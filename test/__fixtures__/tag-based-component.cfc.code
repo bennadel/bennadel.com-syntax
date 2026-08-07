@@ -1,0 +1,37 @@
+<!--- Older tag-based component, the dominant style in the early archive. --->
+<cfcomponent output="false" hint="Reads blog entries.">
+
+	<cffunction name="init" access="public" returntype="any" output="false">
+		<cfargument name="datasource" type="string" required="true" />
+
+		<cfset variables.datasource = arguments.datasource />
+
+		<cfreturn this />
+	</cffunction>
+
+	<cffunction name="getEntry" access="public" returntype="struct" output="false">
+		<cfargument name="id" type="numeric" required="true" />
+
+		<cfquery name="local.entry" datasource="#variables.datasource#">
+			SELECT
+				e.id,
+				e.name
+			FROM
+				blog_entry e
+			WHERE
+				e.id = <cfqueryparam value="#arguments.id#" cfsqltype="cf_sql_integer" />
+			AND
+				e.publishedAt &lt; <cfqueryparam value="#now()#" cfsqltype="cf_sql_timestamp" />
+		</cfquery>
+
+		<cfif ! local.entry.recordCount>
+			<cfthrow type="EntryNotFound" message="No entry for #arguments.id#" />
+		</cfif>
+
+		<cfreturn {
+			id: local.entry.id,
+			name: local.entry.name
+		} />
+	</cffunction>
+
+</cfcomponent>

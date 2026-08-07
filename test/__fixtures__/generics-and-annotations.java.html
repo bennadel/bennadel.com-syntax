@@ -1,0 +1,25 @@
+<span class="pl-k">package</span> <span class="pl-smi">com.bennadel.archive</span>;
+
+<span class="pl-k">import</span> <span class="pl-smi">java.util.List</span>;
+<span class="pl-k">import</span> <span class="pl-smi">java.util.stream.Collectors</span>;
+
+<span class="pl-k">@Service</span>
+<span class="pl-k">public</span> <span class="pl-k">class</span> <span class="pl-en">PostIndexer</span>&lt;T <span class="pl-k">extends</span> <span class="pl-e">Comparable&lt;</span><span class="pl-smi">T</span><span class="pl-e">&gt;</span>&gt; {
+
+	<span class="pl-k">private</span> <span class="pl-k">static</span> <span class="pl-k">final</span> <span class="pl-k">int</span> <span class="pl-c1">BATCH</span> <span class="pl-k">=</span> <span class="pl-c1">500</span>;
+
+	<span class="pl-k">@Autowired</span>
+	<span class="pl-k">private</span> <span class="pl-smi">Repository</span> repository;
+
+	<span class="pl-c">/**</span>
+<span class="pl-c">	* Reindex everything newer than the given id.</span>
+<span class="pl-c">	*/</span>
+	<span class="pl-k">public</span> <span class="pl-k">List&lt;</span><span class="pl-smi">String</span><span class="pl-k">&gt;</span> <span class="pl-en">reindex</span>(<span class="pl-k">long</span> <span class="pl-v">sinceId</span>) <span class="pl-k">throws</span> <span class="pl-smi">IndexException</span> {
+		<span class="pl-k">return</span> repository
+			.findAllNewerThan(sinceId, <span class="pl-c1">BATCH</span>)
+			.stream()
+			.map(post <span class="pl-k">-&gt;</span> post<span class="pl-k">.</span>getTitle()<span class="pl-k">.</span>trim())
+			.filter(title <span class="pl-k">-&gt;</span> <span class="pl-k">!</span>title<span class="pl-k">.</span>isEmpty())
+			.collect(<span class="pl-smi">Collectors</span><span class="pl-k">.</span>toList());
+	}
+}

@@ -1,0 +1,17 @@
+Deployment notes for the 2019 migration
+=======================================
+
+! This line starts with a bang. Adblock filter syntax treats that as a
+  comment, so if this block ever resolves to text.adblock again it will
+  render grey and italic instead of as prose.
+
+||example.com^ and $keyword are adblock operators.
+{{ if .Enabled }} is a Go template action.
+# This is not a shell comment. It is a heading.
+
+Characters that must survive escaping: < > & "quoted" 'single'
+A comparison: 5 > 3 && 2 < 4
+An entity that must NOT be decoded: &amp; stays as typed.
+
+	Indented with a tab, which normalization must leave alone.
+This line ends with two trailing spaces, also left alone.  

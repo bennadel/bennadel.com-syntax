@@ -1,0 +1,20 @@
+# NOTE: dist/ is deliberately NOT listed here. It ignores itself, via
+# dist/.gitignore, so that the directory exists in a fresh clone.
+#
+# This is not a style preference -- it is required. Git does not descend into an
+# ignored directory, so a `dist/` rule at this level would make dist/.gitignore
+# untrackable and the directory invisible again, silently undoing the thing it
+# was added for.
+
+# npm is only ever supposed to run inside a container (see "Build hardening").
+# This is here so that if someone does run it on the host by accident, the
+# mistake does not become a 24 MB commit.
+node_modules/
+
+.DS_Store
+
+# Claude Code writes plans here (plansDirectory in .claude/settings.json). They
+# are working notes for a single piece of work, not a record of what the repo
+# is, so they do not belong in history. The rest of .claude/ IS tracked --
+# CLAUDE.md and settings.json are shared configuration.
+.claude/plans/

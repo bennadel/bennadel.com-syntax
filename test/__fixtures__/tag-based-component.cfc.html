@@ -1,0 +1,37 @@
+<span class="pl-c">&lt;!--- Older tag-based component, the dominant style in the early archive. ---&gt;</span>
+&lt;<span class="pl-k">cfcomponent</span> <span class="pl-e">output</span>=<span class="pl-s"><span class="pl-pds">"</span>false<span class="pl-pds">"</span></span> <span class="pl-e">hint</span>=<span class="pl-s"><span class="pl-pds">"</span>Reads blog entries.<span class="pl-pds">"</span></span>&gt;
+
+	&lt;<span class="pl-k">cffunction</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span><span class="pl-en">init</span><span class="pl-pds">"</span></span> <span class="pl-e">access</span>=<span class="pl-s"><span class="pl-pds">"</span><span class="pl-k">public</span><span class="pl-pds">"</span></span> <span class="pl-e">returntype</span>=<span class="pl-s"><span class="pl-pds">"</span><span class="pl-c1">any</span><span class="pl-pds">"</span></span> <span class="pl-e">output</span>=<span class="pl-s"><span class="pl-pds">"</span>false<span class="pl-pds">"</span></span>&gt;
+		&lt;<span class="pl-ent">cfargument</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span><span class="pl-smi">datasource</span><span class="pl-pds">"</span></span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span><span class="pl-c1">string</span><span class="pl-pds">"</span></span> <span class="pl-e">required</span>=<span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span> /&gt;
+
+		&lt;<span class="pl-ent">cfset</span> <span class="pl-c1">variables</span>.<span class="pl-smi">datasource</span> <span class="pl-k">=</span> <span class="pl-c1">arguments</span>.<span class="pl-smi">datasource</span> /&gt;
+
+		&lt;<span class="pl-ent">cfreturn</span> <span class="pl-c1">this</span> /&gt;
+	&lt;/<span class="pl-k">cffunction</span>&gt;
+
+	&lt;<span class="pl-k">cffunction</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span><span class="pl-en">getEntry</span><span class="pl-pds">"</span></span> <span class="pl-e">access</span>=<span class="pl-s"><span class="pl-pds">"</span><span class="pl-k">public</span><span class="pl-pds">"</span></span> <span class="pl-e">returntype</span>=<span class="pl-s"><span class="pl-pds">"</span><span class="pl-c1">struct</span><span class="pl-pds">"</span></span> <span class="pl-e">output</span>=<span class="pl-s"><span class="pl-pds">"</span>false<span class="pl-pds">"</span></span>&gt;
+		&lt;<span class="pl-ent">cfargument</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span><span class="pl-smi">id</span><span class="pl-pds">"</span></span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span><span class="pl-c1">numeric</span><span class="pl-pds">"</span></span> <span class="pl-e">required</span>=<span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span> /&gt;
+
+		&lt;<span class="pl-ent">cfquery</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>local.entry<span class="pl-pds">"</span></span> <span class="pl-e">datasource</span>=<span class="pl-s"><span class="pl-pds">"</span>#<span class="pl-c1">variables</span>.<span class="pl-smi">datasource</span>#<span class="pl-pds">"</span></span>&gt;
+			<span class="pl-k">SELECT</span>
+				<span class="pl-c1">e</span>.<span class="pl-c1">id</span>,
+				<span class="pl-c1">e</span>.<span class="pl-c1">name</span>
+			<span class="pl-k">FROM</span>
+				blog_entry e
+			<span class="pl-k">WHERE</span>
+				<span class="pl-c1">e</span>.<span class="pl-c1">id</span> <span class="pl-k">=</span> &lt;<span class="pl-ent">cfqueryparam</span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>#<span class="pl-c1">arguments</span>.<span class="pl-smi">id</span>#<span class="pl-pds">"</span></span> <span class="pl-e">cfsqltype</span>=<span class="pl-s"><span class="pl-pds">"</span>cf_sql_integer<span class="pl-pds">"</span></span> /&gt;
+			<span class="pl-k">AND</span>
+				<span class="pl-c1">e</span>.<span class="pl-c1">publishedAt</span> &amp;lt; &lt;<span class="pl-ent">cfqueryparam</span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>#<span class="pl-c1">now</span>()#<span class="pl-pds">"</span></span> <span class="pl-e">cfsqltype</span>=<span class="pl-s"><span class="pl-pds">"</span>cf_sql_timestamp<span class="pl-pds">"</span></span> /&gt;
+		&lt;/<span class="pl-ent">cfquery</span>&gt;
+
+		&lt;<span class="pl-ent">cfif</span> <span class="pl-k">!</span> <span class="pl-c1">local</span>.<span class="pl-smi">entry</span>.<span class="pl-smi">recordCount</span>&gt;
+			&lt;<span class="pl-ent">cfthrow</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>EntryNotFound<span class="pl-pds">"</span></span> <span class="pl-e">message</span>=<span class="pl-s"><span class="pl-pds">"</span>No entry for #<span class="pl-c1">arguments</span>.<span class="pl-smi">id</span>#<span class="pl-pds">"</span></span> /&gt;
+		&lt;/<span class="pl-ent">cfif</span>&gt;
+
+		&lt;<span class="pl-ent">cfreturn</span> {
+			<span class="pl-smi">id</span><span class="pl-k">:</span> <span class="pl-c1">local</span>.<span class="pl-smi">entry</span>.<span class="pl-smi">id</span>,
+			<span class="pl-smi">name</span><span class="pl-k">:</span> <span class="pl-c1">local</span>.<span class="pl-smi">entry</span>.<span class="pl-smi">name</span>
+		} /&gt;
+	&lt;/<span class="pl-k">cffunction</span>&gt;
+
+&lt;/<span class="pl-k">cfcomponent</span>&gt;

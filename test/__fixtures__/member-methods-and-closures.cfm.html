@@ -1,0 +1,59 @@
+&lt;<span class="pl-ent">cfscript</span>&gt;
+
+	<span class="pl-c">// ColdFusion language extensions (global functions).</span>
+	<span class="pl-ent">include</span> <span class="pl-s"><span class="pl-pds">"</span>/core/cfmlx.cfm<span class="pl-pds">"</span></span>;
+
+	<span class="pl-c">// ------------------------------------------------------------------------------- //</span>
+	<span class="pl-c">// ------------------------------------------------------------------------------- //</span>
+
+	<span class="pl-c">// Member method calls directly on Struct literals.</span>
+	<span class="pl-smi">steve</span> <span class="pl-k">=</span> {}
+		.<span class="pl-c1">insert</span>( <span class="pl-s"><span class="pl-pds">"</span>id<span class="pl-pds">"</span></span>, <span class="pl-c1">1</span> )
+		.<span class="pl-c1">insert</span>( <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Steve<span class="pl-pds">"</span></span> )
+		.<span class="pl-c1">insert</span>( <span class="pl-s"><span class="pl-pds">"</span>coolness<span class="pl-pds">"</span></span>, <span class="pl-c1">0.3</span> )
+	;
+	<span class="pl-smi">laura</span> <span class="pl-k">=</span> {}
+		.<span class="pl-c1">insert</span>( <span class="pl-s"><span class="pl-pds">"</span>id<span class="pl-pds">"</span></span>, <span class="pl-c1">2</span> )
+		.<span class="pl-c1">insert</span>( <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Laura<span class="pl-pds">"</span></span> )
+		.<span class="pl-c1">insert</span>( <span class="pl-s"><span class="pl-pds">"</span>coolness<span class="pl-pds">"</span></span>, <span class="pl-c1">0.87</span> )
+	;
+	<span class="pl-smi">kit</span> <span class="pl-k">=</span> {}
+		.<span class="pl-c1">insert</span>( <span class="pl-s"><span class="pl-pds">"</span>id<span class="pl-pds">"</span></span>, <span class="pl-c1">3</span> )
+		.<span class="pl-c1">insert</span>( <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Kit<span class="pl-pds">"</span></span> )
+		.<span class="pl-c1">insert</span>( <span class="pl-s"><span class="pl-pds">"</span>coolness<span class="pl-pds">"</span></span>, <span class="pl-c1">0.54</span> )
+	;
+
+	<span class="pl-c">// Member method calls directly on Array literals.</span>
+	<span class="pl-smi">friends</span> <span class="pl-k">=</span> []
+		.<span class="pl-c1">append</span>( <span class="pl-smi">steve</span> )
+		.<span class="pl-c1">append</span>( <span class="pl-smi">laura</span> )
+		.<span class="pl-c1">append</span>( <span class="pl-smi">kit</span> )
+	;
+
+	<span class="pl-c">// Bracket-access directly on result of method call.</span>
+	<span class="pl-smi">coolestFriend</span> <span class="pl-k">=</span> <span class="pl-smi">friends</span>
+		.<span class="pl-c1">sort</span>( <span class="pl-en">coolnessComparator</span>( <span class="pl-s"><span class="pl-pds">"</span>desc<span class="pl-pds">"</span></span> ) )
+		[ <span class="pl-c1">1</span> ]
+	;
+	<span class="pl-smi">lamestFriend</span> <span class="pl-k">=</span> <span class="pl-smi">friends</span>[ <span class="pl-k">-</span><span class="pl-c1">1</span> ];
+
+	<span class="pl-en">dump</span>( <span class="pl-smi">friends</span> );
+	<span class="pl-en">dump</span>( <span class="pl-smi">coolestFriend</span> );
+	<span class="pl-en">dump</span>( <span class="pl-smi">lamestFriend</span> );
+
+	<span class="pl-c">// ------------------------------------------------------------------------------- //</span>
+	<span class="pl-c">// ------------------------------------------------------------------------------- //</span>
+
+	<span class="pl-c">/**</span>
+<span class="pl-c">	* I return a coolness sort operator using the given direction. </span>
+<span class="pl-c">	*/</span>
+	<span class="pl-k">private</span> <span class="pl-c1">function</span> <span class="pl-k">function</span> <span class="pl-en">coolnessComparator</span>( <span class="pl-k">required</span> <span class="pl-c1">string</span> <span class="pl-smi">direction</span> ) {
+
+		<span class="pl-k">return</span> ( <span class="pl-smi">direction</span> <span class="pl-k">==</span> <span class="pl-s"><span class="pl-pds">"</span>asc<span class="pl-pds">"</span></span> )
+			<span class="pl-k">?</span> ( <span class="pl-smi">a</span>, <span class="pl-smi">b</span> ) <span class="pl-k">=&gt;</span> ( <span class="pl-smi">a</span>.<span class="pl-smi">coolness</span> <span class="pl-k">-</span> <span class="pl-smi">b</span>.<span class="pl-smi">coolness</span> )
+			<span class="pl-k">:</span> ( <span class="pl-smi">a</span>, <span class="pl-smi">b</span> ) <span class="pl-k">=&gt;</span> ( <span class="pl-smi">b</span>.<span class="pl-smi">coolness</span> <span class="pl-k">-</span> <span class="pl-smi">a</span>.<span class="pl-smi">coolness</span> )
+		;
+
+	}
+
+&lt;/<span class="pl-ent">cfscript</span>&gt;

@@ -1,0 +1,321 @@
+# No `version:` key -- it is obsolete in Compose v2 and now emits a warning.
+#
+# NO `dockerfile:` KEY ON ANY BUILD BLOCK EITHER. The Dockerfile is at the repo
+# root, which is where `context: .` already looks by default, so naming it would
+# only restate the default -- the same reason there is no `version:` key and no
+# `networks:` block.
+#
+# It sits at the root rather than in a subdirectory so that both halves of the
+# container definition are at the same level. Note that .dockerignore CANNOT
+# follow it into a subdirectory: Docker reads only `<context>/.dockerignore` or
+# `<dockerfile-path>.dockerignore`, so a plain `docker/.dockerignore` is
+# silently ignored -- measured on Docker 29.6.1 -- and this project's allow-list
+# would fail OPEN, putting the whole working tree into function.zip with no
+# warning. Root is the only place both files are unambiguous.
+name: bennadel-syntax
+
+services:
+  highlighter:
+    build:
+      context: .
+    image: bennadel/syntax-highlighter:dev
+
+    # Runs tini as PID 1: reaps zombies and forwards signals. Matters here
+    # because the worker-thread pool spawns children that must tear down
+    # cleanly on Ctrl-C, and because we deliberately kill workers mid-request.
+    init: true
+
+    # Bound to loopback only. Nothing on your LAN can reach this, and it is
+    # never fronted by a web server.
+    ports:
+      - "127.0.0.1:3000:3000"
+
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      # Shared-secret header value. This default is a local-dev placeholder;
+      # production sets a real value through the platform's secret store.
+      HIGHLIGHT_TOKEN: ${HIGHLIGHT_TOKEN:-dev-local-only}
+      # Payload cap in bytes (256 KB).
+      MAX_BYTES: "262144"
+      # ReDoS guard. Any block containing a line longer than this is returned
+      # as escaped plain text instead of being tokenized. Line length -- not
+      # payload size -- is the dimension that drives Oniguruma cost, because
+      # grammars tokenize line by line. Listed explicitly at its default so the
+      # knob is discoverable; raise it temporarily to re-run a backfill.
+      MAX_LINE_LENGTH: "200"
+      #
+      # TIMEOUT_MS intentionally absent. It would only mean something with a
+      # worker-thread pool, and there is none -- Lambda's SIGKILL on timeout is
+      # what stops a wedged match. Leaving it set while unread would
+      # misrepresent what this service actually enforces.
+
+    # The service writes nothing to disk. It has no database driver, no
+    # credentials, and no state.
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m
+
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+    # A runaway match should hit a wall rather than eat the host. These are
+    # backstops behind the per-request timeout, not the primary control.
+    mem_limit: 512m
+    pids_limit: 128
+    cpus: 2.0
+
+    restart: unless-stopped
+
+    volumes:
+      # Live source. Editing src/ does not require --build: the host directory
+      # is overlaid on the image's copy, so `up` picks up whatever is on disk.
+      #
+      # A RESTART IS STILL REQUIRED. Node does not reload modules, so the running
+      # process keeps the version it imported at startup. Ctrl-C and `up` again,
+      # or `docker compose restart highlighter`.
+      #
+      # node_modules deliberately stays baked into the image, so a dependency
+      # change (package.json / package-lock.json) still needs --build. So does a
+      # Dockerfile change.
+      #
+      # The tradeoff: the running container does not necessarily match the built
+      # image. That is acceptable only because the golden corpus targets
+      # src/core/highlight.js, the pure module, rather than a packaging
+      # artifact. Point the corpus at the image and this mount silently
+      # invalidates it.
+      #
+      # It does NOT affect the deployment zip: the `package` service builds from
+      # the Dockerfile's COPY, not from this mount, which is exactly why --build
+      # is mandatory there.
+      - ./src:/app/src:ro
+
+  # The local inspection tools: http://127.0.0.1:3001
+  #
+  #   docker compose up
+  #
+  # DELIBERATELY NOT PROFILE-GATED, unlike `package` and `test`. Those are
+  # one-shot tools you invoke when you want them. This is meant to be up
+  # whenever the API is up, so a plain `up` starts both.
+  #
+  # It shares the runtime image (node_modules is already in it) and overrides
+  # the command. It does NOT share anything else with `highlighter`:
+  #
+  #   - No HIGHLIGHT_TOKEN. It imports src/core/highlight.js directly rather than
+  #     calling the API, so it holds no credential and publishing this port
+  #     exposes no API surface. See the header in tools/server.js.
+  #   - No depends_on. It never talks to the highlighter, so coupling their
+  #     lifecycles would only mean a broken API takes these tools down with it.
+  #
+  # tools/ IS NOT IN THE IMAGE. .dockerignore allows back only src/ and the two
+  # manifests, so tools/ never enters the build context and cannot reach
+  # function.zip. It exists in the container solely because of the bind mount
+  # below -- run this image without that mount and it fails MODULE_NOT_FOUND,
+  # which is the correct outcome rather than a bug to fix.
+  #
+  # NAMED `tools`, NOT `demo`. It serves two pages, not one: `/` renders the
+  # golden corpus, and `/blog` pulls the code blocks out of a live bennadel.com
+  # post so real prose-embedded code can be looked at. "demo" undersold the
+  # second one, which is the half that finds things the fixtures cannot.
+  tools:
+    build:
+      context: .
+    image: bennadel/syntax-highlighter:dev
+
+    init: true
+
+    # Loopback only, same as the API. Nothing on your LAN reaches this.
+    ports:
+      - "127.0.0.1:3001:3001"
+
+    environment:
+      PORT: "3001"
+
+    # All three mounts are :ro -- these tools read fixtures and render them, and
+    # have no reason to be able to write any of these trees. In particular it must
+    # never be able to regenerate a golden file; that is `test-update`'s job, and
+    # the read-write asymmetry there is what keeps it a deliberate act.
+    #
+    # test/ is mounted because the page renders the golden corpus. That is the
+    # only reason a non-test service touches that directory, and :ro is what
+    # keeps "renders the goldens" from becoming "can rewrite the goldens".
+    volumes:
+      - ./src:/app/src:ro
+      - ./tools:/app/tools:ro
+      - ./test:/app/test:ro
+
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m
+
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+    mem_limit: 512m
+    pids_limit: 128
+    cpus: 2.0
+
+    # MUST be overridden. The Dockerfile's HEALTHCHECK probes port 3000, which
+    # nothing listens on here, so inheriting it would mark this container
+    # unhealthy forever while it worked perfectly.
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+
+    # NOT `network_mode: none`, though it needs no egress. `none` leaves only
+    # loopback INSIDE the container, which would make the published port
+    # unreachable from the host -- the same reason the highlighter cannot use
+    # it. See the note at the bottom of this file.
+    restart: unless-stopped
+
+    command: ["node", "tools/server.js"]
+
+  # DO NOT ADD A SERVICE THAT VERIFIES THE VENDORED GRAMMAR PATCHES. That check
+  # belongs to the real test suite, not to a service of its own:
+  # test/corpus.test.js asserts both patches applied to both files AND the
+  # behaviour each one produces, and re-downloading upstream is verified by
+  # `docker compose run --rm test` like everything else -- one command to
+  # remember instead of two.
+
+  # One-shot: build the Lambda deployment zip into the repo root, then exit.
+  #
+  #   docker compose run --rm --build package
+  #
+  # --build IS REQUIRED, not optional. `compose run` reuses the existing image by
+  # default, so without it a source edit produces a zip built from the PREVIOUS
+  # image -- a stale artifact, silently, with a cheerful success message. That is
+  # the one way this service can hurt you. The layer cache means --build costs
+  # about a second when nothing changed.
+  #
+  # Profile-gated, so a plain `docker compose up` never starts it and the normal
+  # local-service workflow is unchanged.
+  #
+  # No `--profile package` needed on the command above: naming a service
+  # explicitly auto-enables the profiles it belongs to (verified on Compose
+  # 5.2.0). The `profiles:` key below is still doing real work -- it is what
+  # keeps this out of a bare `up` -- but the CLI flag was redundant.
+  #
+  # It shares the Dockerfile with `highlighter` -- and therefore shares the
+  # CACHED `npm ci` layer, which is the whole reason this exists rather than a
+  # `docker run` one-liner that reinstalls everything each time. It deliberately
+  # shares nothing else: no port, no healthcheck, no environment, and crucially
+  # NOT read_only, since writing the zip is its entire job. That is also why this
+  # is a separate service rather than `extends` -- there is nothing worth
+  # inheriting.
+  package:
+    profiles:
+      - package
+
+    build:
+      context: .
+      target: package
+    image: bennadel/syntax-highlighter:package
+
+    # Build output goes to dist/, which .gitignore covers. Docker creates the
+    # directory on first run.
+    #
+    # Deliberately NOT the repo root. A
+    # one-directory mount means the packaging container can only ever write to
+    # the one place it is supposed to -- the same blast-radius reasoning that
+    # makes .dockerignore an allow-list rather than a deny-list.
+    volumes:
+      - ./dist:/out
+
+    # It reads a bind mount and writes one file. It has no reason to reach
+    # anything, and unlike the runtime service, egress here IS expressible --
+    # see the note on the highlighter network below for why that is not true
+    # of a service that must answer HTTP.
+    network_mode: none
+
+  # Both test suites, one shot:
+  #
+  #   docker compose run --rm test
+  #
+  # `network_mode: none` leaves only loopback, which is all contract.test.js
+  # needs -- it starts src/adapters/server.js in-process and talks to it over 127.0.0.1.
+  # A test run therefore cannot reach the internet, which matters more than it
+  # looks: it means a green run proves the grammars compiled from the bundled
+  # WASM rather than silently fetching onig.wasm from esm.sh.
+  #
+  # No --build here on purpose. These mount src/ live, and node_modules is
+  # already in the image, so a source edit is picked up without a rebuild. Add
+  # --build only after changing package.json or the Dockerfile.
+  test:
+    profiles:
+      - test
+
+    build:
+      context: .
+    image: bennadel/syntax-highlighter:dev
+
+    environment:
+      # corpus.test.js does not need one; contract.test.js sets its own before
+      # importing either adapter. This is here so that boot() has something if
+      # the entrypoint is ever changed to run the server instead.
+      HIGHLIGHT_TOKEN: test-only
+
+    volumes:
+      - ./src:/app/src:ro
+      - ./test:/app/test:ro
+
+    network_mode: none
+
+    entrypoint: ["sh", "-c"]
+    command: ["node test/corpus.test.js && node test/contract.test.js"]
+
+  # Regenerate the golden files after a deliberate change to highlighting:
+  #
+  #   docker compose run --rm test-update
+  #
+  # Separate from `test` for one reason: test/ is mounted READ-WRITE here, and
+  # nowhere else. Every other service mounts it :ro, which is why --update fails
+  # against them with EROFS rather than quietly working. That asymmetry is the
+  # point -- regenerating goldens is a deliberate act, not something a test run
+  # can do to itself by accident.
+  #
+  # Note that src/ stays :ro even here. Since the goldens moved out of src/, the
+  # one command allowed to write has no reason to reach source at all, so it
+  # cannot. Before the move this service had src/ read-write and that was the
+  # only way to grant it access to src/__fixtures__/.
+  #
+  # ALWAYS read the resulting diff. An unreviewed --update blesses whatever the
+  # code currently does, which converts the corpus from a test into a rubber
+  # stamp.
+  test-update:
+    profiles:
+      - test
+
+    build:
+      context: .
+    image: bennadel/syntax-highlighter:dev
+
+    volumes:
+      - ./src:/app/src:ro
+      - ./test:/app/test
+
+    network_mode: none
+
+    entrypoint: ["node"]
+    command: ["test/corpus.test.js", "--update"]
+
+# NO `networks:` BLOCK, DELIBERATELY.
+#
+# Compose already creates a default network with the `bridge` driver and
+# attaches every service to it, so declaring one only renames it.
+#
+# DO NOT ADD ONE TO BLOCK OUTBOUND ACCESS FROM `highlighter`. Both ways of doing
+# that were tried here and neither works: `enable_ip_masquerade: "false"` because
+# Docker Desktop NATs again at the macOS VM boundary, and `internal: true`
+# because it kills inbound along with outbound and the service has to answer
+# HTTP. Egress is deliberately not enforced on Lambda either. This comment is
+# the only record of the two failed experiments -- do not re-run them.
+#
+# The one service that genuinely constrains networking is `package`, which sets
+# `network_mode: none` because it truly needs nothing.

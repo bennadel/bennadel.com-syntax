@@ -1,0 +1,23 @@
+# Deny everything, then allow back only what the build actually needs.
+#
+# An allow-list rather than a deny-list on purpose: with a deny-list, every new
+# file or directory added to the repo silently joins the build context, and the
+# failure mode is leaking something (a .sql snapshot, credentials, notes) into
+# an image layer. Here, anything new is excluded until explicitly permitted.
+*
+
+!package.json
+!package-lock.json
+!src/
+
+# NOTE: there are deliberately no re-exclusions under src/ any more. Tests and
+# fixtures used to live there and needed `src/**/*.test.js` and
+# `src/**/__fixtures__/` to keep them out of the zip -- an enumeration that
+# covered those two shapes and nothing else, so a helper module or a second
+# fixture directory would have shipped. They now live in test/, which the `*`
+# rule above denies without being named. Same for tools/.
+#
+# The rule to keep: if it is under src/, it ships. Put anything that should not
+# ship somewhere else rather than adding a pattern here.
+**/node_modules/
+**/.DS_Store

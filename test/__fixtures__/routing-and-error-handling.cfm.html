@@ -1,0 +1,105 @@
+&lt;<span class="pl-ent">cfscript</span>&gt;
+
+	<span class="pl-c">// Define properties for dependency-injection.</span>
+	<span class="pl-smi">config</span> <span class="pl-k">=</span> <span class="pl-c1">request</span>.<span class="pl-smi">ioc</span>.<span class="pl-c1">get</span>( <span class="pl-s"><span class="pl-pds">"</span>config<span class="pl-pds">"</span></span> );
+	<span class="pl-smi">legacyRedirects</span> <span class="pl-k">=</span> <span class="pl-c1">request</span>.<span class="pl-smi">ioc</span>.<span class="pl-c1">get</span>( <span class="pl-s"><span class="pl-pds">"</span>core.lib.web.LegacyRedirects<span class="pl-pds">"</span></span> );
+	<span class="pl-smi">requestHelper</span> <span class="pl-k">=</span> <span class="pl-c1">request</span>.<span class="pl-smi">ioc</span>.<span class="pl-c1">get</span>( <span class="pl-s"><span class="pl-pds">"</span>core.lib.web.RequestHelper<span class="pl-pds">"</span></span> );
+	<span class="pl-smi">requestMetadata</span> <span class="pl-k">=</span> <span class="pl-c1">request</span>.<span class="pl-smi">ioc</span>.<span class="pl-c1">get</span>( <span class="pl-s"><span class="pl-pds">"</span>core.lib.web.RequestMetadata<span class="pl-pds">"</span></span> );
+	<span class="pl-smi">router</span> <span class="pl-k">=</span> <span class="pl-c1">request</span>.<span class="pl-smi">ioc</span>.<span class="pl-c1">get</span>( <span class="pl-s"><span class="pl-pds">"</span>core.lib.web.Router<span class="pl-pds">"</span></span> );
+	<span class="pl-smi">ui</span> <span class="pl-k">=</span> <span class="pl-c1">request</span>.<span class="pl-smi">ioc</span>.<span class="pl-c1">get</span>( <span class="pl-s"><span class="pl-pds">"</span>core.lib.web.UI<span class="pl-pds">"</span></span> );
+
+	<span class="pl-c">// ColdFusion language extensions (global functions).</span>
+	<span class="pl-ent">include</span> <span class="pl-s"><span class="pl-pds">"</span>/core/cfmlx.cfm<span class="pl-pds">"</span></span>;
+
+	<span class="pl-c">// ------------------------------------------------------------------------------- //</span>
+	<span class="pl-c">// ------------------------------------------------------------------------------- //</span>
+
+	<span class="pl-c">// While these components are all cached in the application scope, they all need to</span>
+	<span class="pl-c">// operate, in part, on requests-scoped variables. As such, we have to initialize the</span>
+	<span class="pl-c">// request-scoped variables at the start of each request.</span>
+	<span class="pl-smi">requestMetadata</span>.<span class="pl-en">setupRequest</span>();
+	<span class="pl-smi">requestHelper</span>.<span class="pl-en">setupRequest</span>();
+	<span class="pl-smi">router</span>.<span class="pl-en">setupRequest</span>();
+	<span class="pl-smi">ui</span>.<span class="pl-en">setupRequest</span>();
+
+	<span class="pl-c">// ------------------------------------------------------------------------------- //</span>
+	<span class="pl-c">// ------------------------------------------------------------------------------- //</span>
+
+	<span class="pl-c">// Note: this is the one piece outside the core try/catch because it's the one piece</span>
+	<span class="pl-c">// of data that I want any other view to be able to depend on.</span>
+	<span class="pl-c1">request</span>.<span class="pl-smi">response</span> <span class="pl-k">=</span> {};
+
+	<span class="pl-c">// Most forms in this application post back to themselves for processing. For</span>
+	<span class="pl-c">// aesthetic reasons, I'd like the URL for these post-back operations to remain the</span>
+	<span class="pl-c">// same during the form processing life-cycle. This way, if we have to present an</span>
+	<span class="pl-c">// error message to the user (after the form has been submitted), the URL is never</span>
+	<span class="pl-c">// showing as "index.cfm"; but, rather, has the original URL of the page itself. To do</span>
+	<span class="pl-c">// this, we're going to use the CGI.QUERY_STRING value to drive form actions, with any</span>
+	<span class="pl-c">// additional data being provided as form inputs.</span>
+	<span class="pl-c1">request</span>.<span class="pl-smi">postBackAction</span> <span class="pl-k">=</span> <span class="pl-smi">router</span>.<span class="pl-en">buildPostBackAction</span>();
+	<span class="pl-c">// Define globally convenient short-hands.</span>
+	<span class="pl-c1">request</span>.<span class="pl-smi">isLive</span> <span class="pl-k">=</span> <span class="pl-smi">config</span>.<span class="pl-smi">isLive</span>;
+	<span class="pl-c1">request</span>.<span class="pl-smi">isLocal</span> <span class="pl-k">=</span> <span class="pl-k">!</span> <span class="pl-c1">request</span>.<span class="pl-smi">isLive</span>;
+	<span class="pl-c1">request</span>.<span class="pl-smi">isGet</span> <span class="pl-k">=</span> <span class="pl-smi">requestMetadata</span>.<span class="pl-en">isGet</span>();
+	<span class="pl-c1">request</span>.<span class="pl-smi">isPost</span> <span class="pl-k">=</span> <span class="pl-smi">requestMetadata</span>.<span class="pl-en">isPost</span>();
+	<span class="pl-c1">request</span>.<span class="pl-smi">htmx</span> <span class="pl-k">=</span> <span class="pl-smi">requestMetadata</span>.<span class="pl-en">getHtmxHeaders</span>();
+	<span class="pl-c1">request</span>.<span class="pl-smi">isHtmx</span> <span class="pl-k">=</span> <span class="pl-c1">request</span>.<span class="pl-smi">htmx</span>.<span class="pl-smi">request</span>;
+
+	<span class="pl-c">// ------------------------------------------------------------------------------- //</span>
+	<span class="pl-c">// ------------------------------------------------------------------------------- //</span>
+
+	<span class="pl-k">try</span> {
+
+		<span class="pl-k">switch</span> ( <span class="pl-smi">router</span>.<span class="pl-en">next</span>( <span class="pl-s"><span class="pl-pds">"</span>marketing<span class="pl-pds">"</span></span> ) ) {
+			<span class="pl-k">case</span> <span class="pl-s"><span class="pl-pds">"</span>account<span class="pl-pds">"</span></span>:
+			<span class="pl-k">case</span> <span class="pl-s"><span class="pl-pds">"</span>auth<span class="pl-pds">"</span></span>:
+			<span class="pl-k">case</span> <span class="pl-s"><span class="pl-pds">"</span>dev<span class="pl-pds">"</span></span>:
+			<span class="pl-k">case</span> <span class="pl-s"><span class="pl-pds">"</span>go<span class="pl-pds">"</span></span>:
+			<span class="pl-k">case</span> <span class="pl-s"><span class="pl-pds">"</span>marketing<span class="pl-pds">"</span></span>:
+			<span class="pl-k">case</span> <span class="pl-s"><span class="pl-pds">"</span>member<span class="pl-pds">"</span></span>:
+			<span class="pl-k">case</span> <span class="pl-s"><span class="pl-pds">"</span>share<span class="pl-pds">"</span></span>:
+			<span class="pl-k">case</span> <span class="pl-s"><span class="pl-pds">"</span>system<span class="pl-pds">"</span></span>:
+				<span class="pl-ent">cfmodule</span>( <span class="pl-e">template</span> = <span class="pl-smi">router</span>.<span class="pl-en">nextTemplate</span>() );
+			<span class="pl-k">break</span>;
+			<span class="pl-k">default</span>:
+				<span class="pl-c1">throw</span>( <span class="pl-e">type</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>App.Routing.InvalidEvent<span class="pl-pds">"</span></span> );
+			<span class="pl-k">break</span>;
+		}
+
+	} <span class="pl-k">catch</span> ( <span class="pl-c1">any</span> <span class="pl-smi">error</span> ) {
+
+		<span class="pl-c">// Legacy routes have an opportunity to redirect before an error is logged.</span>
+		<span class="pl-k">if</span> ( <span class="pl-smi">error</span>.<span class="pl-smi">type</span> <span class="pl-k">==</span> <span class="pl-s"><span class="pl-pds">"</span>App.Routing.InvalidEvent<span class="pl-pds">"</span></span> ) {
+
+			<span class="pl-smi">legacyRedirects</span>.<span class="pl-en">handleInvalidEvent</span>( <span class="pl-smi">error</span> );
+
+		}
+
+		<span class="pl-c1">request</span>.<span class="pl-smi">error</span> <span class="pl-k">=</span> <span class="pl-smi">error</span>;
+
+		<span class="pl-c">// Note: the error module isn't a stand-alone subsystem like its siblings. It</span>
+		<span class="pl-c">// might look and feel like one; but nothing can route directly into it. This is</span>
+		<span class="pl-c">// the only ingress into the error subsystem - as an uncaught error.</span>
+		<span class="pl-ent">cfmodule</span>( <span class="pl-e">template</span> = <span class="pl-s"><span class="pl-pds">"</span>./error/error.cfm<span class="pl-pds">"</span></span> );
+
+		<span class="pl-c">// Edge-case: ColdFusion isn't always super reliable when it comes to creating the</span>
+		<span class="pl-c">// per-application datasource during the bootstrapping process. If we ever get the</span>
+		<span class="pl-c">// error that the datasource cannot be found, shut the application down and exit.</span>
+		<span class="pl-c">// The next request should re-start the ColdFusion application and the datasource</span>
+		<span class="pl-c">// will _likely_ have been created successfully at that point.</span>
+		<span class="pl-c">// --</span>
+		<span class="pl-c">// Note: the error will be logged within the error-module above.</span>
+		<span class="pl-k">if</span> (
+			( <span class="pl-smi">error</span>.<span class="pl-smi">type</span> <span class="pl-k">==</span> <span class="pl-s"><span class="pl-pds">"</span>database<span class="pl-pds">"</span></span> ) <span class="pl-k">&amp;&amp;</span>
+			( <span class="pl-smi">error</span>.<span class="pl-smi">message</span> <span class="pl-k">contains</span> <span class="pl-s"><span class="pl-pds">"</span>datasource<span class="pl-pds">"</span></span> ) <span class="pl-k">&amp;&amp;</span>
+			( <span class="pl-smi">error</span>.<span class="pl-smi">message</span> <span class="pl-k">contains</span> <span class="pl-s"><span class="pl-pds">"</span>could not be found<span class="pl-pds">"</span></span> )
+			) {
+
+			<span class="pl-c1">applicationStop</span>();
+			<span class="pl-k">abort</span>;
+
+		}
+
+	}
+
+&lt;/<span class="pl-ent">cfscript</span>&gt;

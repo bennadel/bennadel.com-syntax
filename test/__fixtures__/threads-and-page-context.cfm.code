@@ -1,0 +1,34 @@
+<cfscript>
+
+    /**
+    * Polyfill Lucee CFML's isInThread() function using Adobe ColdFusion's page-context.
+    */
+    public boolean function isInThread() {
+
+        return getPageContext().isUnderCFThread();
+
+    }
+
+    // ------------------------------------------------------------------------------- //
+    // ------------------------------------------------------------------------------- //
+
+    // Check before thread.
+    results = [:];
+    results.beforeThread = isInThread();
+
+    // Check mid thread.
+    thread name = "one" {
+        thread.midThread = isInThread();
+        sleep( 500 );
+    }
+
+    // Check after thread (but while thread is still running / sleeping).
+    results.afterThread = isInThread();
+
+    // Read results for thread after it joins.
+    thread action="join";
+    results.midThread = cfthread.one.midThread;
+
+    writeDump( results );
+
+</cfscript>

@@ -1,0 +1,31 @@
+<cfscript>
+	variables.greeting = "Hello #session.user.name#";
+
+	public struct function buildReport( required date since, numeric limit = 50 ) {
+		var rows = queryExecute(
+			"SELECT id, name FROM users WHERE created > :since",
+			{ since: { value: since, cfsqltype: "cf_sql_timestamp" } },
+			{ maxrows: limit }
+		);
+
+		return {
+			count: rows.recordCount,
+			names: rows.columnData( "name" ).map( ( n ) => n.ucase() )
+		};
+	}
+</cfscript>
+
+<cfquery name="data" datasource="app">
+	SELECT   id, name, created
+	FROM     users
+	WHERE    id = <cfqueryparam value="#url.id#" cfsqltype="cf_sql_integer" />
+	ORDER BY created DESC
+</cfquery>
+
+<cfoutput>
+	<ul>
+		<cfloop query="data">
+			<li>#e( data.name )#</li>
+		</cfloop>
+	</ul>
+</cfoutput>

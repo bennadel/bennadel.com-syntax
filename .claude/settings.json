@@ -1,0 +1,8 @@
+{
+  "plansDirectory": "./.claude/plans",
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
+  "autoMemoryEnabled": false
+}

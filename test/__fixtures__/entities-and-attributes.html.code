@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Ben &amp; Co &mdash; Archive</title>
+</head>
+<body class="post" data-id="4127">
+	<h1>Reading &lt;pre&gt; blocks</h1>
+	<p>An entity: &copy; 2026. A comparison: 5 &gt; 3.</p>
+	<!-- a comment with <tags> inside it -->
+	<a href="/blog?id=1&amp;page=2" title="quoted &quot;thing&quot;">link</a>
+</body>
+</html>

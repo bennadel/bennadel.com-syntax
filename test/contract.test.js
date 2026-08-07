@@ -1,0 +1,194 @@
+/**
+* Adapter contract test.
+*
+* The API contract must be identical against both adapters, and this is what
+* holds that up. Both adapters must stay thin: auth, routing,
+* validation, and the highlight call belong in src/core/service.js. Moving any
+* of it back into one adapter produces a divergence nothing else would catch --
+* it surfaces only as the ColdFusion client behaving differently against prod
+* than against local, which is close to the worst place to find it.
+*
+* So this asserts two separate things per case:
+*
+*   1. Each adapter returns the expected status.
+*   2. Both adapters return the SAME status and the SAME body.
+*
+* The second is the one worth having. It turns "identical contract" from a claim
+* into a checked property.
+*
+* NOT the golden corpus -- test/corpus.test.js targets src/core/highlight.js and
+* verifies highlighting OUTPUT. This verifies the request/response envelope and
+* deliberately keeps its assertions coarse, so that changing a grammar does not
+* fail a transport test.
+*
+* Lives in test/ rather than beside the code because the deployment zip copies
+* src/ wholesale -- see the header in test/corpus.test.js. Reachable locally
+* because docker-compose.yaml bind-mounts test/ into the test services.
+*
+*   ./scripts/test.sh
+*/
+
+const TOKEN = 'contract-test-token'
+const PORT = 3999
+
+// Must be set BEFORE importing either adapter: both read process.env at module
+// scope, and both now refuse to start without a token.
+process.env.HIGHLIGHT_TOKEN = TOKEN
+process.env.PORT = String(PORT)
+
+const {handler} = await import('../src/adapters/lambda.js')
+await import('../src/adapters/server.js')
+
+// server.js calls listen() at module scope; give it a moment to bind.
+await new Promise((resolve) => setTimeout(resolve, 300))
+
+const MAX_BYTES = Number(process.env.MAX_BYTES ?? 262144)
+
+/**
+* Drive the Lambda adapter directly. Builds a payload-format-2.0 event by hand
+* rather than mocking, because the shape of that event IS part of what this
+* test is pinning down.
+*/
+async function callLambda({method, path, token, body}) {
+	const headers = {}
+
+	if (token !== undefined) headers['x-highlight-token'] = token
+	if (body !== undefined) headers['content-length'] = String(Buffer.byteLength(body))
+
+	const result = await handler({
+		rawPath: path,
+		requestContext: {http: {method}},
+		headers,
+		body
+	})
+
+	return {status: result.statusCode, body: result.body}
+}
+
+/**
+* Drive the HTTP adapter over a real socket. Not an in-process call: the whole
+* point is that the transport is exercised, including the streaming body guard
+* that has no Lambda equivalent.
+*/
+async function callServer({method, path, token, body}) {
+	const headers = {'content-type': 'application/json'}
+
+	if (token !== undefined) headers['x-highlight-token'] = token
+
+	try {
+		const response = await fetch(`http://127.0.0.1:${PORT}${path}`, {
+			method,
+			headers,
+			body
+		})
+
+		return {status: response.status, body: await response.text()}
+	} catch (error) {
+		// A 413 closes the connection, so surface transport failures as data
+		// rather than letting them abort the run.
+		return {status: 'FETCH_FAILED', body: error.message}
+	}
+}
+
+const json = (value) => JSON.stringify(value)
+
+const cases = [
+	// Routing and method handling.
+	{name: 'GET /health', status: 200,
+		request: {method: 'GET', path: '/health'}},
+	{name: 'GET /unknown-path', status: 404,
+		request: {method: 'GET', path: '/nope'}},
+	{name: 'GET /highlight (wrong method)', status: 405,
+		request: {method: 'GET', path: '/highlight'}},
+
+	// Auth. The 401 cases are the regression guard for the fail-open bug.
+	{name: 'no token header', status: 401,
+		request: {method: 'POST', path: '/highlight', body: json({code: 'x'})}},
+	{name: 'wrong token', status: 401,
+		request: {method: 'POST', path: '/highlight', token: 'nope', body: json({code: 'x'})}},
+	{name: 'token of different length', status: 401,
+		request: {method: 'POST', path: '/highlight', token: 'a', body: json({code: 'x'})}},
+
+	// Body parsing.
+	{name: 'malformed JSON', status: 400,
+		request: {method: 'POST', path: '/highlight', token: TOKEN, body: '{nope'}},
+	{name: 'JSON null body', status: 400,
+		request: {method: 'POST', path: '/highlight', token: TOKEN, body: 'null'}},
+	{name: 'missing code', status: 400,
+		request: {method: 'POST', path: '/highlight', token: TOKEN, body: json({language: 'cfml'})}},
+	{name: 'code is a number', status: 400,
+		request: {method: 'POST', path: '/highlight', token: TOKEN, body: json({code: 42})}},
+
+	// language validation -- regression guard for the String() throw.
+	{name: 'language {toString:1}', status: 400,
+		request: {method: 'POST', path: '/highlight', token: TOKEN, body: json({code: 'x', language: {toString: 1}})}},
+	{name: 'language {}', status: 400,
+		request: {method: 'POST', path: '/highlight', token: TOKEN, body: json({code: 'x', language: {}})}},
+	{name: 'language []', status: 400,
+		request: {method: 'POST', path: '/highlight', token: TOKEN, body: json({code: 'x', language: []})}},
+	{name: 'language 42', status: 400,
+		request: {method: 'POST', path: '/highlight', token: TOKEN, body: json({code: 'x', language: 42})}},
+	{name: 'language null (legal)', status: 200,
+		request: {method: 'POST', path: '/highlight', token: TOKEN, body: json({code: 'x', language: null})}},
+	{name: 'language absent (legal)', status: 200,
+		request: {method: 'POST', path: '/highlight', token: TOKEN, body: json({code: 'x'})}},
+
+	// Payload cap.
+	{name: 'body over MAX_BYTES', status: 413,
+		request: {method: 'POST', path: '/highlight', token: TOKEN,
+			body: json({code: 'x'.repeat(MAX_BYTES + 1024)})}},
+
+	// Highlighting outcomes. Coarse on purpose -- status and the highlighted
+	// flag only, so grammar changes do not fail a transport test.
+	{name: 'valid cfml', status: 200,
+		request: {method: 'POST', path: '/highlight', token: TOKEN,
+			body: json({code: '<cfset a = 1>', language: 'cfml'})}},
+	{name: 'unknown language', status: 200,
+		request: {method: 'POST', path: '/highlight', token: TOKEN,
+			body: json({code: 'x = 1', language: 'not-a-language'})}},
+	{name: 'empty code', status: 200,
+		request: {method: 'POST', path: '/highlight', token: TOKEN,
+			body: json({code: '', language: 'cfml'})}},
+	{name: 'line over MAX_LINE_LENGTH', status: 200,
+		request: {method: 'POST', path: '/highlight', token: TOKEN,
+			body: json({code: 'a'.repeat(500), language: 'cfml'})}}
+]
+
+let failures = 0
+
+console.log('')
+console.log('case'.padEnd(32), 'lambda'.padEnd(8), 'server'.padEnd(8), 'match', 'expected')
+console.log('-'.repeat(78))
+
+for (const {name, request, status} of cases) {
+	const lambda = await callLambda(request)
+	const server = await callServer(request)
+
+	const match = lambda.status === server.status && lambda.body === server.body
+	const expected = lambda.status === status && server.status === status
+	const ok = match && expected
+
+	if (!ok) failures++
+
+	console.log(
+		name.padEnd(32),
+		String(lambda.status).padEnd(8),
+		String(server.status).padEnd(8),
+		(match ? 'yes' : 'NO').padEnd(6),
+		expected ? String(status) : `WANTED ${status}`
+	)
+
+	// Only dump bodies when something is wrong -- a passing run stays readable.
+	if (!match) {
+		console.log('   lambda body:', lambda.body?.slice(0, 200))
+		console.log('   server body:', server.body?.slice(0, 200))
+	}
+}
+
+console.log('-'.repeat(78))
+console.log(failures === 0
+	? `PASS -- ${cases.length} cases, both adapters agree`
+	: `FAIL -- ${failures} of ${cases.length} cases`)
+console.log('')
+
+process.exit(failures === 0 ? 0 : 1)

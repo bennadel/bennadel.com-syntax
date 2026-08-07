@@ -1,0 +1,25 @@
+$ docker compose run --rm test
+PASS -- corpus clean
+PASS -- 22 cases, both adapters agree
+
+$ npm run build
+Error: can't resolve 'fs' in /app/src
+  at Module._resolveFilename (node:internal/modules/cjs/loader:1145:15)
+Warning: 3 files didn't compile -- see the log for what's missing
+
+bennadel@studio:~/Sites/bennadel.com/syntax$ git status --short
+ M DESIGN.md
+?? demo/
+
+$ echo "quoted argument" | tr a-z A-Z
+QUOTED ARGUMENT
+
+$ grep -rn 'pl-c1' dist/
+Binary file dist/function.zip matches -- pass `-a` to force text mode
+
+$ curl -s "$HOST/health"
+{"ok":true}
+
+# systemctl restart highlighter
+Job for highlighter.service failed because the control process exited.
+See "systemctl status highlighter.service" && "journalctl -xe" for details.

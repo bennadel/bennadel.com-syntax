@@ -1,0 +1,15 @@
+<span class="pl-c">#!/usr/bin/env bash</span>
+<span class="pl-c1">set</span> -euo pipefail
+
+TOKEN=<span class="pl-s"><span class="pl-pds">"</span><span class="pl-smi">${HIGHLIGHT_TOKEN</span><span class="pl-k">:?</span><span class="pl-smi">must be set}</span><span class="pl-pds">"</span></span>
+ENDPOINT=<span class="pl-s"><span class="pl-pds">"</span>https://example.invalid/highlight<span class="pl-pds">"</span></span>
+
+<span class="pl-k">for</span> <span class="pl-smi">file</span> <span class="pl-k">in</span> src/<span class="pl-k">*</span>.js<span class="pl-k">;</span> <span class="pl-k">do</span>
+	<span class="pl-c1">printf</span> <span class="pl-s"><span class="pl-pds">'</span>checking %s\n<span class="pl-pds">'</span></span> <span class="pl-s"><span class="pl-pds">"</span><span class="pl-smi">$file</span><span class="pl-pds">"</span></span> <span class="pl-k">&gt;&amp;2</span>
+
+	curl -sS -X POST <span class="pl-s"><span class="pl-pds">"</span><span class="pl-smi">$ENDPOINT</span><span class="pl-pds">"</span></span> \
+		-H <span class="pl-s"><span class="pl-pds">'</span>content-type: application/json<span class="pl-pds">'</span></span> \
+		-H <span class="pl-s"><span class="pl-pds">"</span>x-highlight-token: <span class="pl-smi">$TOKEN</span><span class="pl-pds">"</span></span> \
+		-d <span class="pl-s"><span class="pl-pds">"$(</span> jq -Rs --arg lang js <span class="pl-pds">'</span>{code: ., language: $lang}<span class="pl-pds">'</span> <span class="pl-k">&lt;</span> <span class="pl-pds">"</span><span class="pl-smi">$file</span><span class="pl-pds">"</span> <span class="pl-pds">)"</span></span> \
+		<span class="pl-k">|</span> jq -r <span class="pl-s"><span class="pl-pds">'</span>.highlighted<span class="pl-pds">'</span></span>
+<span class="pl-k">done</span>

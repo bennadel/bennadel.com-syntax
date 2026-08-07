@@ -1,0 +1,31 @@
+&lt;<span class="pl-ent">cfscript</span>&gt;
+	<span class="pl-c1">variables</span>.<span class="pl-smi">greeting</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>Hello #<span class="pl-c1">session</span>.<span class="pl-smi">user</span>.<span class="pl-smi">name</span>#<span class="pl-pds">"</span></span>;
+
+	<span class="pl-k">public</span> <span class="pl-c1">struct</span> <span class="pl-k">function</span> <span class="pl-en">buildReport</span>( <span class="pl-k">required</span> <span class="pl-c1">date</span> <span class="pl-smi">since</span>, <span class="pl-c1">numeric</span> <span class="pl-smi">limit</span> <span class="pl-k">=</span> <span class="pl-c1">50</span> ) {
+		<span class="pl-k">var</span> <span class="pl-smi">rows</span> <span class="pl-k">=</span> <span class="pl-c1">queryExecute</span>(
+			<span class="pl-s"><span class="pl-pds">"</span></span><span class="pl-k">SELECT</span> id, <span class="pl-k">name</span> <span class="pl-k">FROM</span> users <span class="pl-k">WHERE</span> created <span class="pl-k">&gt;</span> <span class="pl-v">:since</span><span class="pl-s"><span class="pl-pds">"</span></span>,
+			{ <span class="pl-v">since</span>: { <span class="pl-v">value</span>: <span class="pl-smi">since</span>, <span class="pl-v">cfsqltype</span>: <span class="pl-s"><span class="pl-pds">"</span>cf_sql_timestamp<span class="pl-pds">"</span></span> } },
+			{ <span class="pl-v">maxrows</span>: <span class="pl-smi">limit</span> }
+		);
+
+		<span class="pl-k">return</span> {
+			<span class="pl-v">count</span>: <span class="pl-smi">rows</span>.<span class="pl-smi">recordCount</span>,
+			<span class="pl-v">names</span>: <span class="pl-smi">rows</span>.<span class="pl-c1">columnData</span>( <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span> ).<span class="pl-c1">map</span>( ( <span class="pl-smi">n</span> ) <span class="pl-k">=&gt;</span> <span class="pl-smi">n</span>.<span class="pl-c1">ucase</span>() )
+		};
+	}
+&lt;/<span class="pl-ent">cfscript</span>&gt;
+
+&lt;<span class="pl-ent">cfquery</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>data<span class="pl-pds">"</span></span> <span class="pl-e">datasource</span>=<span class="pl-s"><span class="pl-pds">"</span>app<span class="pl-pds">"</span></span>&gt;
+	<span class="pl-k">SELECT</span>   id, <span class="pl-k">name</span>, created
+	<span class="pl-k">FROM</span>     users
+	<span class="pl-k">WHERE</span>    id <span class="pl-k">=</span> &lt;<span class="pl-ent">cfqueryparam</span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>#<span class="pl-c1">url</span>.<span class="pl-smi">id</span>#<span class="pl-pds">"</span></span> <span class="pl-e">cfsqltype</span>=<span class="pl-s"><span class="pl-pds">"</span>cf_sql_integer<span class="pl-pds">"</span></span> /&gt;
+	<span class="pl-k">ORDER BY</span> created <span class="pl-k">DESC</span>
+&lt;/<span class="pl-ent">cfquery</span>&gt;
+
+&lt;<span class="pl-ent">cfoutput</span>&gt;
+	&lt;<span class="pl-ent">ul</span>&gt;
+		&lt;<span class="pl-ent">cfloop</span> <span class="pl-e">query</span>=<span class="pl-s"><span class="pl-pds">"</span>data<span class="pl-pds">"</span></span>&gt;
+			&lt;<span class="pl-ent">li</span>&gt;#<span class="pl-en">e</span>( <span class="pl-smi">data</span>.<span class="pl-smi">name</span> )#&lt;/<span class="pl-ent">li</span>&gt;
+		&lt;/<span class="pl-ent">cfloop</span>&gt;
+	&lt;/<span class="pl-ent">ul</span>&gt;
+&lt;/<span class="pl-ent">cfoutput</span>&gt;

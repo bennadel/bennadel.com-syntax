@@ -1,0 +1,21 @@
+WITH recent AS (
+	SELECT
+		u.id,
+		u.name,
+		COUNT( c.id ) AS comment_count
+	FROM
+		users u
+	INNER JOIN
+		comments c
+	ON
+		c.user_id = u.id
+	WHERE
+		c.created_at > '2026-01-01'
+	GROUP BY
+		u.id, u.name
+)
+SELECT *
+FROM recent
+WHERE comment_count >= 10
+ORDER BY comment_count DESC
+LIMIT 25;

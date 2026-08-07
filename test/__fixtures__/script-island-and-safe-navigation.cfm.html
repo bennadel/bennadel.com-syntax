@@ -1,0 +1,54 @@
+&lt;<span class="pl-ent">cfscript</span>&gt;
+
+	<span class="pl-c">// ColdFusion language extensions (global functions).</span>
+	<span class="pl-ent">include</span> <span class="pl-s"><span class="pl-pds">"</span>/core/cfmlx.cfm<span class="pl-pds">"</span></span>;
+
+	<span class="pl-c">// ------------------------------------------------------------------------------- //</span>
+	<span class="pl-c">// ------------------------------------------------------------------------------- //</span>
+
+	<span class="pl-smi">queue</span> <span class="pl-k">=</span> [<span class="pl-k">:</span>];
+	<span class="pl-smi">queue</span>.<span class="pl-smi">one</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>this is one<span class="pl-pds">"</span></span>;
+	<span class="pl-smi">queue</span>.<span class="pl-smi">two</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>this is two<span class="pl-pds">"</span></span>;
+	<span class="pl-smi">queue</span>.<span class="pl-smi">three</span> <span class="pl-k">=</span> <span class="pl-c1">nullValue</span>();
+	<span class="pl-smi">queue</span>.<span class="pl-smi">four</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>this is four<span class="pl-pds">"</span></span>;
+
+	<span class="pl-en">dump</span>([
+		<span class="pl-c">// Output the taken values.</span>
+		<span class="pl-s"><span class="pl-pds">"</span>Value One<span class="pl-pds">"</span></span><span class="pl-k">:</span> <span class="pl-en">structPop</span>( <span class="pl-smi">queue</span>, <span class="pl-s"><span class="pl-pds">"</span>one<span class="pl-pds">"</span></span> ),
+		<span class="pl-s"><span class="pl-pds">"</span>Value Three<span class="pl-pds">"</span></span><span class="pl-k">:</span> <span class="pl-en">structPop</span>( <span class="pl-smi">queue</span>, <span class="pl-s"><span class="pl-pds">"</span>three<span class="pl-pds">"</span></span> ),
+
+		<span class="pl-c">// Output the mutated-in-place struct.</span>
+		<span class="pl-s"><span class="pl-pds">"</span>Source Struct<span class="pl-pds">"</span></span><span class="pl-k">:</span> <span class="pl-smi">queue</span>
+	]);
+
+	<span class="pl-c">// ------------------------------------------------------------------------------- //</span>
+	<span class="pl-c">// ------------------------------------------------------------------------------- //</span>
+
+	<span class="pl-c">/**</span>
+<span class="pl-c">	* I return the value stored at the given key, then delete the keyed entry from the</span>
+<span class="pl-c">	* source struct.</span>
+<span class="pl-c">	*/</span>
+	<span class="pl-k">public</span> <span class="pl-c1">any</span> <span class="pl-k">function</span> <span class="pl-en">structPop</span>(
+		<span class="pl-k">required</span> <span class="pl-c1">struct</span> <span class="pl-smi">source</span>,
+		<span class="pl-k">required</span> <span class="pl-c1">string</span> <span class="pl-smi">key</span>
+		) {
+
+		<span class="pl-k">try</span> {
+
+			<span class="pl-k">return</span> <span class="pl-smi">source</span><span class="pl-k">?</span>[ <span class="pl-smi">key</span> ];
+
+		<span class="pl-c">// In this case, `finally` isn't about error recovery, it's about cleanup. The</span>
+		<span class="pl-c">// return expression is evaluated before the `finally` block executes, allowing us</span>
+		<span class="pl-c">// to delete the keyed entry after the evaluation BUT BEFORE the value is returned</span>
+		<span class="pl-c">// to the calling context. This is an unusual technique, but for me it just reads</span>
+		<span class="pl-c">// SO MUCH BETTER than storing an intermediary variable and dancing around null</span>
+		<span class="pl-c">// reference errors.</span>
+		} <span class="pl-k">finally</span> {
+
+			<span class="pl-smi">source</span>.<span class="pl-c1">delete</span>( <span class="pl-smi">key</span> );
+
+		}
+
+	}
+
+&lt;/<span class="pl-ent">cfscript</span>&gt;

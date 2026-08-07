@@ -1,0 +1,68 @@
+/**
+* Modern script-based component. Pairs with tag-based-component.cfc.code:
+* same fence tag, opposite branch of refineScope().
+*/
+component
+	output = false
+	hint = "Reads blog entries."
+	{
+
+	property name="datasource" type="string";
+
+	public any function init( required string datasource ) {
+
+		variables.datasource = arguments.datasource;
+
+		return( this );
+
+	}
+
+	public struct function getEntry( required numeric id ) {
+
+		var results = queryExecute(
+			"
+				SELECT
+					e.id,
+					e.name
+				FROM
+					blog_entry e
+				WHERE
+					e.id = :id
+			",
+			{ id: { value: arguments.id, cfsqltype: "cf_sql_integer" } },
+			{ datasource: variables.datasource }
+		);
+
+		if ( ! results.recordCount ) {
+
+			throw( type = "EntryNotFound", message = "No entry for #arguments.id#" );
+
+		}
+
+		return({
+			id: results.id,
+			name: results.name
+		});
+
+	}
+
+	private array function recent( numeric limit = 10 ) {
+
+		var all = getEntries();
+		var out = [];
+
+		for ( var i = 1 ; i <= min( limit, all.len() ) ; i++ ) {
+
+			if ( all[ i ].score > 0 && all[ i ].name != "" ) {
+
+				out.append( all[ i ] );
+
+			}
+
+		}
+
+		return( out.map( ( entry ) => entry.name.ucase() ) );
+
+	}
+
+}

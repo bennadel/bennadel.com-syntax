@@ -1,0 +1,68 @@
+<span class="pl-c">/**</span>
+<span class="pl-c">* Modern script-based component. Pairs with tag-based-component.cfc.code:</span>
+<span class="pl-c">* same fence tag, opposite branch of refineScope().</span>
+<span class="pl-c">*/</span>
+<span class="pl-k">component</span>
+	<span class="pl-e">output</span> = <span class="pl-s">false</span>
+	<span class="pl-e">hint</span> = <span class="pl-s"><span class="pl-pds">"</span>Reads blog entries.<span class="pl-pds">"</span></span>
+	{
+
+	<span class="pl-ent">property</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>datasource<span class="pl-pds">"</span></span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span><span class="pl-c1">string</span><span class="pl-pds">"</span></span>;
+
+	<span class="pl-k">public</span> <span class="pl-c1">any</span> <span class="pl-k">function</span> <span class="pl-en">init</span>( <span class="pl-k">required</span> <span class="pl-c1">string</span> <span class="pl-smi">datasource</span> ) {
+
+		<span class="pl-c1">variables</span>.<span class="pl-smi">datasource</span> <span class="pl-k">=</span> <span class="pl-c1">arguments</span>.<span class="pl-smi">datasource</span>;
+
+		<span class="pl-k">return</span>( <span class="pl-c1">this</span> );
+
+	}
+
+	<span class="pl-k">public</span> <span class="pl-c1">struct</span> <span class="pl-k">function</span> <span class="pl-en">getEntry</span>( <span class="pl-k">required</span> <span class="pl-c1">numeric</span> <span class="pl-smi">id</span> ) {
+
+		<span class="pl-k">var</span> <span class="pl-smi">results</span> <span class="pl-k">=</span> <span class="pl-c1">queryExecute</span>(
+			<span class="pl-s"><span class="pl-pds">"</span></span>
+				<span class="pl-k">SELECT</span>
+					<span class="pl-c1">e</span>.<span class="pl-c1">id</span>,
+					<span class="pl-c1">e</span>.<span class="pl-c1">name</span>
+				<span class="pl-k">FROM</span>
+					blog_entry e
+				<span class="pl-k">WHERE</span>
+					<span class="pl-c1">e</span>.<span class="pl-c1">id</span> <span class="pl-k">=</span> <span class="pl-v">:id</span>
+			<span class="pl-s"><span class="pl-pds">"</span></span>,
+			{ <span class="pl-v">id</span>: { <span class="pl-v">value</span>: <span class="pl-c1">arguments</span>.<span class="pl-smi">id</span>, <span class="pl-v">cfsqltype</span>: <span class="pl-s"><span class="pl-pds">"</span>cf_sql_integer<span class="pl-pds">"</span></span> } },
+			{ <span class="pl-v">datasource</span>: <span class="pl-c1">variables</span>.<span class="pl-smi">datasource</span> }
+		);
+
+		<span class="pl-k">if</span> ( <span class="pl-k">!</span> <span class="pl-smi">results</span>.<span class="pl-smi">recordCount</span> ) {
+
+			<span class="pl-c1">throw</span>( <span class="pl-e">type</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>EntryNotFound<span class="pl-pds">"</span></span>, <span class="pl-e">message</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>No entry for #<span class="pl-c1">arguments</span>.<span class="pl-smi">id</span>#<span class="pl-pds">"</span></span> );
+
+		}
+
+		<span class="pl-k">return</span>({
+			<span class="pl-v">id</span>: <span class="pl-smi">results</span>.<span class="pl-smi">id</span>,
+			<span class="pl-v">name</span>: <span class="pl-smi">results</span>.<span class="pl-smi">name</span>
+		});
+
+	}
+
+	<span class="pl-k">private</span> <span class="pl-c1">array</span> <span class="pl-k">function</span> <span class="pl-en">recent</span>( <span class="pl-c1">numeric</span> <span class="pl-smi">limit</span> <span class="pl-k">=</span> <span class="pl-c1">10</span> ) {
+
+		<span class="pl-k">var</span> <span class="pl-smi">all</span> <span class="pl-k">=</span> <span class="pl-en">getEntries</span>();
+		<span class="pl-k">var</span> <span class="pl-smi">out</span> <span class="pl-k">=</span> [];
+
+		<span class="pl-k">for</span> ( <span class="pl-k">var</span> <span class="pl-smi">i</span> <span class="pl-k">=</span> <span class="pl-c1">1</span> ; <span class="pl-smi">i</span> <span class="pl-k">&lt;=</span> <span class="pl-c1">min</span>( <span class="pl-smi">limit</span>, <span class="pl-smi">all</span>.<span class="pl-c1">len</span>() ) ; <span class="pl-smi">i</span><span class="pl-k">++</span> ) {
+
+			<span class="pl-k">if</span> ( <span class="pl-smi">all</span>[ <span class="pl-smi">i</span> ].<span class="pl-smi">score</span> <span class="pl-k">&gt;</span> <span class="pl-c1">0</span> <span class="pl-k">&amp;&amp;</span> <span class="pl-smi">all</span>[ <span class="pl-smi">i</span> ].<span class="pl-smi">name</span> <span class="pl-k">!=</span> <span class="pl-s"><span class="pl-pds">""</span></span> ) {
+
+				<span class="pl-smi">out</span>.<span class="pl-c1">append</span>( <span class="pl-smi">all</span>[ <span class="pl-smi">i</span> ] );
+
+			}
+
+		}
+
+		<span class="pl-k">return</span>( <span class="pl-smi">out</span>.<span class="pl-c1">map</span>( ( <span class="pl-smi">entry</span> ) <span class="pl-k">=&gt;</span> <span class="pl-smi">entry</span>.<span class="pl-smi">name</span>.<span class="pl-c1">ucase</span>() ) );
+
+	}
+
+}

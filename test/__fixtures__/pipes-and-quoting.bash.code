@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+TOKEN="${HIGHLIGHT_TOKEN:?must be set}"
+ENDPOINT="https://example.invalid/highlight"
+
+for file in src/*.js; do
+	printf 'checking %s\n' "$file" >&2
+
+	curl -sS -X POST "$ENDPOINT" \
+		-H 'content-type: application/json' \
+		-H "x-highlight-token: $TOKEN" \
+		-d "$( jq -Rs --arg lang js '{code: ., language: $lang}' < "$file" )" \
+		| jq -r '.highlighted'
+done

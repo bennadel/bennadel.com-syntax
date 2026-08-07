@@ -1,0 +1,14 @@
+# Build output. `./scripts/package.sh` writes function.<YYYYMMDD>.zip
+# here -- ~3.9 MB, and fully determined by package-lock.json plus src/, so
+# committing it would be storing a derived binary that goes stale the moment
+# either changes.
+#
+# This file ignores everything except itself, which is what makes the directory
+# exist in a fresh clone rather than being conjured by Docker on first use.
+#
+# The root .gitignore deliberately does NOT list dist/. Git never descends into
+# an ignored directory, so a parent-level rule would make this file untrackable
+# and defeat the point. If you ever add `dist/` up there, this stops working and
+# nothing warns you.
+*
+!.gitignore

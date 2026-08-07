@@ -1,0 +1,28 @@
+import {readFile} from 'node:fs/promises'
+
+const RETRIES = 3
+
+export class Loader {
+	#cache = new Map()
+
+	async load(path, {force = false} = {}) {
+		if (!force && this.#cache.has(path)) {
+			return this.#cache.get(path)
+		}
+
+		for (let attempt = 1; attempt <= RETRIES; attempt++) {
+			try {
+				const raw = await readFile(path, 'utf8')
+				const parsed = JSON.parse(raw)
+
+				this.#cache.set(path, parsed)
+
+				return parsed
+			} catch (error) {
+				if (attempt === RETRIES) throw error
+			}
+		}
+	}
+}
+
+const label = (n) => `${n} item${n === 1 ? '' : 's'}`

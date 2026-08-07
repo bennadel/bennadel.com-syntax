@@ -1,0 +1,21 @@
+WITH recent <span class="pl-k">AS</span> (
+	<span class="pl-k">SELECT</span>
+		<span class="pl-c1">u</span>.<span class="pl-c1">id</span>,
+		<span class="pl-c1">u</span>.<span class="pl-c1">name</span>,
+		<span class="pl-c1">COUNT</span>( <span class="pl-c1">c</span>.<span class="pl-c1">id</span> ) <span class="pl-k">AS</span> comment_count
+	<span class="pl-k">FROM</span>
+		users u
+	<span class="pl-k">INNER JOIN</span>
+		comments c
+	<span class="pl-k">ON</span>
+		<span class="pl-c1">c</span>.<span class="pl-c1">user_id</span> <span class="pl-k">=</span> <span class="pl-c1">u</span>.<span class="pl-c1">id</span>
+	<span class="pl-k">WHERE</span>
+		<span class="pl-c1">c</span>.<span class="pl-c1">created_at</span> <span class="pl-k">&gt;</span> <span class="pl-s"><span class="pl-pds">'</span>2026-01-01<span class="pl-pds">'</span></span>
+	<span class="pl-k">GROUP BY</span>
+		<span class="pl-c1">u</span>.<span class="pl-c1">id</span>, <span class="pl-c1">u</span>.<span class="pl-c1">name</span>
+)
+<span class="pl-k">SELECT</span> <span class="pl-k">*</span>
+<span class="pl-k">FROM</span> recent
+<span class="pl-k">WHERE</span> comment_count <span class="pl-k">&gt;=</span> <span class="pl-c1">10</span>
+<span class="pl-k">ORDER BY</span> comment_count <span class="pl-k">DESC</span>
+<span class="pl-k">LIMIT</span> <span class="pl-c1">25</span>;

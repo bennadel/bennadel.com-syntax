@@ -1,0 +1,59 @@
+<cfscript>
+
+	// ColdFusion language extensions (global functions).
+	include "/core/cfmlx.cfm";
+
+	// ------------------------------------------------------------------------------- //
+	// ------------------------------------------------------------------------------- //
+
+	// Member method calls directly on Struct literals.
+	steve = {}
+		.insert( "id", 1 )
+		.insert( "name", "Steve" )
+		.insert( "coolness", 0.3 )
+	;
+	laura = {}
+		.insert( "id", 2 )
+		.insert( "name", "Laura" )
+		.insert( "coolness", 0.87 )
+	;
+	kit = {}
+		.insert( "id", 3 )
+		.insert( "name", "Kit" )
+		.insert( "coolness", 0.54 )
+	;
+
+	// Member method calls directly on Array literals.
+	friends = []
+		.append( steve )
+		.append( laura )
+		.append( kit )
+	;
+
+	// Bracket-access directly on result of method call.
+	coolestFriend = friends
+		.sort( coolnessComparator( "desc" ) )
+		[ 1 ]
+	;
+	lamestFriend = friends[ -1 ];
+
+	dump( friends );
+	dump( coolestFriend );
+	dump( lamestFriend );
+
+	// ------------------------------------------------------------------------------- //
+	// ------------------------------------------------------------------------------- //
+
+	/**
+	* I return a coolness sort operator using the given direction. 
+	*/
+	private function function coolnessComparator( required string direction ) {
+
+		return ( direction == "asc" )
+			? ( a, b ) => ( a.coolness - b.coolness )
+			: ( a, b ) => ( b.coolness - a.coolness )
+		;
+
+	}
+
+</cfscript>
