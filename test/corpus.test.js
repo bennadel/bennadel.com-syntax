@@ -465,21 +465,21 @@ if (!UPDATE) {
 
 	// -- what cfmleditor fixed --------------------------------------------------
 
-	// CF2021. The 2013 grammar scoped `final` as variable.other -> pl-smi, and we
-	// carried a patch for it. cfmleditor knows the keyword, so the patch is gone.
+	// CF2021 keyword. Asserted because a downgrade would scope it as
+	// variable.other -> pl-smi, which looks like ordinary code rather than a bug.
 	assertEqual('final is a keyword, not a variable',
 		script('final var LIMIT = 10;').includes('<span class="pl-k">final</span>'), true)
 
-	// CFML is case-insensitive and so is the grammar. An earlier patch of ours
-	// matched only lowercase and silently did nothing on `Final`, which is what
-	// got that whole approach reconsidered.
+	// CFML is case-insensitive and so is the grammar. Asserted separately because
+	// a rule that matches only lowercase still passes the check above while
+	// silently doing nothing on `Final` -- the failure is invisible either way.
 	assertEqual('final is matched case-insensitively',
 		script('Final var LIMIT = 10;').includes('<span class="pl-k">Final</span>'), true)
 
-	// The old grammar could not do this and our attempt at it was DELETED as
-	// unsound -- "the first argument of this call is SQL" is a claim about the
-	// parse tree, and a regex near the call cannot make it. cfmleditor models the
-	// call structure, so the SQL is genuinely embedded.
+	// Do not try to reproduce this with a regex near the call site if it ever
+	// breaks: "the first argument of this call is SQL" is a claim about the parse
+	// tree, and a pattern match cannot make it. cfmleditor models the call
+	// structure, which is why the SQL is genuinely embedded.
 	assertEqual('queryExecute embeds SQL',
 		script('var r = queryExecute( "SELECT id FROM t" );').includes('<span class="pl-k">SELECT</span>'), true)
 	assertEqual('queryExecute SQL survives mixed case',
@@ -487,10 +487,8 @@ if (!UPDATE) {
 
 	// -- the patches we still carry ---------------------------------------------
 
-	// CF2018. cfmleditor has no rule for `?.`, so neither character is claimed and
-	// the operator renders as plain text. This is the one construct the old
-	// grammar handled BETTER, because we had patched it -- carried across so the
-	// swap is not a regression.
+	// CF2018. cfmleditor has no rule for `?.`, so without our patch neither
+	// character is claimed and the operator renders as plain text.
 	assertEqual('safe navigation stays one operator',
 		script('var a = b?.c;').includes('<span class="pl-k">?.</span>'), true)
 
@@ -509,10 +507,10 @@ if (!UPDATE) {
 
 	// -- patches now reach nested script ----------------------------------------
 
-	// This INVERTS a limitation the old design could not escape. A wrapper grammar
-	// only applied where WE picked the entry grammar: inside a tag-based file,
-	// `text.html.cfm` included `source.cfscript` BY NAME and TextMate resolved
-	// that to the stock grammar, so no patch of ours could reach it.
+	// Do not reintroduce a wrapper grammar to carry the patches. A wrapper only
+	// applies where WE pick the entry grammar, so inside a tag-based file it is
+	// bypassed entirely -- TextMate resolves an included scope name to the stock
+	// grammar, and no patch of ours reaches it.
 	//
 	// cfmleditor inlines everything instead of including by name, so there is no
 	// include chain to lose and a patch applied to the file applies in every

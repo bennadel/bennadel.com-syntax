@@ -14,8 +14,8 @@
 * resolves to, and reading a `test-update` diff with some idea of what it will
 * actually change on the page.
 *
-* The second page is why this is not just a demo. The fixture corpus is 14
-* hand-picked files against an archive of ~4,900 posts, and /blog is the only
+* /blog is the half that earns its keep. The fixture corpus is 14 hand-picked
+* files against an archive of ~4,900 posts, and /blog is the only
 * thing here that meets real prose-embedded code -- the tag nobody anticipated,
 * the block that trips MAX_LINE_LENGTH, the grammar that looks right on a
 * fixture and wrong in situ.
@@ -23,21 +23,15 @@
 * WHAT THIS IS NOT
 *
 * It is not correctness coverage. A test fails on its own; a page requires a
-* human to look at it and nod. src/adapters/server.js once carried a GET /demo route
-* doing exactly that, and it was deleted on purpose -- the job it was pretending
-* to do is done properly by test/corpus.test.js, which asserts against golden
-* files. The API's routing is a whitelist in src/core/service.js (anything that is
-* not /highlight or /health is 404), so a page route cannot reappear by
-* accident; it would have to be written on purpose.
+* human to look at it and nod -- test/corpus.test.js is what actually holds the
+* line, by asserting against golden files.
 *
-* This exists as a SEPARATE SERVICE precisely so that decision stays intact. The
-* API serves JSON and nothing else; page rendering lives here, on its own port,
-* in its own directory, and is never packaged.
-*
-* The directory and the compose service are both `tools`, renamed from `demo`.
-* The old name read as a third peer of src/ and test/ -- application code -- so
-* both files in here had to open by denying it; and "demo" undersold /blog,
-* which is the half that finds what the fixtures cannot.
+* This is a SEPARATE SERVICE so that the split stays intact: the API serves JSON
+* and nothing else, and page rendering lives here, on its own port, in its own
+* directory, never packaged. Do not add a rendering route to an adapter. The
+* API's routing is a whitelist in src/core/service.js -- anything that is not
+* /highlight or /health is 404 -- so a page route cannot appear there by
+* accident, only on purpose.
 *
 * WHY IT CANNOT LEAK INTO THE DEPLOYMENT
 *
@@ -87,7 +81,7 @@ const FIXTURES = new URL('../test/__fixtures__/', import.meta.url)
 
 /**
 * Resolved through the package exports map (`"./style/*": "./style/*.css"`)
-* rather than a hardcoded node_modules path, so the demo always shows the CSS
+* rather than a hardcoded node_modules path, so this page always shows the CSS
 * belonging to the INSTALLED starry-night. If an upgrade changes the class
 * vocabulary, this page reflects it without anyone remembering to re-copy a
 * file.

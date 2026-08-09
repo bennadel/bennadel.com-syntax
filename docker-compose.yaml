@@ -112,10 +112,9 @@ services:
   # below -- run this image without that mount and it fails MODULE_NOT_FOUND,
   # which is the correct outcome rather than a bug to fix.
   #
-  # NAMED `tools`, NOT `demo`. It serves two pages, not one: `/` renders the
-  # golden corpus, and `/blog` pulls the code blocks out of a live bennadel.com
-  # post so real prose-embedded code can be looked at. "demo" undersold the
-  # second one, which is the half that finds things the fixtures cannot.
+  # It serves two pages: `/` renders the golden corpus, and `/blog` pulls the
+  # code blocks out of a live bennadel.com post so real prose-embedded code can
+  # be looked at -- the half that finds what the fixtures cannot.
   tools:
     build:
       context: .
@@ -189,16 +188,14 @@ services:
   #
   # No `--profile package` needed on the command above: naming a service
   # explicitly auto-enables the profiles it belongs to (verified on Compose
-  # 5.2.0). The `profiles:` key below is still doing real work -- it is what
-  # keeps this out of a bare `up` -- but the CLI flag was redundant.
+  # 5.2.0). The `profiles:` key below still does real work -- it is what keeps
+  # this out of a bare `up`.
   #
-  # It shares the Dockerfile with `highlighter` -- and therefore shares the
-  # CACHED `npm ci` layer, which is the whole reason this exists rather than a
-  # `docker run` one-liner that reinstalls everything each time. It deliberately
-  # shares nothing else: no port, no healthcheck, no environment, and crucially
-  # NOT read_only, since writing the zip is its entire job. That is also why this
-  # is a separate service rather than `extends` -- there is nothing worth
-  # inheriting.
+  # It shares the Dockerfile with `highlighter`, and therefore shares the CACHED
+  # `npm ci` layer -- the whole reason this is a service rather than a
+  # `docker run` one-liner that reinstalls everything each time. Do not add
+  # `read_only` here for consistency with `highlighter`: writing the zip is this
+  # service's entire job.
   package:
     profiles:
       - package

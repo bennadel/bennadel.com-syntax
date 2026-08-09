@@ -82,9 +82,9 @@ const DIR = new URL('./', import.meta.url)
 * worse than no patch -- it looks fixed and is not.
 *
 * Patch TOKENS here, never STRUCTURE. A structural gap is evidence for adopting
-* a better grammar, not for writing a cleverer regex -- that lesson cost a
-* deleted `queryExecute` rule under the old grammar, and cfmleditor models the
-* call properly precisely because it is a grammar rather than a patch.
+* a better grammar, not for writing a cleverer regex: a claim like "the first
+* argument of this call is SQL" is about the parse tree, and no pattern match
+* placed near the call site can make it soundly.
 */
 
 /**
