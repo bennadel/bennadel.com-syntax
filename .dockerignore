@@ -10,14 +10,18 @@
 !package-lock.json
 !src/
 
-# NOTE: there are deliberately no re-exclusions under src/ any more. Tests and
-# fixtures used to live there and needed `src/**/*.test.js` and
-# `src/**/__fixtures__/` to keep them out of the zip -- an enumeration that
-# covered those two shapes and nothing else, so a helper module or a second
-# fixture directory would have shipped. They now live in test/, which the `*`
-# rule above denies without being named. Same for tools/.
+# NO RE-EXCLUSIONS UNDER src/, DELIBERATELY. A re-exclusion covers only the
+# shapes it names, so the first file that does not match the pattern ships
+# without anyone noticing.
 #
-# The rule to keep: if it is under src/, it ships. Put anything that should not
-# ship somewhere else rather than adding a pattern here.
-**/node_modules/
+# The rule to keep: if it is under src/, it ships. Anything that must not ship
+# goes outside src/ rather than getting a pattern here.
+
+# THE ONE EXCEPTION to that, because it cannot be relocated: Finder writes
+# .DS_Store into every directory it browses, so it turns up under src/ without
+# anyone putting it there.
+#
+# It needs the `**/` to work. `*` matches a single path segment, so it never
+# sees src/anything -- and `!src/` re-includes that whole subtree, nested junk
+# included. Verified: with `*` and `!src/` alone, src/.DS_Store ships.
 **/.DS_Store

@@ -1,12 +1,11 @@
-# No `version:` key -- it is obsolete in Compose v2 and now emits a warning.
+# THREE KEYS ARE ABSENT ON PURPOSE, all for the same reason -- they restate a
+# default. `version:` is obsolete in Compose v2 and warns if you add it back.
+# `dockerfile:` names a path `context: .` already looks in. `networks:` renames
+# the default bridge network Compose creates anyway. Each one is a common reflex
+# when editing a compose file, which is why their absence is written down.
 #
-# NO `dockerfile:` KEY ON ANY BUILD BLOCK EITHER. The Dockerfile is at the repo
-# root, which is where `context: .` already looks by default, so naming it would
-# only restate the default -- the same reason there is no `version:` key and no
-# `networks:` block.
-#
-# It sits at the root rather than in a subdirectory so that both halves of the
-# container definition are at the same level. Note that .dockerignore CANNOT
+# The Dockerfile sits at the root rather than in a subdirectory so that both
+# halves of the container definition are at the same level. .dockerignore CANNOT
 # follow it into a subdirectory: Docker reads only `<context>/.dockerignore` or
 # `<dockerfile-path>.dockerignore`, so a plain `docker/.dockerignore` is
 # silently ignored -- measured on Docker 29.6.1 -- and this project's allow-list
@@ -20,9 +19,12 @@ services:
       context: .
     image: bennadel/syntax-highlighter:dev
 
-    # Runs tini as PID 1: reaps zombies and forwards signals. Matters here
-    # because the worker-thread pool spawns children that must tear down
-    # cleanly on Ctrl-C, and because we deliberately kill workers mid-request.
+    # Runs tini as PID 1, which is what makes Ctrl-C work. Ctrl-C sends SIGINT,
+    # nothing here installs a SIGINT handler, and the kernel applies no default
+    # signal action to PID 1 -- so with node as PID 1 the signal is discarded
+    # and Compose waits out its full timeout before SIGKILLing. Measured on this
+    # image: without it SIGINT leaves the container running, with it the
+    # container exits. SIGTERM works either way, because server.js handles it.
     init: true
 
     # Bound to loopback only. Nothing on your LAN can reach this, and it is
@@ -44,11 +46,6 @@ services:
       # grammars tokenize line by line. Listed explicitly at its default so the
       # knob is discoverable; raise it temporarily to re-run a backfill.
       MAX_LINE_LENGTH: "200"
-      #
-      # TIMEOUT_MS intentionally absent. It would only mean something with a
-      # worker-thread pool, and there is none -- Lambda's SIGKILL on timeout is
-      # what stops a wedged match. Leaving it set while unread would
-      # misrepresent what this service actually enforces.
 
     # The service writes nothing to disk. It has no database driver, no
     # credentials, and no state.
@@ -177,13 +174,6 @@ services:
 
     command: ["node", "tools/server.js"]
 
-  # DO NOT ADD A SERVICE THAT VERIFIES THE VENDORED GRAMMAR PATCHES. That check
-  # belongs to the real test suite, not to a service of its own:
-  # test/corpus.test.js asserts both patches applied to both files AND the
-  # behaviour each one produces, and re-downloading upstream is verified by
-  # `docker compose run --rm test` like everything else -- one command to
-  # remember instead of two.
-
   # One-shot: build the Lambda deployment zip into the repo root, then exit.
   #
   #   docker compose run --rm --build package
@@ -305,10 +295,7 @@ services:
     entrypoint: ["node"]
     command: ["test/corpus.test.js", "--update"]
 
-# NO `networks:` BLOCK, DELIBERATELY.
-#
-# Compose already creates a default network with the `bridge` driver and
-# attaches every service to it, so declaring one only renames it.
+# On the absent `networks:` block, beyond the header's reason for it:
 #
 # DO NOT ADD ONE TO BLOCK OUTBOUND ACCESS FROM `highlighter`. Both ways of doing
 # that were tried here and neither works: `enable_ip_masquerade: "false"` because

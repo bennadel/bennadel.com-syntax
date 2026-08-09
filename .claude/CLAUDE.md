@@ -5,10 +5,10 @@
 * **Never put a reference in a comment that can drift silently.** No line
   numbers, no ticket or issue or PR numbers, no "see above/below", no links to
   anything whose URL encodes a position. Anchor to something greppable instead:
-  a symbol name, or a filename. The test is not "will
-  this go stale" - everything does - it is "will anything notice." A renamed
-  file breaks loudly and gets fixed; a stale line number just quietly lies, and
-  the reader trusts it because comments in this repo are usually right.
+  a symbol name, or a filename. The test is not "will this go stale" -
+  everything does - it is "will anything notice." A renamed file breaks loudly
+  and gets fixed; a stale line number just quietly lies, and the reader trusts
+  it because comments in this repo are usually right.
 * **Comments justify the code as it stands - they are not a changelog.** The
   only reason to mention a past state is to stop a specific future change that
   would otherwise look reasonable. "This was fail-open once, and that shipped a
@@ -19,6 +19,18 @@
   lives in", name the change being prevented. If you cannot name one, delete
   the sentence - git already has the history, and nobody reads a comment to
   find out what the code used to be.
+* **Do not document absences.** A comment explaining why something is *not*
+  there usually invents the question it answers. `TIMEOUT_MS` appeared nowhere
+  in this repo except the comment saying it was deliberately absent - the
+  comment was the only thing that knew the name existed. The test is whether
+  anyone would actually reach for the thing: `version:` in a compose file is
+  muscle memory, so its absence reads as an oversight and earns a line; a
+  variable this project invented does not.
+  When an absence does earn a comment it is usually not an absence at all - it
+  is a change someone would make *because it looks like an improvement*:
+  destroying the socket after a 413, adding a Content-Length pre-check, listing
+  `dist/` in .gitignore. Write those as "do not do X, because Y", not as "there
+  is no X". If it cannot be phrased that way, it does not need saying.
 
 ## This repo
 

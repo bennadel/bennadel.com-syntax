@@ -50,12 +50,12 @@ const BAD_SHAPE = 'Expected { code: string, language?: string }'
 * dies immediately rather than spending ~2.3 s compiling grammars it must never
 * use.
 *
-* On the token: this used to treat "no token configured" as "allow everything",
-* which is a reasonable default on a laptop and a catastrophic one behind a
-* public Function URL -- and from inside the process those two situations are
-* indistinguishable. A deploy that forgot the variable produced an open
-* highlighting service with a healthy /health check and no other signal. It was
-* live in that state, and only a deliberate unauthenticated probe found it.
+* On the token: do NOT add a permissive fallback for an unset one. Treating "no
+* token configured" as "allow everything" is reasonable on a laptop and
+* catastrophic behind a public Function URL, and from inside the process those
+* two situations are indistinguishable -- what it produces is an open
+* highlighting service with a healthy /health check and no other signal. That
+* shipped once here, and only a deliberate unauthenticated probe caught it.
 *
 * On the scopes: grammar dependencies resolve silently when unmet --
 * source.cfscript depends on source.sql, and a missing dependency degrades

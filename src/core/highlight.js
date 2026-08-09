@@ -175,7 +175,7 @@ function looksTagBased(source) {
 }
 
 // Linguist's two spellings are listed alongside ours on purpose. Nothing routes
-// to them any more, but a future override that forgets to use the
+// to them today, but a future override that forgets to use the
 // CFML_SCRIPT constant would otherwise lose the tag-vs-script correction
 // silently, which is exactly the class of bug this file guards against.
 const SCRIPT_SCOPES = new Set([CFML_SCRIPT, 'source.cfscript', 'source.cfscript.patched'])

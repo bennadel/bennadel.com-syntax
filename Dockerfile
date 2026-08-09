@@ -108,9 +108,11 @@ USER node
 
 EXPOSE 3000
 
-# Hits the real HTTP path rather than just checking the port, so a wedged
-# worker pool reports unhealthy instead of looking fine. `fetch` is global in
-# Node 18+, so this needs no extra dependency and no shell.
+# Hits the real HTTP path rather than just checking the port, and do not
+# simplify it to a port check. A wedged match blocks the event loop, so the
+# kernel goes on accepting connections on 3000 while nothing ever answers --
+# a port probe passes in exactly the situation that matters. `fetch` is global
+# in Node 18+, so this needs no extra dependency and no shell.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
 	CMD node -e "fetch('http://127.0.0.1:3000/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
 

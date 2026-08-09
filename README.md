@@ -93,11 +93,11 @@ Two suites, deliberately separate because they answer different questions.
 
 **The contract test** drives both adapters through every status code and diffs them against each other. That second part is the point — it turns "the contract is identical against both adapters" from a claim maintained by discipline into a checked property. Two bugs during development had to be fixed twice in two files; this is what catches the third.
 
-Both live in `test/` rather than beside the code they exercise. The deployment zip is built by copying `src/` wholesale, so **anything under `src/` ships** — keeping tests outside it means `.dockerignore`'s `*` rule excludes them without naming them. It previously named them, which covered `*.test.js` and `__fixtures__/` and would not have covered a helper module added later. Test runs use `network_mode: none`, so a green run also proves the grammars compiled from the bundled WASM rather than quietly fetching `onig.wasm` over the network.
+Both live in `test/` rather than beside the code they exercise. The deployment zip is built by copying `src/` wholesale, so **anything under `src/` ships** — keeping tests outside it means `.dockerignore`'s `*` rule excludes them without naming them. Naming them instead would cover only the shapes listed, so the first file that didn't match the pattern would ship. Test runs use `network_mode: none`, so a green run also proves the grammars compiled from the bundled WASM rather than quietly fetching `onig.wasm` over the network.
 
 ### Regenerating Goldens
 
-`test-update` is the only place `test/` is mounted read-write; everywhere else it is `:ro`, so `--update` fails with `EROFS` rather than quietly succeeding. `src/` stays `:ro` even there — the goldens no longer live under it, so the one writable command has no reason to reach source. That asymmetry is deliberate — regenerating is an act you opt into, not something a test run can do to itself.
+`test-update` is the only place `test/` is mounted read-write; everywhere else it is `:ro`, so `--update` fails with `EROFS` rather than quietly succeeding. `src/` stays `:ro` even there — the goldens live in `test/`, so the one writable command has no reason to reach source. That asymmetry is deliberate — regenerating is an act you opt into, not something a test run can do to itself.
 
 **Always read the resulting diff.** An unreviewed `--update` blesses whatever the code currently does, which converts the corpus from a test into a rubber stamp. A grammar bump legitimately changes these files; a regression looks exactly the same in `git status`.
 
@@ -143,7 +143,7 @@ openssl rand -hex 32
 
 256 bits from the OS entropy source. Do not hand-write one, and do not have an assistant print one into a chat transcript — model-generated hex looks identical to the real thing but carries no entropy guarantee, and anything pasted into a transcript is stored on disk and sent to a third-party API. Run the command yourself and paste the result straight into wherever it is going.
 
-`HIGHLIGHT_TOKEN` is **required**. `src/adapters/server.js` exits 1 without it and `src/adapters/lambda.js` throws during INIT. This is deliberate: it previously treated *unset* as *allow everything*, which is a fine default on a laptop and a wide-open endpoint behind a public Function URL — and the process cannot tell those apart. A deploy that forgets the variable now fails loudly instead of serving anonymous traffic.
+`HIGHLIGHT_TOKEN` is **required**. `src/adapters/server.js` exits 1 without it and `src/adapters/lambda.js` throws during INIT. This is deliberate, and **do not add a permissive fallback for an unset token**: treating *unset* as *allow everything* is a fine default on a laptop and a wide-open endpoint behind a public Function URL, and the process cannot tell those apart. Failing loudly is the only behaviour that is safe in both places.
 
 Consequence worth knowing: **set the variable before uploading a new zip.** In the other order the function fails INIT and every request errors until you fix it.
 
@@ -200,8 +200,6 @@ Steps below are console clicks unless shown as a command. **These have been exec
 That number is the pessimistic bound. It assumes *throttled* requests are billed, and **AWS's pricing page does not say either way** — it defines billable requests as those "served" and is silent on throttling. The common understanding is that a 429 costs nothing because the code never runs, which would make the real figure much lower. Treat $10/month as the ceiling, not the estimate, and confirm from an actual bill if it ever matters.
 
 ### Every deploy
-
-> **One-time, for the next deploy only.** The handler moved from `src/lambda.handler` to **`src/adapters/lambda.handler`** when `src/` was split into `core/` and `adapters/` (2026-08-07). A function created before that has the old value in **Runtime settings → Handler** and must be updated *in the same visit as the upload* — the code and the config have to move together. Uploading the new zip against the old handler fails every invocation with `Cannot find module 'src/lambda'`.
 
 - **Build the artifact.** `./scripts/package.sh` → `dist/function.<YYYYMMDD>.zip`. The `--build` is mandatory; without it you get a zip from the previous image. The build self-checks that `onig.wasm`, `src/adapters/lambda.js` and `package.json` are present and exits non-zero if not.
 - **Code → Upload from → .zip file** → the dated zip the script just named for you → Save.
