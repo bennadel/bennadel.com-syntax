@@ -153,11 +153,11 @@ Local development needs no action — `docker-compose.yaml` supplies `dev-local-
 
 ```bash
 # Regenerate the lockfile without running npm on the host.
-docker run --rm -v "$PWD":/app -w /app node:22-alpine \
+docker run --rm -v "$PWD":/app -w /app node:24-alpine \
   npm install --package-lock-only --ignore-scripts
 
 # Resolve a new base-image digest, after deciding to move to a newer one.
-docker buildx imagetools inspect node:22-alpine --format '{{println .Manifest.Digest}}'
+docker buildx imagetools inspect node:24-alpine --format '{{println .Manifest.Digest}}'
 ```
 
 **`npm` never runs on the host** — not for installs, not for the lockfile, not for packaging. That plus `--ignore-scripts` is the supply-chain posture, and the zip build is containerized for exactly this reason.
@@ -178,7 +178,7 @@ Steps below are console clicks unless shown as a command. **These have been exec
 
 ### One time — create the function
 
-- **Lambda → Create function → Author from scratch.** Runtime **Node.js 22.x**, architecture **arm64** (20% cheaper; the artifact is architecture-neutral, so this is purely a pricing choice).
+- **Lambda → Create function → Author from scratch.** Runtime **Node.js 24.x**, architecture **arm64** (20% cheaper; the artifact is architecture-neutral, so this is purely a pricing choice).
 - **Permissions → "Create a new role with basic Lambda permissions."** This is the entire IAM story. It grants CloudWatch Logs and nothing else, and you never need to open it again.
 - **Runtime settings → Handler → `src/adapters/lambda.handler`.** Not the `index.handler` default. A mismatch fails at invoke time with `Cannot find module 'index'`, which reads like a packaging problem rather than a configuration one.
 - **General configuration → Memory `1769` MB, Timeout `10` seconds.** 1769 MB is exactly one vCPU; because Lambda bills memory × duration, anything below it costs the same and runs slower, and anything above it costs more for no gain on single-threaded work. The 10 s timeout bounds a pathological block to a fraction of a cent.

@@ -3,20 +3,20 @@
 # ---------------------------------------------------------------------------
 # Stage 1: dependencies
 #
-# Pinned by digest, not tag. Tags are mutable -- node:22-alpine points at
+# Pinned by digest, not tag. Tags are mutable -- node:24-alpine points at
 # different bytes month to month -- and this matters more than usual here
 # because the golden corpus verifies THE IMAGE. If the image isn't
 # reproducible, that verification means nothing.
 #
-# Digest resolved 2026-07-26. To move to a newer base deliberately:
+# Digest resolved 2026-08-09. To move to a newer base deliberately:
 #
-#   docker buildx imagetools inspect node:22-alpine \
+#   docker buildx imagetools inspect node:24-alpine \
 #     --format '{{println .Manifest.Digest}}'
 #
 # This is a multi-arch manifest list, so it resolves correctly on both your
 # arm64 Mac and an amd64 deployment host.
 # ---------------------------------------------------------------------------
-FROM node:22-alpine@sha256:16e22a550f3863206a3f701448c45f7912c6896a62de43add43bb9c86130c3e2 AS deps
+FROM node:24-alpine@sha256:d32cdf619f63fe0471182d08996dd516c6275bb5fd31ae06e55a570bd9e1ad43 AS deps
 
 WORKDIR /app
 
@@ -48,7 +48,7 @@ RUN npm ci --omit=dev --ignore-scripts
 # for it, and the runtime stage stays last so a plain `docker build` still
 # produces the service image.
 # ---------------------------------------------------------------------------
-FROM node:22-alpine@sha256:16e22a550f3863206a3f701448c45f7912c6896a62de43add43bb9c86130c3e2 AS package
+FROM node:24-alpine@sha256:d32cdf619f63fe0471182d08996dd516c6275bb5fd31ae06e55a570bd9e1ad43 AS package
 
 WORKDIR /app
 
@@ -91,7 +91,7 @@ CMD ["package-lambda"]
 # Separate stage so the npm cache, lockfile, and any dev dependencies resolved
 # during install never reach the shipped image.
 # ---------------------------------------------------------------------------
-FROM node:22-alpine@sha256:16e22a550f3863206a3f701448c45f7912c6896a62de43add43bb9c86130c3e2 AS runtime
+FROM node:24-alpine@sha256:d32cdf619f63fe0471182d08996dd516c6275bb5fd31ae06e55a570bd9e1ad43 AS runtime
 
 ENV NODE_ENV=production
 
