@@ -134,19 +134,28 @@ export async function handleRequest({method, path, token, readBody}) {
 
 	// Authoritative, unlike a declared Content-Length, which can lie or be
 	// absent. The HTTP adapter has usually rejected long before this.
-	if (Buffer.byteLength(raw ?? '', 'utf8') > MAX_BYTES) {
+	if (Buffer.byteLength(raw, 'utf8') > MAX_BYTES) {
 		return {status: 413, payload: {error: 'Payload too large'}}
 	}
 
 	let body
 
 	try {
-		body = JSON.parse(raw ?? '')
+		body = JSON.parse(raw)
 	} catch {
 		return {status: 400, payload: {error: 'Invalid JSON'}}
 	}
 
-	if (typeof body?.code !== 'string') {
+	// Parsing cleanly is not the same as being handed an object: `null`, `42`,
+	// `"x"` and `[]` are all valid JSON documents. Establish it once here, so
+	// every property read below is a plain access rather than a guarded one --
+	// `null` is the case that would otherwise throw, since typeof null is
+	// 'object'. An array falls through to the `code` check and fails there.
+	if (body === null || typeof body !== 'object') {
+		return {status: 400, payload: {error: BAD_SHAPE}}
+	}
+
+	if (typeof body.code !== 'string') {
 		return {status: 400, payload: {error: BAD_SHAPE}}
 	}
 

@@ -64,8 +64,17 @@ const cases = [
 	// Body parsing.
 	{name: 'malformed JSON', status: 400,
 		request: {method: 'POST', path: '/highlight', token: TOKEN, body: '{nope'}},
+	// Every one of these parses cleanly and is not an object. `null` is the one
+	// that would throw rather than 400 if the shape checks read properties off
+	// the parsed value directly.
 	{name: 'JSON null body', status: 400,
 		request: {method: 'POST', path: '/highlight', token: TOKEN, body: 'null'}},
+	{name: 'JSON number body', status: 400,
+		request: {method: 'POST', path: '/highlight', token: TOKEN, body: '42'}},
+	{name: 'JSON string body', status: 400,
+		request: {method: 'POST', path: '/highlight', token: TOKEN, body: '"x"'}},
+	{name: 'JSON array body', status: 400,
+		request: {method: 'POST', path: '/highlight', token: TOKEN, body: '[]'}},
 	{name: 'missing code', status: 400,
 		request: {method: 'POST', path: '/highlight', token: TOKEN, body: json({language: 'cfml'})}},
 	{name: 'code is a number', status: 400,
@@ -132,8 +141,8 @@ for (const {name, request, status} of cases) {
 
 	// Only dump bodies when something is wrong -- a passing run stays readable.
 	if (!match) {
-		console.log('   lambda body:', lambda.body?.slice(0, 200))
-		console.log('   server body:', server.body?.slice(0, 200))
+		console.log('   lambda body:', lambda.body.slice(0, 200))
+		console.log('   server body:', server.body.slice(0, 200))
 	}
 }
 

@@ -50,12 +50,20 @@ export async function handler(event) {
 		? Buffer.from(event.body ?? '', 'base64').toString('utf8')
 		: (event.body ?? '')
 
+	// Do not make these accesses optional. Payload format 2.0 always carries
+	// rawPath, headers, and requestContext.http.method -- guarding them would be
+	// claiming a doubt that does not exist. It also costs something real: format
+	// 1.0 spells these `httpMethod` and `path`, so if this function were ever
+	// handed a 1.0 event, `?.` would resolve the whole chain to undefined and
+	// every request would 404 with a plausible-looking body. Unguarded, the same
+	// mistake throws a TypeError on the line below, which says what is wrong.
 	return send(await handleRequest({
-		method: event?.requestContext?.http?.method,
-		path: event?.rawPath ?? '/',
+		method: event.requestContext.http.method,
+		path: event.rawPath,
 		// Header names in payload format 2.0 are lowercased by Lambda, so no
-		// case-insensitive lookup is needed.
-		token: event?.headers?.['x-highlight-token'],
+		// case-insensitive lookup is needed. An absent header is undefined, which
+		// tokenMatches rejects -- that is the 401 path, not a missing-data case.
+		token: event.headers['x-highlight-token'],
 		readBody
 	}))
 }
