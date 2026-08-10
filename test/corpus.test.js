@@ -82,44 +82,6 @@ await init()
 let failures = 0
 let updated = 0
 
-function fail(name, detail) {
-	failures++
-	console.log(`  FAIL  ${name}`)
-
-	if (detail) console.log(`        ${detail}`)
-}
-
-function pass(name) {
-	console.log(`  ok    ${name}`)
-}
-
-function assertEqual(name, actual, expected) {
-	if (actual === expected) return pass(name)
-
-	fail(name, `expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`)
-}
-
-/**
-* Report the first difference rather than dumping two multi-kilobyte strings.
-* A golden-file mismatch is usually a handful of characters and the useful
-* information is where, not what.
-*/
-function diffAt(actual, expected) {
-	const limit = Math.min(actual.length, expected.length)
-	let index = 0
-
-	while (index < limit && actual[index] === expected[index]) index++
-
-	const window = 60
-	const start = Math.max(0, index - window / 2)
-
-	return [
-		`first difference at offset ${index} (expected ${expected.length} bytes, got ${actual.length})`,
-		`  expected: …${expected.slice(start, start + window)}…`,
-		`  actual:   …${actual.slice(start, start + window)}…`
-	].join('\n        ')
-}
-
 // ---------------------------------------------------------------------------
 // Golden fixtures
 // ---------------------------------------------------------------------------
@@ -581,3 +543,41 @@ if (UPDATE) {
 console.log('')
 
 process.exit(failures === 0 ? 0 : 1)
+
+function fail(name, detail) {
+	failures++
+	console.log(`  FAIL  ${name}`)
+
+	if (detail) console.log(`        ${detail}`)
+}
+
+function pass(name) {
+	console.log(`  ok    ${name}`)
+}
+
+function assertEqual(name, actual, expected) {
+	if (actual === expected) return pass(name)
+
+	fail(name, `expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`)
+}
+
+/**
+* Report the first difference rather than dumping two multi-kilobyte strings.
+* A golden-file mismatch is usually a handful of characters and the useful
+* information is where, not what.
+*/
+function diffAt(actual, expected) {
+	const limit = Math.min(actual.length, expected.length)
+	let index = 0
+
+	while (index < limit && actual[index] === expected[index]) index++
+
+	const window = 60
+	const start = Math.max(0, index - window / 2)
+
+	return [
+		`first difference at offset ${index} (expected ${expected.length} bytes, got ${actual.length})`,
+		`  expected: …${expected.slice(start, start + window)}…`,
+		`  actual:   …${actual.slice(start, start + window)}…`
+	].join('\n        ')
+}

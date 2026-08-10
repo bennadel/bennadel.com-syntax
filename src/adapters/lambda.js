@@ -14,14 +14,6 @@ import {boot, handleRequest} from '../core/service.js'
 */
 await boot()
 
-function send({status, payload}) {
-	return {
-		statusCode: status,
-		headers: {'content-type': 'application/json; charset=utf-8'},
-		body: JSON.stringify(payload)
-	}
-}
-
 /**
 * Function URL handler, payload format 2.0.
 *
@@ -66,4 +58,12 @@ export async function handler(event) {
 		token: event?.headers?.['x-highlight-token'],
 		readBody
 	}))
+}
+
+function send({status, payload}) {
+	return {
+		statusCode: status,
+		headers: {'content-type': 'application/json; charset=utf-8'},
+		body: JSON.stringify(payload)
+	}
 }

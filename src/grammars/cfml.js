@@ -68,6 +68,47 @@ import {readFile} from 'node:fs/promises'
 
 const DIR = new URL('./', import.meta.url)
 
+/** Tag-based CFML: `.cfm` files, and `.cfc` files written with tags. */
+export const CFML_TAG = 'embedding.cfml'
+
+/** Script-based CFML: `cfscript` blocks and script-style `.cfc` components. */
+export const CFML_SCRIPT = 'embedding.cfml.cfs'
+
+/**
+* file -> [patch names]. Exported so the test suite can assert that every patch
+* actually ran, rather than trusting that it did.
+*/
+export const applied = new Map()
+
+const PATCHES = [patchBareInclude, patchSafeNavigation]
+
+export async function loadCfmlGrammars() {
+	return Promise.all([
+		load('cfml.tmLanguage.json'),
+		load('cfml-cfs.tmLanguage.json')
+	])
+}
+
+/**
+* `names` and `extensions` are emptied deliberately.
+*
+* Leaving cfmleditor's own lists in place would make these grammars resolvable
+* straight from a fence tag, racing Linguist's registrations for the same names
+* with no stated winner. Every route into these scopes is instead an explicit
+* entry in `flagOverrides` (src/core/highlight.js), so the mapping is readable in one
+* place and a tag cannot start resolving here by accident.
+*
+* `dependencies` is emptied because there genuinely are none -- these grammars
+* inline everything they use. `missingScopes()` at boot confirms it.
+*/
+async function load(file) {
+	const grammar = JSON.parse(await readFile(new URL(file, DIR), 'utf8'))
+
+	applied.set(file, PATCHES.map((patch) => patch(grammar, file)))
+
+	return {...grammar, names: [], extensions: [], dependencies: []}
+}
+
 /**
 * LOCAL PATCHES -- applied at load time, never written to the vendored file.
 *
@@ -205,45 +246,4 @@ function patchSafeNavigation(grammar, file) {
 	})
 
 	return 'safe-navigation'
-}
-
-const PATCHES = [patchBareInclude, patchSafeNavigation]
-
-/**
-* file -> [patch names]. Exported so the test suite can assert that every patch
-* actually ran, rather than trusting that it did.
-*/
-export const applied = new Map()
-
-/**
-* `names` and `extensions` are emptied deliberately.
-*
-* Leaving cfmleditor's own lists in place would make these grammars resolvable
-* straight from a fence tag, racing Linguist's registrations for the same names
-* with no stated winner. Every route into these scopes is instead an explicit
-* entry in `flagOverrides` (src/core/highlight.js), so the mapping is readable in one
-* place and a tag cannot start resolving here by accident.
-*
-* `dependencies` is emptied because there genuinely are none -- these grammars
-* inline everything they use. `missingScopes()` at boot confirms it.
-*/
-async function load(file) {
-	const grammar = JSON.parse(await readFile(new URL(file, DIR), 'utf8'))
-
-	applied.set(file, PATCHES.map((patch) => patch(grammar, file)))
-
-	return {...grammar, names: [], extensions: [], dependencies: []}
-}
-
-/** Tag-based CFML: `.cfm` files, and `.cfc` files written with tags. */
-export const CFML_TAG = 'embedding.cfml'
-
-/** Script-based CFML: `cfscript` blocks and script-style `.cfc` components. */
-export const CFML_SCRIPT = 'embedding.cfml.cfs'
-
-export async function loadCfmlGrammars() {
-	return Promise.all([
-		load('cfml.tmLanguage.json'),
-		load('cfml-cfs.tmLanguage.json')
-	])
 }

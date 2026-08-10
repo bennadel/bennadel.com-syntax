@@ -38,8 +38,8 @@ const TOKEN = process.env.HIGHLIGHT_TOKEN ?? ''
 
 export const MAX_BYTES = Number(process.env.MAX_BYTES ?? 262144)
 
-// One string, one place -- it has to stay in sync with the validation below,
-// and it is returned from more than one call site.
+// One string, one place -- it has to stay in sync with the shape checks in
+// handleRequest, and it is returned from more than one call site.
 const BAD_SHAPE = 'Expected { code: string, language?: string }'
 
 /**
@@ -77,24 +77,6 @@ export async function boot() {
 	}
 
 	return starryNight
-}
-
-/**
-* Constant-time comparison, so a caller cannot learn the token one byte at a
-* time by measuring response latency. Length is compared first because
-* timingSafeEqual throws on mismatched lengths -- that leaks token length, which
-* is not worth defending.
-*
-* TOKEN is guaranteed non-empty by boot(), so there is no "unconfigured" branch
-* to fall open through.
-*/
-function tokenMatches(supplied) {
-	if (typeof supplied !== 'string') return false
-
-	const a = Buffer.from(supplied)
-	const b = Buffer.from(TOKEN)
-
-	return a.length === b.length && timingSafeEqual(a, b)
 }
 
 /**
@@ -202,4 +184,22 @@ export async function handleRequest({method, path, token, readBody}) {
 
 		return {status: 500, payload: {error: error.message}}
 	}
+}
+
+/**
+* Constant-time comparison, so a caller cannot learn the token one byte at a
+* time by measuring response latency. Length is compared first because
+* timingSafeEqual throws on mismatched lengths -- that leaks token length, which
+* is not worth defending.
+*
+* TOKEN is guaranteed non-empty by boot(), so there is no "unconfigured" branch
+* to fall open through.
+*/
+function tokenMatches(supplied) {
+	if (typeof supplied !== 'string') return false
+
+	const a = Buffer.from(supplied)
+	const b = Buffer.from(TOKEN)
+
+	return a.length === b.length && timingSafeEqual(a, b)
 }

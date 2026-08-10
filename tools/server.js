@@ -151,15 +151,67 @@ const BASE_CSS = `
 
 const ESCAPES = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}
 
-/**
-* Local to these tools on purpose. src/core/highlight.js has its own escaper tuned to
-* the entity form GitHub emits; this one also escapes quotes
-* because it is used for attribute values, and the two should not be shared
-* lest a change made for an inspection page alter the shipped output.
-*/
-function escapeHtml(value) {
-	return String(value).replace(/[&<>"]/g, (character) => ESCAPES[character])
+const server = createServer(async (request, response) => {
+	const {pathname, searchParams} = new URL(request.url, 'http://localhost')
+
+	try {
+		const style = STYLE.find(({name}) => pathname === `/style/${name}.css`)
+
+		if (style) {
+			return send(response, 200, 'text/css; charset=utf-8',
+				await readFile(style.url, 'utf8'))
+		}
+
+		if (pathname === '/') {
+			return send(response, 200, 'text/html; charset=utf-8',
+				page(await loadFixtures()))
+		}
+
+		// GET with the URL in the query string rather than a POST, so a result is
+		// linkable and survives a refresh -- the whole workflow here is "look at
+		// this post, change something in src/, restart, look again".
+		if (pathname === '/blog') {
+			const input = searchParams.get('url')
+			const includeComments = searchParams.get('comments') === '1'
+
+			// A failed fetch is an ordinary outcome of pasting a URL, not a crash:
+			// it renders as a message above the form with the input still in it.
+			// The catch-all below stays for genuine bugs, which is why this does
+			// not swallow anything broader than the fetch.
+			const [fetched, error] = input
+				? await fetchBlocks(input, {includeComments})
+					.then((value) => [value, null], (reason) => [null, reason.message])
+				: [null, null]
+
+			return send(response, 200, 'text/html; charset=utf-8',
+				blogPage({input, includeComments, fetched, error}))
+		}
+
+		send(response, 404, 'text/plain; charset=utf-8', 'Not found\n')
+	} catch (error) {
+		// Shown rather than swallowed: this is a local tool, and the stack is the
+		// most useful thing it can put on screen.
+		send(response, 500, 'text/plain; charset=utf-8', `${error.stack}\n`)
+	}
+})
+
+try {
+	// Registers exactly what the service registers, and nothing more. Do not add
+	// grammars here: a grammar set of its own is exactly how this page would come
+	// to show output the service does not actually produce.
+	starryNight = await init()
+
+	server.listen(PORT, () => {
+		console.log(`tools on ${PORT}, ${starryNight.scopes().length} grammars (/, /blog)`)
+	})
+} catch (error) {
+	console.error(error.message)
+	process.exit(1)
 }
+
+process.on('SIGTERM', () => {
+	server.close(() => process.exit(0))
+})
 
 /**
 * Same convention test/corpus.test.js reads: `<slug>.<language>.code`, where the
@@ -200,45 +252,6 @@ async function loadFixtures() {
 			drift: golden !== null && golden !== result.html
 		}
 	}))
-}
-
-function badge(label, value, tone) {
-	return `<span class="badge ${tone}">${escapeHtml(label)} <b>${escapeHtml(value)}</b></span>`
-}
-
-function section(fixture) {
-	const {entry, goldenName, language, result, lines, golden, drift} = fixture
-	const id = entry.replace(/[^a-z0-9]+/gi, '-')
-
-	const status = result.highlighted
-		? badge('highlighted', 'yes', 'ok')
-		: badge('highlighted', 'no -- plain text', 'warn')
-
-	const resolved = badge('scope', result.resolvedLanguage ?? 'none', result.resolvedLanguage ? 'ok' : 'warn')
-
-	const goldenBadge = golden === null
-		? badge('golden', 'missing', 'warn')
-		: drift
-			? badge('golden', 'DIFFERS', 'bad')
-			: badge('golden', 'matches', 'ok')
-
-	return `
-<section id="${escapeHtml(id)}">
-	<h2><a href="#${escapeHtml(id)}">${escapeHtml(entry)}</a></h2>
-	<p class="badges">
-		${badge('flag', language, 'neutral')}
-		${resolved}
-		${status}
-		${badge('lines', String(lines), 'neutral')}
-		${goldenBadge}
-	</p>
-	${drift ? `<p class="drift">Live output differs from <code>${escapeHtml(goldenName)}</code>. Either the golden is stale (run <code>docker compose run --rm test-update</code> and read the diff) or highlighting has regressed. <code>test/corpus.test.js</code> is the authority, not this page.</p>` : ''}
-	<pre class="render"><code>${result.html}</code></pre>
-	<details>
-		<summary>markup</summary>
-		<pre class="markup"><code>${escapeHtml(result.html)}</code></pre>
-	</details>
-</section>`
 }
 
 function page(fixtures) {
@@ -298,64 +311,36 @@ ${fixtures.map(section).join('\n')}
 // Live archive check (/blog)
 // ---------------------------------------------------------------------------
 
-/**
-* Does the rendered markup still contain exactly the source text?
-*
-* This is the one assertion the page can make on its own. Every fixture has a
-* golden file to compare against; an arbitrary archive post has nothing, so the
-* only property checkable without a human is that highlighting is
-* TEXT-PRESERVING -- strip the tags, undo the escaping, and you must be holding
-* the input back again.
-*
-* It is a real check, not decoration. Escaping bugs are the failure mode that
-* matters most here, because they are silent: a dropped `&` or a doubled `&amp;`
-* renders as something plausible and corrupts the stored HTML permanently. That
-* is also why `normalize()` is imported rather than reimplemented -- the
-* comparison has to be against what highlight() was actually given.
-*/
-function textPreserved(source, html) {
-	// Exactly the three entities src/core/highlight.js emits, via ESCAPES, and no
-	// more.
-	// Decoding a wider set would make this pass on output the service does not
-	// actually produce, which is the opposite of what the check is for. Stripping
-	// tags is safe for the same reason the extractor's regex is: a literal `<` in
-	// the source is already `&lt;` by this point and cannot look like a tag.
-	const text = html
-		.replace(/<[^>]*>/g, '')
-		.replace(/&(?:lt|gt|amp);/g, (entity) => ({'&lt;': '<', '&gt;': '>', '&amp;': '&'})[entity])
+function section(fixture) {
+	const {entry, goldenName, language, result, lines, golden, drift} = fixture
+	const id = entry.replace(/[^a-z0-9]+/gi, '-')
 
-	return text === normalize(source)
-}
+	const status = result.highlighted
+		? badge('highlighted', 'yes', 'ok')
+		: badge('highlighted', 'no -- plain text', 'warn')
 
-function blogSection(block, index) {
-	const source = normalize(block.source)
-	const result = highlight(source, block.flag)
-	const longest = longestLine(source)
-	const preserved = textPreserved(source, result.html)
+	const resolved = badge('scope', result.resolvedLanguage ?? 'none', result.resolvedLanguage ? 'ok' : 'warn')
 
-	const label = block.filename ?? `block ${index}`
+	const goldenBadge = golden === null
+		? badge('golden', 'missing', 'warn')
+		: drift
+			? badge('golden', 'DIFFERS', 'bad')
+			: badge('golden', 'matches', 'ok')
 
 	return `
-<section>
-	<h2>${escapeHtml(label)}</h2>
+<section id="${escapeHtml(id)}">
+	<h2><a href="#${escapeHtml(id)}">${escapeHtml(entry)}</a></h2>
 	<p class="badges">
-		${badge('flag', block.flag, 'neutral')}
-		${badge('scope', result.resolvedLanguage ?? 'none', result.resolvedLanguage ? 'ok' : 'warn')}
-		${result.highlighted
-			? badge('highlighted', 'yes', 'ok')
-			: badge('highlighted', 'NO -- plain text', 'bad')}
-		${badge('lines', String(source.split('\n').length), 'neutral')}
-		${badge('longest line', `${longest.length} / ${MAX_LINE_LENGTH}`,
-			longest.length > MAX_LINE_LENGTH ? 'bad' : 'neutral')}
-		${preserved
-			? badge('text preserved', 'yes', 'ok')
-			: badge('text preserved', 'NO -- ESCAPING BUG', 'bad')}
-		${block.isComment ? badge('from', 'reader comment', 'warn') : ''}
+		${badge('flag', language, 'neutral')}
+		${resolved}
+		${status}
+		${badge('lines', String(lines), 'neutral')}
+		${goldenBadge}
 	</p>
+	${drift ? `<p class="drift">Live output differs from <code>${escapeHtml(goldenName)}</code>. Either the golden is stale (run <code>docker compose run --rm test-update</code> and read the diff) or highlighting has regressed. <code>test/corpus.test.js</code> is the authority, not this page.</p>` : ''}
 	<pre class="render"><code>${result.html}</code></pre>
 	<details>
-		<summary>source as extracted &middot; markup</summary>
-		<pre class="markup"><code>${escapeHtml(source)}</code></pre>
+		<summary>markup</summary>
 		<pre class="markup"><code>${escapeHtml(result.html)}</code></pre>
 	</details>
 </section>`
@@ -428,6 +413,73 @@ ${body}
 </html>`
 }
 
+function blogSection(block, index) {
+	const source = normalize(block.source)
+	const result = highlight(source, block.flag)
+	const longest = longestLine(source)
+	const preserved = textPreserved(source, result.html)
+
+	const label = block.filename ?? `block ${index}`
+
+	return `
+<section>
+	<h2>${escapeHtml(label)}</h2>
+	<p class="badges">
+		${badge('flag', block.flag, 'neutral')}
+		${badge('scope', result.resolvedLanguage ?? 'none', result.resolvedLanguage ? 'ok' : 'warn')}
+		${result.highlighted
+			? badge('highlighted', 'yes', 'ok')
+			: badge('highlighted', 'NO -- plain text', 'bad')}
+		${badge('lines', String(source.split('\n').length), 'neutral')}
+		${badge('longest line', `${longest.length} / ${MAX_LINE_LENGTH}`,
+			longest.length > MAX_LINE_LENGTH ? 'bad' : 'neutral')}
+		${preserved
+			? badge('text preserved', 'yes', 'ok')
+			: badge('text preserved', 'NO -- ESCAPING BUG', 'bad')}
+		${block.isComment ? badge('from', 'reader comment', 'warn') : ''}
+	</p>
+	<pre class="render"><code>${result.html}</code></pre>
+	<details>
+		<summary>source as extracted &middot; markup</summary>
+		<pre class="markup"><code>${escapeHtml(source)}</code></pre>
+		<pre class="markup"><code>${escapeHtml(result.html)}</code></pre>
+	</details>
+</section>`
+}
+
+/**
+* Does the rendered markup still contain exactly the source text?
+*
+* This is the one assertion the page can make on its own. Every fixture has a
+* golden file to compare against; an arbitrary archive post has nothing, so the
+* only property checkable without a human is that highlighting is
+* TEXT-PRESERVING -- strip the tags, undo the escaping, and you must be holding
+* the input back again.
+*
+* It is a real check, not decoration. Escaping bugs are the failure mode that
+* matters most here, because they are silent: a dropped `&` or a doubled `&amp;`
+* renders as something plausible and corrupts the stored HTML permanently. That
+* is also why `normalize()` is imported rather than reimplemented -- the
+* comparison has to be against what highlight() was actually given.
+*/
+function textPreserved(source, html) {
+	// Exactly the three entities src/core/highlight.js emits, via ESCAPES, and no
+	// more.
+	// Decoding a wider set would make this pass on output the service does not
+	// actually produce, which is the opposite of what the check is for. Stripping
+	// tags is safe for the same reason the extractor's regex is: a literal `<` in
+	// the source is already `&lt;` by this point and cannot look like a tag.
+	const text = html
+		.replace(/<[^>]*>/g, '')
+		.replace(/&(?:lt|gt|amp);/g, (entity) => ({'&lt;': '<', '&gt;': '>', '&amp;': '&'})[entity])
+
+	return text === normalize(source)
+}
+
+function badge(label, value, tone) {
+	return `<span class="badge ${tone}">${escapeHtml(label)} <b>${escapeHtml(value)}</b></span>`
+}
+
 function send(response, status, type, body) {
 	response.writeHead(status, {
 		'content-type': type,
@@ -438,64 +490,12 @@ function send(response, status, type, body) {
 	response.end(body)
 }
 
-const server = createServer(async (request, response) => {
-	const {pathname, searchParams} = new URL(request.url, 'http://localhost')
-
-	try {
-		const style = STYLE.find(({name}) => pathname === `/style/${name}.css`)
-
-		if (style) {
-			return send(response, 200, 'text/css; charset=utf-8',
-				await readFile(style.url, 'utf8'))
-		}
-
-		if (pathname === '/') {
-			return send(response, 200, 'text/html; charset=utf-8',
-				page(await loadFixtures()))
-		}
-
-		// GET with the URL in the query string rather than a POST, so a result is
-		// linkable and survives a refresh -- the whole workflow here is "look at
-		// this post, change something in src/, restart, look again".
-		if (pathname === '/blog') {
-			const input = searchParams.get('url')
-			const includeComments = searchParams.get('comments') === '1'
-
-			// A failed fetch is an ordinary outcome of pasting a URL, not a crash:
-			// it renders as a message above the form with the input still in it.
-			// The catch-all below stays for genuine bugs, which is why this does
-			// not swallow anything broader than the fetch.
-			const [fetched, error] = input
-				? await fetchBlocks(input, {includeComments})
-					.then((value) => [value, null], (reason) => [null, reason.message])
-				: [null, null]
-
-			return send(response, 200, 'text/html; charset=utf-8',
-				blogPage({input, includeComments, fetched, error}))
-		}
-
-		send(response, 404, 'text/plain; charset=utf-8', 'Not found\n')
-	} catch (error) {
-		// Shown rather than swallowed: this is a local tool, and the stack is the
-		// most useful thing it can put on screen.
-		send(response, 500, 'text/plain; charset=utf-8', `${error.stack}\n`)
-	}
-})
-
-try {
-	// Registers exactly what the service registers, and nothing more. Do not add
-	// grammars here: a grammar set of its own is exactly how this page would come
-	// to show output the service does not actually produce.
-	starryNight = await init()
-
-	server.listen(PORT, () => {
-		console.log(`tools on ${PORT}, ${starryNight.scopes().length} grammars (/, /blog)`)
-	})
-} catch (error) {
-	console.error(error.message)
-	process.exit(1)
+/**
+* Local to these tools on purpose. src/core/highlight.js has its own escaper tuned to
+* the entity form GitHub emits; this one also escapes quotes
+* because it is used for attribute values, and the two should not be shared
+* lest a change made for an inspection page alter the shipped output.
+*/
+function escapeHtml(value) {
+	return String(value).replace(/[&<>"]/g, (character) => ESCAPES[character])
 }
-
-process.on('SIGTERM', () => {
-	server.close(() => process.exit(0))
-})

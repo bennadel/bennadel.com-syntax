@@ -55,41 +55,6 @@ const ALLOWED = new Set(['www.bennadel.com', 'bennadel.com'])
 */
 const AGENT = 'bennadel-syntax-tools/1.0 (local inspection tool)'
 
-/**
-* Single pass, which is what makes it correct: decoding `&lt;` and `&amp;` in
-* separate passes turns the stored text `&amp;lt;` into `<` instead of `&lt;`.
-* One replace with one alternation cannot double-decode.
-*
-* Only the entities the blog actually emits are named (`&lt;`, `&gt;`, `&amp;`
-* were the only ones found across a 17-post sample), plus the two other named
-* forms an HTML escaper might reasonably produce and the numeric forms.
-*/
-const ENTITIES = {
-	'&lt;': '<',
-	'&gt;': '>',
-	'&amp;': '&',
-	'&quot;': '"',
-	'&apos;': "'",
-	'&nbsp;': ' '
-}
-
-function decodeEntities(value) {
-	return value.replace(/&(?:[a-z]+|#\d+|#x[0-9a-f]+);/gi, (entity) => {
-		const named = ENTITIES[entity.toLowerCase()]
-
-		if (named !== undefined) return named
-
-		const numeric = /^&#x/i.test(entity)
-			? Number.parseInt(entity.slice(3, -1), 16)
-			: Number.parseInt(entity.slice(2, -1), 10)
-
-		// An entity this does not know is left verbatim rather than dropped. It
-		// would show up in the rendered block as `&hellip;`, which is legible as
-		// "the extractor missed one" -- silently deleting it would not be.
-		return Number.isNaN(numeric) ? entity : String.fromCodePoint(numeric)
-	})
-}
-
 const BLOCK = /<pre>\s*<code class="language-([^"]+)">([\s\S]*?)<\/code>\s*<\/pre>/g
 
 /** The wrapper div that carries the filename, searched for behind each match. */
@@ -106,37 +71,21 @@ const FILENAME = /data-gist-filename="([^"]+)"/g
 const COMMENT_START = /id="comments_\d+"/
 
 /**
-* Accepts what someone would realistically paste or type: a full URL, a
-* scheme-less host, or just the path.
+* Single pass, which is what makes it correct: decoding `&lt;` and `&amp;` in
+* separate passes turns the stored text `&amp;lt;` into `<` instead of `&lt;`.
+* One replace with one alternation cannot double-decode.
+*
+* Only the entities the blog actually emits are named (`&lt;`, `&gt;`, `&amp;`
+* were the only ones found across a 17-post sample), plus the two other named
+* forms an HTML escaper might reasonably produce and the numeric forms.
 */
-export function normalizeUrl(input) {
-	const trimmed = String(input).trim()
-
-	if (!trimmed) throw new Error('No URL given.')
-
-	const withScheme = /^https?:\/\//i.test(trimmed)
-		? trimmed
-		: `https://${trimmed.replace(/^\/*/, 'www.bennadel.com/')}`
-
-	let url
-
-	try {
-		url = new URL(withScheme)
-	} catch {
-		throw new Error(`Not a URL: ${trimmed}`)
-	}
-
-	if (!ALLOWED.has(url.hostname)) {
-		throw new Error(
-			`Refused ${url.hostname}. This tool only fetches ${[...ALLOWED].join(' or ')} ` +
-			'-- it runs server-side inside a Docker network, so it is not a general proxy.'
-		)
-	}
-
-	// Downgrading to http would be a silent change to what was asked for.
-	url.protocol = 'https:'
-
-	return url
+const ENTITIES = {
+	'&lt;': '<',
+	'&gt;': '>',
+	'&amp;': '&',
+	'&quot;': '"',
+	'&apos;': "'",
+	'&nbsp;': ' '
 }
 
 /**
@@ -193,4 +142,55 @@ export async function fetchBlocks(input, {includeComments = false} = {}) {
 	}
 
 	return {url, title, blocks, commentCount}
+}
+
+/**
+* Accepts what someone would realistically paste or type: a full URL, a
+* scheme-less host, or just the path.
+*/
+export function normalizeUrl(input) {
+	const trimmed = String(input).trim()
+
+	if (!trimmed) throw new Error('No URL given.')
+
+	const withScheme = /^https?:\/\//i.test(trimmed)
+		? trimmed
+		: `https://${trimmed.replace(/^\/*/, 'www.bennadel.com/')}`
+
+	let url
+
+	try {
+		url = new URL(withScheme)
+	} catch {
+		throw new Error(`Not a URL: ${trimmed}`)
+	}
+
+	if (!ALLOWED.has(url.hostname)) {
+		throw new Error(
+			`Refused ${url.hostname}. This tool only fetches ${[...ALLOWED].join(' or ')} ` +
+			'-- it runs server-side inside a Docker network, so it is not a general proxy.'
+		)
+	}
+
+	// Downgrading to http would be a silent change to what was asked for.
+	url.protocol = 'https:'
+
+	return url
+}
+
+function decodeEntities(value) {
+	return value.replace(/&(?:[a-z]+|#\d+|#x[0-9a-f]+);/gi, (entity) => {
+		const named = ENTITIES[entity.toLowerCase()]
+
+		if (named !== undefined) return named
+
+		const numeric = /^&#x/i.test(entity)
+			? Number.parseInt(entity.slice(3, -1), 16)
+			: Number.parseInt(entity.slice(2, -1), 10)
+
+		// An entity this does not know is left verbatim rather than dropped. It
+		// would show up in the rendered block as `&hellip;`, which is legible as
+		// "the extractor missed one" -- silently deleting it would not be.
+		return Number.isNaN(numeric) ? entity : String.fromCodePoint(numeric)
+	})
 }

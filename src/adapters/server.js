@@ -4,9 +4,54 @@ import {boot, handleRequest, MAX_BYTES} from '../core/service.js'
 
 const PORT = Number(process.env.PORT ?? 3000)
 
-function tooLarge() {
-	return Object.assign(new Error('Payload too large'), {status: 413})
+/**
+* Deliberately thin. Auth, routing, validation, and the highlight call all live
+* in ../core/service.js, shared with lambda.js -- see the note there on why
+* that file exists. What remains here is node:http-specific: the streaming body
+* guard and writing the response.
+*
+* This serves JSON and nothing else. Do not add a route that renders HTML: this
+* stays an API rather than a mix of API and page rendering. Looking at
+* highlighted output is what tools/ is for, and asserting it is correct is what
+* test/corpus.test.js is for -- neither job belongs in an adapter.
+*/
+const server = createServer(async (request, response) => {
+	const {pathname} = new URL(request.url, 'http://localhost')
+
+	// readBody is passed as a function, not a string: service.js calls it only
+	// after authorization passes, so an unauthenticated caller still cannot push
+	// a payload before being refused.
+	const {status, payload} = await handleRequest({
+		method: request.method,
+		path: pathname,
+		token: request.headers['x-highlight-token'],
+		readBody: () => readBody(request)
+	})
+
+	send(response, status, payload, {close: status === 413})
+
+	// Only after the response has flushed -- otherwise we are back to handing the
+	// caller a reset instead of the 413.
+	if (status === 413) response.on('finish', () => request.destroy())
+})
+
+// Throws on a missing token or unmet grammar scopes. Exiting rather than
+// letting it propagate, because a non-zero exit is already meaningful to Docker
+// and Compose -- and because the message is more useful than a stack trace.
+try {
+	const starryNight = await boot()
+
+	server.listen(PORT, () => {
+		console.log(`listening on ${PORT}, ${starryNight.scopes().length} grammars`)
+	})
+} catch (error) {
+	console.error(error.message)
+	process.exit(1)
 }
+
+process.on('SIGTERM', () => {
+	server.close(() => process.exit(0))
+})
 
 /**
 * Read the request body, enforcing the payload cap DURING the stream rather than
@@ -74,51 +119,6 @@ function send(response, status, payload, {close = false} = {}) {
 	response.end(body)
 }
 
-/**
-* Deliberately thin. Auth, routing, validation, and the highlight call all live
-* in ../core/service.js, shared with lambda.js -- see the note there on why
-* that file exists. What remains here is node:http-specific: the streaming body
-* guard and writing the response.
-*
-* This serves JSON and nothing else. Do not add a route that renders HTML: this
-* stays an API rather than a mix of API and page rendering. Looking at
-* highlighted output is what tools/ is for, and asserting it is correct is what
-* test/corpus.test.js is for -- neither job belongs in an adapter.
-*/
-const server = createServer(async (request, response) => {
-	const {pathname} = new URL(request.url, 'http://localhost')
-
-	// readBody is passed as a function, not a string: service.js calls it only
-	// after authorization passes, so an unauthenticated caller still cannot push
-	// a payload before being refused.
-	const {status, payload} = await handleRequest({
-		method: request.method,
-		path: pathname,
-		token: request.headers['x-highlight-token'],
-		readBody: () => readBody(request)
-	})
-
-	send(response, status, payload, {close: status === 413})
-
-	// Only after the response has flushed -- otherwise we are back to handing the
-	// caller a reset instead of the 413.
-	if (status === 413) response.on('finish', () => request.destroy())
-})
-
-// Throws on a missing token or unmet grammar scopes. Exiting rather than
-// letting it propagate, because a non-zero exit is already meaningful to Docker
-// and Compose -- and because the message is more useful than a stack trace.
-try {
-	const starryNight = await boot()
-
-	server.listen(PORT, () => {
-		console.log(`listening on ${PORT}, ${starryNight.scopes().length} grammars`)
-	})
-} catch (error) {
-	console.error(error.message)
-	process.exit(1)
+function tooLarge() {
+	return Object.assign(new Error('Payload too large'), {status: 413})
 }
-
-process.on('SIGTERM', () => {
-	server.close(() => process.exit(0))
-})

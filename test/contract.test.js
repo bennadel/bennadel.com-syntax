@@ -44,54 +44,6 @@ await new Promise((resolve) => setTimeout(resolve, 300))
 
 const MAX_BYTES = Number(process.env.MAX_BYTES ?? 262144)
 
-/**
-* Drive the Lambda adapter directly. Builds a payload-format-2.0 event by hand
-* rather than mocking, because the shape of that event IS part of what this
-* test is pinning down.
-*/
-async function callLambda({method, path, token, body}) {
-	const headers = {}
-
-	if (token !== undefined) headers['x-highlight-token'] = token
-	if (body !== undefined) headers['content-length'] = String(Buffer.byteLength(body))
-
-	const result = await handler({
-		rawPath: path,
-		requestContext: {http: {method}},
-		headers,
-		body
-	})
-
-	return {status: result.statusCode, body: result.body}
-}
-
-/**
-* Drive the HTTP adapter over a real socket. Not an in-process call: the whole
-* point is that the transport is exercised, including the streaming body guard
-* that has no Lambda equivalent.
-*/
-async function callServer({method, path, token, body}) {
-	const headers = {'content-type': 'application/json'}
-
-	if (token !== undefined) headers['x-highlight-token'] = token
-
-	try {
-		const response = await fetch(`http://127.0.0.1:${PORT}${path}`, {
-			method,
-			headers,
-			body
-		})
-
-		return {status: response.status, body: await response.text()}
-	} catch (error) {
-		// A 413 closes the connection, so surface transport failures as data
-		// rather than letting them abort the run.
-		return {status: 'FETCH_FAILED', body: error.message}
-	}
-}
-
-const json = (value) => JSON.stringify(value)
-
 const cases = [
 	// Routing and method handling.
 	{name: 'GET /health', status: 200,
@@ -192,3 +144,56 @@ console.log(failures === 0
 console.log('')
 
 process.exit(failures === 0 ? 0 : 1)
+
+/**
+* Drive the Lambda adapter directly. Builds a payload-format-2.0 event by hand
+* rather than mocking, because the shape of that event IS part of what this
+* test is pinning down.
+*/
+async function callLambda({method, path, token, body}) {
+	const headers = {}
+
+	if (token !== undefined) headers['x-highlight-token'] = token
+	if (body !== undefined) headers['content-length'] = String(Buffer.byteLength(body))
+
+	const result = await handler({
+		rawPath: path,
+		requestContext: {http: {method}},
+		headers,
+		body
+	})
+
+	return {status: result.statusCode, body: result.body}
+}
+
+/**
+* Drive the HTTP adapter over a real socket. Not an in-process call: the whole
+* point is that the transport is exercised, including the streaming body guard
+* that has no Lambda equivalent.
+*/
+async function callServer({method, path, token, body}) {
+	const headers = {'content-type': 'application/json'}
+
+	if (token !== undefined) headers['x-highlight-token'] = token
+
+	try {
+		const response = await fetch(`http://127.0.0.1:${PORT}${path}`, {
+			method,
+			headers,
+			body
+		})
+
+		return {status: response.status, body: await response.text()}
+	} catch (error) {
+		// A 413 closes the connection, so surface transport failures as data
+		// rather than letting them abort the run.
+		return {status: 'FETCH_FAILED', body: error.message}
+	}
+}
+
+// A function declaration rather than a const, so it can live down here: `cases`
+// is built at module scope and calls this, which only works because the
+// declaration hoists.
+function json(value) {
+	return JSON.stringify(value)
+}
