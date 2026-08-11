@@ -7,7 +7,7 @@
 	"type": "module",
 	"main": "src/core/highlight.js",
 	"engines": {
-		"node": ">=22"
+		"node": ">=24"
 	},
 	"scripts": {
 		"start": "node src/adapters/server.js",
