@@ -48,6 +48,7 @@ import {
 	MAX_LINE_LENGTH
 } from '../src/core/highlight.js'
 import {applied as cfmlPatches} from '../src/grammars/cfml.js'
+import {assertPositiveInt} from '../src/core/service.js'
 
 const DIR = new URL('./__fixtures__/', import.meta.url)
 const GRAMMARS = new URL('../src/grammars/', import.meta.url)
@@ -175,6 +176,18 @@ if (!UPDATE) {
 	assertEqual('first wins on a tie', longestLine('aa\nbb').number, 1)
 	assertEqual('empty string', longestLine('').length, 0)
 	assertEqual('trailing newline', longestLine('abc\n').length, 3)
+
+	console.log('')
+	console.log('assertPositiveInt()')
+
+	// boot() calls this on MAX_BYTES and MAX_LINE_LENGTH. NaN is the case that
+	// matters: a garbled env var like "2OO" parses to NaN, and every guard using
+	// these values is a `>` comparison, which NaN silently defeats.
+	assertThrows('rejects NaN (a garbled env var)', () => assertPositiveInt('X', Number('2OO')))
+	assertThrows('rejects zero (an empty env var)', () => assertPositiveInt('X', 0))
+	assertThrows('rejects a negative', () => assertPositiveInt('X', -1))
+	assertThrows('rejects a fraction', () => assertPositiveInt('X', 3.5))
+	assertEqual('returns a valid value unchanged', assertPositiveInt('X', 200), 200)
 
 	console.log('')
 	console.log('highlight() guards')
@@ -559,6 +572,16 @@ function assertEqual(name, actual, expected) {
 	if (actual === expected) return pass(name)
 
 	fail(name, `expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`)
+}
+
+function assertThrows(name, fn) {
+	try {
+		fn()
+	} catch {
+		return pass(name)
+	}
+
+	fail(name, 'expected a throw, got none')
 }
 
 /**

@@ -16,7 +16,21 @@ const PORT = Number(process.env.PORT ?? 3000)
 * test/corpus.test.js is for -- neither job belongs in an adapter.
 */
 const server = createServer(async (request, response) => {
-	const {pathname} = new URL(request.url, 'http://localhost')
+	// llhttp accepts request-targets that are not valid URLs (`//%25`, `//[`),
+	// and `new URL` throws on them. Unguarded, that rejection is unhandled and
+	// Node kills the process -- a pre-auth crash from one malformed line. Lambda
+	// never sees this: its Function URL hands service.js an already-parsed path.
+	let url
+
+	try {
+		url = new URL(request.url, 'http://localhost')
+	} catch {
+		send(response, 400, {error: 'Bad request'})
+
+		return
+	}
+
+	const {pathname} = url
 
 	// readBody is passed as a function, not a string: service.js calls it only
 	// after authorization passes, so an unauthenticated caller still cannot push

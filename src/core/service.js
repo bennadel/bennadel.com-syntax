@@ -1,6 +1,6 @@
 import {timingSafeEqual} from 'node:crypto'
 
-import {init, highlight} from './highlight.js'
+import {init, highlight, MAX_LINE_LENGTH} from './highlight.js'
 
 /**
 * Transport-neutral request handling: auth, routing, validation, and the call
@@ -43,6 +43,21 @@ export const MAX_BYTES = Number(process.env.MAX_BYTES ?? 262144)
 const BAD_SHAPE = 'Expected { code: string, language?: string }'
 
 /**
+* Reject a numeric config value that is not a positive integer, naming the
+* variable so the message points straight at the env var to fix. Validates the
+* already-parsed number rather than the raw string, which keeps one parse site
+* and covers every bad input: NaN (a garbled value), 0 (an empty env var), and
+* negatives or fractions.
+*/
+export function assertPositiveInt(name, value) {
+	if (!Number.isInteger(value) || value <= 0) {
+		throw new Error(`${name} must be a positive integer; check the ${name} env var (got ${value})`)
+	}
+
+	return value
+}
+
+/**
 * Startup checks shared by both adapters. Throws; the caller decides whether
 * that means process.exit (container) or a failed INIT (Lambda).
 *
@@ -57,6 +72,14 @@ const BAD_SHAPE = 'Expected { code: string, language?: string }'
 * highlighting service with a healthy /health check and no other signal. That
 * shipped once here, and only a deliberate unauthenticated probe caught it.
 *
+* On the numeric config: MAX_BYTES and MAX_LINE_LENGTH are read as Number(env),
+* which yields NaN for a garbled value like "2OO". Every guard that uses them is
+* a `>` comparison, and `n > NaN` is always false -- so a typo turns off the
+* payload cap and the ReDoS guard at once, silently, leaving the same open
+* service the token check guards against. Validated here rather than at the
+* const so the throw surfaces through the adapter's boot() handler as a clean
+* exit rather than an uncaught import-time stack trace.
+*
 * On the scopes: grammar dependencies resolve silently when unmet --
 * source.cfscript depends on source.sql, and a missing dependency degrades
 * highlighting rather than throwing. Failing at boot beats shipping quietly
@@ -68,6 +91,9 @@ export async function boot() {
 	if (!TOKEN) {
 		throw new Error('HIGHLIGHT_TOKEN is not set -- refusing to start')
 	}
+
+	assertPositiveInt('MAX_BYTES', MAX_BYTES)
+	assertPositiveInt('MAX_LINE_LENGTH', MAX_LINE_LENGTH)
 
 	const starryNight = await init()
 	const missing = starryNight.missingScopes()
