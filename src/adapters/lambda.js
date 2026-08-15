@@ -39,7 +39,7 @@ export async function handler(event) {
 	// already buffered the whole body by this point -- and rejecting on a
 	// *declared* length lets a lying header refuse a perfectly small payload.
 	// service.js measures the actual bytes instead.
-	var readBody = () => event.isBase64Encoded
+	var body = event.isBase64Encoded
 		? Buffer.from(event.body ?? "", "base64").toString("utf8")
 		: (event.body ?? "");
 
@@ -57,7 +57,7 @@ export async function handler(event) {
 		// case-insensitive lookup is needed. An absent header is undefined, which
 		// tokenMatches rejects -- that is the 401 path, not a missing-data case.
 		token: event.headers["x-highlight-token"],
-		readBody
+		body
 	}));
 }
 

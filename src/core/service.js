@@ -108,23 +108,18 @@ export async function boot() {
 /**
 * Handle one request.
 *
-* `readBody` is a FUNCTION, not a string, and that is load-bearing. It is called
-* only after authorization passes: an unauthenticated caller's body is never
-* read before being told no. Passing an already-assembled string here would
-* have quietly turned a 401-then-read into a read-then-401.
-*
-* The adapters supply different implementations -- Lambda hands back an
-* already-buffered string, the HTTP server returns a promise that buffers the
-* stream.
+* `body` arrives fully read, which means it is read before auth. Acceptable in
+* both places this runs: Lambda has already buffered the whole body before the
+* handler is invoked, and server.js only faces local development traffic.
 *
 * @param {object} request
 * @param {string} request.method
 * @param {string} request.path
 * @param {string|undefined} request.token   x-highlight-token header, if any
-* @param {() => Promise<string>|string} request.readBody
+* @param {string} request.body   raw request body, empty string when absent
 * @returns {Promise<{status: number, payload: object}>}
 */
-export async function handleRequest({method, path, token, readBody}) {
+export async function handleRequest({method, path, token, body}) {
 	// Unauthenticated, and reveals nothing beyond liveness. Serves the container
 	// healthcheck locally, and is the target for a keep-warm ping on Lambda.
 	if (method === "GET" && path === "/health") {
@@ -143,24 +138,14 @@ export async function handleRequest({method, path, token, readBody}) {
 		return {status: 401, payload: {error: "Unauthorized"}};
 	}
 
-	try {
-		var raw = await readBody();
-	} catch (error) {
-		// A rejection here is a transport failure (a socket error), not a
-		// contract outcome.
-		console.error(error);
-
-		return {status: 500, payload: {error: error.message}};
-	}
-
 	// Authoritative, unlike a declared Content-Length, which can lie or be
 	// absent.
-	if (Buffer.byteLength(raw, "utf8") > MAX_BYTES) {
+	if (Buffer.byteLength(body, "utf8") > MAX_BYTES) {
 		return {status: 413, payload: {error: "Payload too large"}};
 	}
 
 	try {
-		var body = JSON.parse(raw);
+		var input = JSON.parse(body);
 	} catch {
 		return {status: 400, payload: {error: "Invalid JSON"}};
 	}
@@ -170,11 +155,11 @@ export async function handleRequest({method, path, token, readBody}) {
 	// every property read below is a plain access rather than a guarded one --
 	// `null` is the case that would otherwise throw, since typeof null is
 	// 'object'. An array falls through to the `code` check and fails there.
-	if (body === null || typeof body !== "object") {
+	if (input === null || typeof input !== "object") {
 		return {status: 400, payload: {error: BAD_SHAPE}};
 	}
 
-	if (typeof body.code !== "string") {
+	if (typeof input.code !== "string") {
 		return {status: 400, payload: {error: BAD_SHAPE}};
 	}
 
@@ -187,7 +172,7 @@ export async function handleRequest({method, path, token, readBody}) {
 	// null and undefined pass deliberately. Both already mean "no language" and
 	// yield highlighted:false, and a JSON client serializing an absent value as
 	// null is ordinary. Rejecting it would break a working call for no gain.
-	if (body.language != null && typeof body.language !== "string") {
+	if (input.language != null && typeof input.language !== "string") {
 		return {status: 400, payload: {error: BAD_SHAPE}};
 	}
 
@@ -206,7 +191,7 @@ export async function handleRequest({method, path, token, readBody}) {
 	// which is uncatchable. That failure is only ever visible from outside the
 	// process. See the MAX_LINE_LENGTH notes in core/highlight.js.
 	try {
-		return {status: 200, payload: highlight(body.code, body.language)};
+		return {status: 200, payload: highlight(input.code, input.language)};
 	} catch (error) {
 		console.error(error);
 
