@@ -39,6 +39,12 @@
   where a pre-declared `let x` above the block is not. Use `let` only when
   block scoping is doing real work - a per-iteration binding that a closure
   must capture, for example. Do not use `const`.
+* **Never write a bare `var x;` just to assign it in a block below.** Declare
+  at the first assignment - hoisting already makes it visible after the block,
+  so the pre-declaration is pure noise. A bare declaration is legitimate only
+  for module state assigned inside one function and read by others, where the
+  assignment site is the wrong scope (starryNight in highlight.js is the
+  example).
 * **Use double quotes for strings, not single quotes.** Template literals are
   fine when interpolating.
 * **End statements with semicolons.** No ASI reliance.

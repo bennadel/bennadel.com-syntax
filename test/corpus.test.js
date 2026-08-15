@@ -133,10 +133,8 @@ for (var entry of entries) {
 		continue;
 	}
 
-	var expected;
-
 	try {
-		expected = await readFile(new URL(goldenName, DIR), "utf8");
+		var expected = await readFile(new URL(goldenName, DIR), "utf8");
 	} catch {
 		fail(entry, `no golden file -- run with --update to create ${goldenName}`);
 		continue;

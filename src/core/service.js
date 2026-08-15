@@ -143,10 +143,8 @@ export async function handleRequest({method, path, token, readBody}) {
 		return {status: 401, payload: {error: "Unauthorized"}};
 	}
 
-	var raw;
-
 	try {
-		raw = await readBody();
+		var raw = await readBody();
 	} catch (error) {
 		// A rejection here is a transport failure (a socket error), not a
 		// contract outcome.
@@ -161,10 +159,8 @@ export async function handleRequest({method, path, token, readBody}) {
 		return {status: 413, payload: {error: "Payload too large"}};
 	}
 
-	var body;
-
 	try {
-		body = JSON.parse(raw);
+		var body = JSON.parse(raw);
 	} catch {
 		return {status: 400, payload: {error: "Invalid JSON"}};
 	}

@@ -46,14 +46,12 @@ var server = createServer(async (request, response) => {
 		return;
 	}
 
-	var {pathname} = url;
-
 	// readBody is passed as a function, not a string: service.js calls it only
 	// after authorization passes, so an unauthenticated caller still cannot push
 	// a payload before being refused.
 	var {status, payload} = await handleRequest({
 		method: request.method,
-		path: pathname,
+		path: url.pathname,
 		token: request.headers["x-highlight-token"],
 		readBody: () => readBody(request)
 	});

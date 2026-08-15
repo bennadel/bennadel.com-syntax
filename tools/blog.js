@@ -157,10 +157,8 @@ export function normalizeUrl(input) {
 		? trimmed
 		: `https://${trimmed.replace(/^\/*/, "www.bennadel.com/")}`;
 
-	var url;
-
 	try {
-		url = new URL(withScheme);
+		var url = new URL(withScheme);
 	} catch {
 		throw new Error(`Not a URL: ${trimmed}`);
 	}

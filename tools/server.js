@@ -71,12 +71,6 @@ import {fetchBlocks} from "./blog.js";
 
 var PORT = Number(process.env.PORT ?? 3001);
 
-/**
-* The live starry-night instance. Only the scope count is read, for the startup
-* line; highlighting goes through src/core/highlight.js like everywhere else.
-*/
-var starryNight;
-
 var FIXTURES = new URL("../test/__fixtures__/", import.meta.url);
 
 /**
@@ -198,8 +192,10 @@ var server = createServer(async (request, response) => {
 try {
 	// Registers exactly what the service registers, and nothing more. Do not add
 	// grammars here: a grammar set of its own is exactly how this page would come
-	// to show output the service does not actually produce.
-	starryNight = await init();
+	// to show output the service does not actually produce. Only the scope count
+	// is read, for the startup line; highlighting goes through
+	// src/core/highlight.js like everywhere else.
+	var starryNight = await init();
 
 	server.listen(PORT, () => {
 		console.log(`tools on ${PORT}, ${starryNight.scopes().length} grammars (/, /blog)`);
