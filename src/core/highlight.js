@@ -1,9 +1,9 @@
-import {createStarryNight, all} from '@wooorm/starry-night'
-import {toHtml} from 'hast-util-to-html'
+import {createStarryNight, all} from "@wooorm/starry-night";
+import {toHtml} from "hast-util-to-html";
 
-import {loadCfmlGrammars, CFML_TAG, CFML_SCRIPT} from '../grammars/cfml.js'
+import {loadCfmlGrammars, CFML_TAG, CFML_SCRIPT} from "../grammars/cfml.js";
 
-let starryNight
+var starryNight;
 
 // Refuse to highlight a block containing a line longer than this.
 //
@@ -30,14 +30,14 @@ let starryNight
 // Exported so test/corpus.test.js can assert the boundary from both sides --
 // exactly at the limit still highlights, one over refuses -- without hardcoding
 // 200 in a second place that could drift.
-export const MAX_LINE_LENGTH = Number(process.env.MAX_LINE_LENGTH ?? 200)
+export var MAX_LINE_LENGTH = Number(process.env.MAX_LINE_LENGTH ?? 200);
 
 // Local overrides layered on top of Linguist's alias set. Linguist already
 // resolves the common cases ('js', 'cfm', 'cfml', 'bash'); this is only for
 // conventions of our own, or mappings we disagree with.
 // A value of `null` forces the plain-text path, which is a real and necessary
 // override rather than a way of spelling "absent" -- see `txt` below.
-const flagOverrides = new Map([
+var flagOverrides = new Map([
 	// All three below were confirmed against a fence-tag scan of the archive on
 	// 2026-08-04: each is a tag actually in use that resolved to nothing, so the
 	// blocks were rendering as unhighlighted plain text.
@@ -61,10 +61,10 @@ const flagOverrides = new Map([
 
 	// Tag-based. `cfm` and `cfml` resolve upstream; `cf` is our own convention
 	// and Linguist has never listed it.
-	['cf', CFML_TAG],
-	['cfm', CFML_TAG],
-	['cfml', CFML_TAG],
-	['coldfusion', CFML_TAG],
+	["cf", CFML_TAG],
+	["cfm", CFML_TAG],
+	["cfml", CFML_TAG],
+	["coldfusion", CFML_TAG],
 
 	// Script-based. `cfc` and `coldfusion-cfc` resolve upstream, to the file
 	// extension's grammar; the rest are ours.
@@ -75,17 +75,17 @@ const flagOverrides = new Map([
 	// type and was the one spelling that rendered as plain text, because
 	// Linguist reaches the grammar through the .cfc file extension rather than
 	// by name.
-	['cfs', CFML_SCRIPT],
-	['cfscript', CFML_SCRIPT],
-	['cfc', CFML_SCRIPT],
-	['coldfusion-cfc', CFML_SCRIPT],
+	["cfs", CFML_SCRIPT],
+	["cfscript", CFML_SCRIPT],
+	["cfc", CFML_SCRIPT],
+	["coldfusion-cfc", CFML_SCRIPT],
 
 	// Same syntax as .gitignore, which already resolves to this scope.
-	['dockerignore', 'source.gitignore'],
+	["dockerignore", "source.gitignore"],
 
 	// Newline-delimited JSON -- every line is a JSON document, and there is no
 	// separate grammar for the container format.
-	['ndjson', 'source.json'],
+	["ndjson", "source.json"],
 
 	// `conf` resolves to `source.ini` upstream, which is wrong twice over: the
 	// archive's `conf` blocks are web-server configs, and INI syntax treats `;`
@@ -103,7 +103,7 @@ const flagOverrides = new Map([
 	//
 	// INI itself is unaffected: `ini` is a separate tag in the archive and still
 	// resolves to `source.ini` on its own.
-	['conf', 'source.nginx'],
+	["conf", "source.nginx"],
 
 	// `txt` resolves to `text.adblock` with the full grammar set loaded, and
 	// adblock filter syntax treats a leading `!` as a comment and `||`/`^` as
@@ -118,16 +118,16 @@ const flagOverrides = new Map([
 	// grammar, but curation was declined: a whitelist is wrong once
 	// readers can submit code in languages the site owner never uses. Overrides
 	// are the chosen instrument, and this is one.
-	['txt', null]
-])
+	["txt", null]
+]);
 
 // Linguist's two spellings are listed alongside ours on purpose. Nothing routes
 // to them today, but a future override that forgets to use the
 // CFML_SCRIPT constant would otherwise lose the tag-vs-script correction
 // silently, which is exactly the class of bug this file guards against.
-const SCRIPT_SCOPES = new Set([CFML_SCRIPT, 'source.cfscript', 'source.cfscript.patched'])
+var SCRIPT_SCOPES = new Set([CFML_SCRIPT, "source.cfscript", "source.cfscript.patched"]);
 
-const ESCAPES = {'&': '&amp;', '<': '&lt;', '>': '&gt;'}
+var ESCAPES = {"&": "&amp;", "<": "&lt;", ">": "&gt;"};
 
 /**
 * Two reasons this returns highlighted:false -- no grammar matched the flag, or
@@ -139,17 +139,17 @@ const ESCAPES = {'&': '&amp;', '<': '&lt;', '>': '&gt;'}
 * @returns {{html: string, highlighted: boolean, resolvedLanguage: string|null}}
 */
 export function highlight(code, flag) {
-	const source = normalize(code)
-	const scope = refineScope(resolveScope(flag), source)
+	var source = normalize(code);
+	var scope = refineScope(resolveScope(flag), source);
 
 	// No grammar -> escaped plain text. Same shape as a successful response so
 	// callers never branch; the flag is for logging, not control flow.
-	if (!scope) return plain(source)
+	if (!scope) return plain(source);
 
 	// Checked AFTER resolving the scope purely so the log can name the grammar
 	// that was skipped -- an unknown language has already returned above, so
 	// this never runs on a block that was not going to be highlighted anyway.
-	const longest = longestLine(source)
+	var longest = longestLine(source);
 
 	if (longest.length > MAX_LINE_LENGTH) {
 		// Loud on purpose. A silent refusal means unhighlighted HTML gets stored
@@ -159,34 +159,34 @@ export function highlight(code, flag) {
 		console.warn(
 			`highlight: refused ${scope} -- line ${longest.number} is ` +
 			`${longest.length} chars, limit ${MAX_LINE_LENGTH}`
-		)
+		);
 
-		return plain(source)
+		return plain(source);
 	}
 
-	const tree = starryNight.highlight(source, scope)
-	const lines = splitLines(tree.children)
+	var tree = starryNight.highlight(source, scope);
+	var lines = splitLines(tree.children);
 
 	// Rejoin with explicit newline text nodes. No wrapper element -- the caller
 	// owns <pre><code>. Because nothing crosses a newline, the caller can also
 	// split this string on \n later to add line numbers or anchors without ever
 	// re-running the highlighter.
-	const children = lines.flatMap((line, index) =>
-		index === 0 ? line : [{type: 'text', value: '\n'}, ...line]
-	)
+	var children = lines.flatMap((line, index) =>
+		index === 0 ? line : [{type: "text", value: "\n"}, ...line]
+	);
 
 	return {
 		html: toHtml(
-			{type: 'root', children: escapeTree(children)},
+			{type: "root", children: escapeTree(children)},
 			{allowDangerousHtml: true}
 		),
 		highlighted: true,
 		resolvedLanguage: scope
-	}
+	};
 }
 
 export async function init() {
-	starryNight = await createStarryNight(all)
+	starryNight = await createStarryNight(all);
 
 	// After the stock set. These declare their own scope names, so this ADDS
 	// `embedding.cfml` and `embedding.cfml.cfs` rather than replacing Linguist's
@@ -197,9 +197,9 @@ export async function init() {
 	// `boot()` calls missingScopes() straight after this. These grammars inline
 	// everything and declare no dependencies, so it should stay empty; if it ever
 	// does not, a patch has introduced an include that is not registered.
-	await starryNight.register(await loadCfmlGrammars())
+	await starryNight.register(await loadCfmlGrammars());
 
-	return starryNight
+	return starryNight;
 }
 
 /**
@@ -216,7 +216,7 @@ export async function init() {
 * tabs/spaces. Tab width is a CSS concern (`tab-size`).
 */
 export function normalize(code) {
-	return String(code).replace(/\r\n?/g, '\n').replace(/\n$/, '')
+	return String(code).replace(/\r\n?/g, "\n").replace(/\n$/, "");
 }
 
 /**
@@ -228,24 +228,24 @@ export function normalize(code) {
 * stack. This is O(n) with no allocation.
 */
 export function longestLine(source) {
-	let longest = 0
-	let number = 1
-	let current = 1
-	let start = 0
+	var longest = 0;
+	var number = 1;
+	var current = 1;
+	var start = 0;
 
 	for (;;) {
-		const index = source.indexOf('\n', start)
-		const length = (index === -1 ? source.length : index) - start
+		var index = source.indexOf("\n", start);
+		var length = (index === -1 ? source.length : index) - start;
 
 		if (length > longest) {
-			longest = length
-			number = current
+			longest = length;
+			number = current;
 		}
 
-		if (index === -1) return {length: longest, number}
+		if (index === -1) return {length: longest, number};
 
-		start = index + 1
-		current++
+		start = index + 1;
+		current++;
 	}
 }
 
@@ -255,16 +255,16 @@ export function longestLine(source) {
 * which is a normal outcome, not an error.
 */
 function resolveScope(flag) {
-	if (!flag) return undefined
-	const normalized = String(flag).trim().toLowerCase()
-	if (!normalized) return undefined
+	if (!flag) return undefined;
+	var normalized = String(flag).trim().toLowerCase();
+	if (!normalized) return undefined;
 
 	// `has`, not `??`. A `null` override means "force plain text", and `??` would
 	// treat it as absent and fall straight through to Linguist -- which is the
 	// exact lookup the override exists to suppress.
-	if (flagOverrides.has(normalized)) return flagOverrides.get(normalized) ?? undefined
+	if (flagOverrides.has(normalized)) return flagOverrides.get(normalized) ?? undefined;
 
-	return starryNight.flagToScope(normalized)
+	return starryNight.flagToScope(normalized);
 }
 
 /**
@@ -295,9 +295,9 @@ function refineScope(scope, source) {
 	// Both spellings: the stock scope, and our patched wrapper around it. Listing
 	// both means an override that forgets to point at the patched grammar still
 	// gets the tag-vs-script correction rather than silently losing it.
-	if (SCRIPT_SCOPES.has(scope) && looksTagBased(source)) return CFML_TAG
+	if (SCRIPT_SCOPES.has(scope) && looksTagBased(source)) return CFML_TAG;
 
-	return scope
+	return scope;
 }
 
 /**
@@ -315,7 +315,7 @@ function refineScope(scope, source) {
 * as tag-based as a full file.
 */
 function looksTagBased(source) {
-	return /^[ \t]*<cf[a-z]/im.test(source)
+	return /^[ \t]*<cf[a-z]/im.test(source);
 }
 
 /**
@@ -335,7 +335,7 @@ function plain(source) {
 		html: escapeText(source),
 		highlighted: false,
 		resolvedLanguage: null
-	}
+	};
 }
 
 /**
@@ -346,26 +346,26 @@ function plain(source) {
 * line. Returns one array of nodes per line.
 */
 function splitLines(nodes) {
-	const lines = [[]]
-	const push = (node) => lines[lines.length - 1].push(node)
+	var lines = [[]];
+	var push = (node) => lines[lines.length - 1].push(node);
 
-	for (const node of nodes) {
-		if (node.type === 'text') {
-			const parts = node.value.split(/\r?\n/)
-			for (const [index, part] of parts.entries()) {
-				if (index > 0) lines.push([])
-				if (part) push({type: 'text', value: part})
+	for (var node of nodes) {
+		if (node.type === "text") {
+			var parts = node.value.split(/\r?\n/);
+			for (var [index, part] of parts.entries()) {
+				if (index > 0) lines.push([]);
+				if (part) push({type: "text", value: part});
 			}
 		} else {
 			// Recurse, then re-wrap each resulting line in a clone of this element.
-			for (const [index, childLine] of splitLines(node.children).entries()) {
-				if (index > 0) lines.push([])
-				if (childLine.length) push({...node, children: childLine})
+			for (var [index, childLine] of splitLines(node.children).entries()) {
+				if (index > 0) lines.push([]);
+				if (childLine.length) push({...node, children: childLine});
 			}
 		}
 	}
 
-	return lines
+	return lines;
 }
 
 /**
@@ -379,10 +379,10 @@ function splitLines(nodes) {
 */
 function escapeTree(nodes) {
 	return nodes.map((node) =>
-		node.type === 'text'
-			? {type: 'raw', value: escapeText(node.value)}
+		node.type === "text"
+			? {type: "raw", value: escapeText(node.value)}
 			: {...node, children: escapeTree(node.children)}
-	)
+	);
 }
 
 /**
@@ -413,5 +413,5 @@ function escapeTree(nodes) {
 * rather than a prior one, so no replacement can be double-escaped.
 */
 function escapeText(value) {
-	return value.replace(/[&<>]/g, (character) => ESCAPES[character])
+	return value.replace(/[&<>]/g, (character) => ESCAPES[character]);
 }

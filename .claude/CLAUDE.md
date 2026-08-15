@@ -32,6 +32,17 @@
   `dist/` in .gitignore. Write those as "do not do X, because Y", not as "there
   is no X". If it cannot be phrased that way, it does not need saying.
 
+## JavaScript Syntax
+
+* **Declare variables with `var`, not `let` or `const`.** Function-scoped
+  hoisting is a feature here: `var x = ...` inside a try block is readable
+  where a pre-declared `let x` above the block is not. Use `let` only when
+  block scoping is doing real work - a per-iteration binding that a closure
+  must capture, for example. Do not use `const`.
+* **Use double quotes for strings, not single quotes.** Template literals are
+  fine when interpolating.
+* **End statements with semicolons.** No ASI reliance.
+
 ## This repo
 
 * **Anything under `src/` ships in the Lambda zip.** `.dockerignore` denies by

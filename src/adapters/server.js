@@ -1,8 +1,8 @@
-import {createServer} from 'node:http'
+import {createServer} from "node:http";
 
-import {boot, handleRequest} from '../core/service.js'
+import {boot, handleRequest} from "../core/service.js";
 
-const PORT = Number(process.env.PORT ?? 3000)
+var PORT = Number(process.env.PORT ?? 3000);
 
 /**
 * Deliberately thin. Auth, routing, validation, and the highlight call all live
@@ -27,49 +27,47 @@ const PORT = Number(process.env.PORT ?? 3000)
 // already meaningful to Docker and Compose -- and because the message is more
 // useful than a stack trace.
 try {
-	var starryNight = await boot()
+	var starryNight = await boot();
 } catch (error) {
-	console.error(error.message)
-	process.exit(1)
+	console.error(error.message);
+	process.exit(1);
 }
 
-const server = createServer(async (request, response) => {
+var server = createServer(async (request, response) => {
 	// llhttp accepts request-targets that are not valid URLs (`//%25`, `//[`),
 	// and `new URL` throws on them. Unguarded, that rejection is unhandled and
 	// Node kills the process -- a pre-auth crash from one malformed line. Lambda
 	// never sees this: its Function URL hands service.js an already-parsed path.
-	let url
-
 	try {
-		url = new URL(request.url, 'http://localhost')
+		var url = new URL(request.url, "http://localhost");
 	} catch {
-		send(response, 400, {error: 'Bad request'})
+		send(response, 400, {error: "Bad request"});
 
-		return
+		return;
 	}
 
-	const {pathname} = url
+	var {pathname} = url;
 
 	// readBody is passed as a function, not a string: service.js calls it only
 	// after authorization passes, so an unauthenticated caller still cannot push
 	// a payload before being refused.
-	const {status, payload} = await handleRequest({
+	var {status, payload} = await handleRequest({
 		method: request.method,
 		path: pathname,
-		token: request.headers['x-highlight-token'],
+		token: request.headers["x-highlight-token"],
 		readBody: () => readBody(request)
-	})
+	});
 
-	send(response, status, payload)
-})
+	send(response, status, payload);
+});
 
 server.listen(PORT, () => {
-	console.log(`listening on ${PORT}, ${starryNight.scopes().length} grammars`)
-})
+	console.log(`listening on ${PORT}, ${starryNight.scopes().length} grammars`);
+});
 
-process.on('SIGTERM', () => {
-	server.close(() => process.exit(0))
-})
+process.on("SIGTERM", () => {
+	server.close(() => process.exit(0));
+});
 
 /**
 * Buffer the request body and return the raw string, letting service.js do the
@@ -78,20 +76,20 @@ process.on('SIGTERM', () => {
 */
 function readBody(request) {
 	return new Promise((resolve, reject) => {
-		const chunks = []
+		var chunks = [];
 
-		request.on('data', (chunk) => chunks.push(chunk))
-		request.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')))
-		request.on('error', reject)
-	})
+		request.on("data", (chunk) => chunks.push(chunk));
+		request.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
+		request.on("error", reject);
+	});
 }
 
 function send(response, status, payload) {
-	const body = JSON.stringify(payload)
+	var body = JSON.stringify(payload);
 
 	response.writeHead(status, {
-		'content-type': 'application/json; charset=utf-8',
-		'content-length': Buffer.byteLength(body)
-	})
-	response.end(body)
+		"content-type": "application/json; charset=utf-8",
+		"content-length": Buffer.byteLength(body)
+	});
+	response.end(body);
 }

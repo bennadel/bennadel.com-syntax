@@ -64,29 +64,29 @@
 * patch applied to the file applies to every context in it.
 */
 
-import {readFile} from 'node:fs/promises'
+import {readFile} from "node:fs/promises";
 
-const DIR = new URL('./', import.meta.url)
+var DIR = new URL("./", import.meta.url);
 
 /** Tag-based CFML: `.cfm` files, and `.cfc` files written with tags. */
-export const CFML_TAG = 'embedding.cfml'
+export var CFML_TAG = "embedding.cfml";
 
 /** Script-based CFML: `cfscript` blocks and script-style `.cfc` components. */
-export const CFML_SCRIPT = 'embedding.cfml.cfs'
+export var CFML_SCRIPT = "embedding.cfml.cfs";
 
 /**
 * file -> [patch names]. Exported so the test suite can assert that every patch
 * actually ran, rather than trusting that it did.
 */
-export const applied = new Map()
+export var applied = new Map();
 
-const PATCHES = [patchBareInclude, patchSafeNavigation]
+var PATCHES = [patchBareInclude, patchSafeNavigation];
 
 export async function loadCfmlGrammars() {
 	return Promise.all([
-		load('cfml.tmLanguage.json'),
-		load('cfml-cfs.tmLanguage.json')
-	])
+		load("cfml.tmLanguage.json"),
+		load("cfml-cfs.tmLanguage.json")
+	]);
 }
 
 /**
@@ -102,11 +102,11 @@ export async function loadCfmlGrammars() {
 * inline everything they use. `missingScopes()` at boot confirms it.
 */
 async function load(file) {
-	const grammar = JSON.parse(await readFile(new URL(file, DIR), 'utf8'))
+	var grammar = JSON.parse(await readFile(new URL(file, DIR), "utf8"));
 
-	applied.set(file, PATCHES.map((patch) => patch(grammar, file)))
+	applied.set(file, PATCHES.map((patch) => patch(grammar, file)));
 
-	return {...grammar, names: [], extensions: [], dependencies: []}
+	return {...grammar, names: [], extensions: [], dependencies: []};
 }
 
 /**
@@ -167,46 +167,46 @@ async function load(file) {
 * used only so the local patch reads first when someone opens the array.
 */
 function patchBareInclude(grammar, file) {
-	const ORDER = 'source-cfml-script-statements'
-	const TARGET = 'source-cfml-script-tag-in-script'
+	var ORDER = "source-cfml-script-statements";
+	var TARGET = "source-cfml-script-tag-in-script";
 
 	// Deliberately unguarded. If upstream renames either entry this throws a
 	// TypeError naming the exact expression, file and line -- strictly more
 	// precise than a hand-written message, and it cannot drift out of sync with
 	// the code the way one can.
-	const order = grammar.repository[ORDER].patterns
-	const target = grammar.repository[TARGET].patterns
+	var order = grammar.repository[ORDER].patterns;
+	var target = grammar.repository[TARGET].patterns;
 
-	const tagIndex = order.findIndex((p) => p.include === `#${TARGET}`)
-	const exprIndex = order.findIndex((p) => p.include === '#source-cfml-script-expressions')
+	var tagIndex = order.findIndex((p) => p.include === `#${TARGET}`);
+	var exprIndex = order.findIndex((p) => p.include === "#source-cfml-script-expressions");
 
 	if (tagIndex < 0 || exprIndex < 0) {
-		throw new Error(`${file}: ${ORDER} no longer includes both tag-in-script and expressions`)
+		throw new Error(`${file}: ${ORDER} no longer includes both tag-in-script and expressions`);
 	}
 
 	if (tagIndex > exprIndex) {
 		throw new Error(
 			`${file}: expressions (${exprIndex}) now precedes tag-in-script (${tagIndex}); ` +
-			'the bare-include patch can no longer win on pattern order'
-		)
+			"the bare-include patch can no longer win on pattern order"
+		);
 	}
 
 	// Anchor check: the upstream rule we are compensating for must still exist,
 	// so this patch is removed rather than duplicated once upstream fixes it.
-	const upstreamHandlesIt = target.some((p) =>
-		typeof p.begin === 'string' && /\|include\|/.test(p.begin)
-	)
+	var upstreamHandlesIt = target.some((p) =>
+		typeof p.begin === "string" && /\|include\|/.test(p.begin)
+	);
 
 	if (!upstreamHandlesIt) {
-		throw new Error(`${file}: the tag-in-script alternation no longer lists 'include'`)
+		throw new Error(`${file}: the tag-in-script alternation no longer lists 'include'`);
 	}
 
 	target.unshift({
-		match: '(?i)\\b(include)\\b(?=\\s*["\'])',
-		captures: {1: {name: 'entity.name.tag.script.cfml'}}
-	})
+		match: "(?i)\\b(include)\\b(?=\\s*[\"'])",
+		captures: {1: {name: "entity.name.tag.script.cfml"}}
+	});
 
-	return 'bare-include'
+	return "bare-include";
 }
 
 /**
@@ -221,29 +221,29 @@ function patchBareInclude(grammar, file) {
 * single-line `match` with no state -- the only kind that belongs in a patch.
 */
 function patchSafeNavigation(grammar, file) {
-	const TARGET = 'source-cfml-script-operators'
+	var TARGET = "source-cfml-script-operators";
 
 	// Unguarded for the same reason as above: a rename throws a TypeError that
 	// names the expression.
-	const target = grammar.repository[TARGET].patterns
+	var target = grammar.repository[TARGET].patterns;
 
 	// Anchor check. If upstream adds its own rule this patch becomes a duplicate
 	// that shadows theirs -- delete it rather than leave two rules racing.
-	const upstreamHandlesIt = target.some((p) =>
-		typeof p.match === 'string' && p.match.includes('\\?\\.')
-	)
+	var upstreamHandlesIt = target.some((p) =>
+		typeof p.match === "string" && p.match.includes("\\?\\.")
+	);
 
 	if (upstreamHandlesIt) {
 		throw new Error(
 			`${file}: ${TARGET} now has its own '?.' rule; ` +
-			'remove patchSafeNavigation rather than shadowing it'
-		)
+			"remove patchSafeNavigation rather than shadowing it"
+		);
 	}
 
 	target.unshift({
-		match: '\\?\\.',
-		name: 'keyword.operator.safe-navigation.cfml'
-	})
+		match: "\\?\\.",
+		name: "keyword.operator.safe-navigation.cfml"
+	});
 
-	return 'safe-navigation'
+	return "safe-navigation";
 }

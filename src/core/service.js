@@ -1,6 +1,6 @@
-import {timingSafeEqual} from 'node:crypto'
+import {timingSafeEqual} from "node:crypto";
 
-import {init, highlight, MAX_LINE_LENGTH} from './highlight.js'
+import {init, highlight, MAX_LINE_LENGTH} from "./highlight.js";
 
 /**
 * Transport-neutral request handling: auth, routing, validation, and the call
@@ -34,13 +34,13 @@ import {init, highlight, MAX_LINE_LENGTH} from './highlight.js'
 * agree byte for byte.
 */
 
-const TOKEN = process.env.HIGHLIGHT_TOKEN ?? ''
+var TOKEN = process.env.HIGHLIGHT_TOKEN ?? "";
 
-const MAX_BYTES = Number(process.env.MAX_BYTES ?? 262144)
+var MAX_BYTES = Number(process.env.MAX_BYTES ?? 262144);
 
 // One string, one place -- it has to stay in sync with the shape checks in
 // handleRequest, and it is returned from more than one call site.
-const BAD_SHAPE = 'Expected { code: string, language?: string }'
+var BAD_SHAPE = "Expected { code: string, language?: string }";
 
 /**
 * Reject a numeric config value that is not a positive integer, naming the
@@ -51,10 +51,10 @@ const BAD_SHAPE = 'Expected { code: string, language?: string }'
 */
 export function assertPositiveInt(name, value) {
 	if (!Number.isInteger(value) || value <= 0) {
-		throw new Error(`${name} must be a positive integer; check the ${name} env var (got ${value})`)
+		throw new Error(`${name} must be a positive integer; check the ${name} env var (got ${value})`);
 	}
 
-	return value
+	return value;
 }
 
 /**
@@ -89,20 +89,20 @@ export function assertPositiveInt(name, value) {
 */
 export async function boot() {
 	if (!TOKEN) {
-		throw new Error('HIGHLIGHT_TOKEN is not set -- refusing to start')
+		throw new Error("HIGHLIGHT_TOKEN is not set -- refusing to start");
 	}
 
-	assertPositiveInt('MAX_BYTES', MAX_BYTES)
-	assertPositiveInt('MAX_LINE_LENGTH', MAX_LINE_LENGTH)
+	assertPositiveInt("MAX_BYTES", MAX_BYTES);
+	assertPositiveInt("MAX_LINE_LENGTH", MAX_LINE_LENGTH);
 
-	const starryNight = await init()
-	const missing = starryNight.missingScopes()
+	var starryNight = await init();
+	var missing = starryNight.missingScopes();
 
 	if (missing.length > 0) {
-		throw new Error(`Missing grammar scopes: ${missing.join(', ')}`)
+		throw new Error(`Missing grammar scopes: ${missing.join(", ")}`);
 	}
 
-	return starryNight
+	return starryNight;
 }
 
 /**
@@ -127,46 +127,46 @@ export async function boot() {
 export async function handleRequest({method, path, token, readBody}) {
 	// Unauthenticated, and reveals nothing beyond liveness. Serves the container
 	// healthcheck locally, and is the target for a keep-warm ping on Lambda.
-	if (method === 'GET' && path === '/health') {
-		return {status: 200, payload: {ok: true}}
+	if (method === "GET" && path === "/health") {
+		return {status: 200, payload: {ok: true}};
 	}
 
-	if (path !== '/highlight') {
-		return {status: 404, payload: {error: 'Not found'}}
+	if (path !== "/highlight") {
+		return {status: 404, payload: {error: "Not found"}};
 	}
 
-	if (method !== 'POST') {
-		return {status: 405, payload: {error: 'Method not allowed'}}
+	if (method !== "POST") {
+		return {status: 405, payload: {error: "Method not allowed"}};
 	}
 
 	if (!tokenMatches(token)) {
-		return {status: 401, payload: {error: 'Unauthorized'}}
+		return {status: 401, payload: {error: "Unauthorized"}};
 	}
 
-	let raw
+	var raw;
 
 	try {
-		raw = await readBody()
+		raw = await readBody();
 	} catch (error) {
 		// A rejection here is a transport failure (a socket error), not a
 		// contract outcome.
-		console.error(error)
+		console.error(error);
 
-		return {status: 500, payload: {error: error.message}}
+		return {status: 500, payload: {error: error.message}};
 	}
 
 	// Authoritative, unlike a declared Content-Length, which can lie or be
 	// absent.
-	if (Buffer.byteLength(raw, 'utf8') > MAX_BYTES) {
-		return {status: 413, payload: {error: 'Payload too large'}}
+	if (Buffer.byteLength(raw, "utf8") > MAX_BYTES) {
+		return {status: 413, payload: {error: "Payload too large"}};
 	}
 
-	let body
+	var body;
 
 	try {
-		body = JSON.parse(raw)
+		body = JSON.parse(raw);
 	} catch {
-		return {status: 400, payload: {error: 'Invalid JSON'}}
+		return {status: 400, payload: {error: "Invalid JSON"}};
 	}
 
 	// Parsing cleanly is not the same as being handed an object: `null`, `42`,
@@ -174,12 +174,12 @@ export async function handleRequest({method, path, token, readBody}) {
 	// every property read below is a plain access rather than a guarded one --
 	// `null` is the case that would otherwise throw, since typeof null is
 	// 'object'. An array falls through to the `code` check and fails there.
-	if (body === null || typeof body !== 'object') {
-		return {status: 400, payload: {error: BAD_SHAPE}}
+	if (body === null || typeof body !== "object") {
+		return {status: 400, payload: {error: BAD_SHAPE}};
 	}
 
-	if (typeof body.code !== 'string') {
-		return {status: 400, payload: {error: BAD_SHAPE}}
+	if (typeof body.code !== "string") {
+		return {status: 400, payload: {error: BAD_SHAPE}};
 	}
 
 	// `language` needs the same check as `code`, for a less obvious reason:
@@ -191,8 +191,8 @@ export async function handleRequest({method, path, token, readBody}) {
 	// null and undefined pass deliberately. Both already mean "no language" and
 	// yield highlighted:false, and a JSON client serializing an absent value as
 	// null is ordinary. Rejecting it would break a working call for no gain.
-	if (body.language != null && typeof body.language !== 'string') {
-		return {status: 400, payload: {error: BAD_SHAPE}}
+	if (body.language != null && typeof body.language !== "string") {
+		return {status: 400, payload: {error: BAD_SHAPE}};
 	}
 
 	// An unknown language or an over-long line is NOT an error -- highlight()
@@ -210,11 +210,11 @@ export async function handleRequest({method, path, token, readBody}) {
 	// which is uncatchable. That failure is only ever visible from outside the
 	// process. See the MAX_LINE_LENGTH notes in core/highlight.js.
 	try {
-		return {status: 200, payload: highlight(body.code, body.language)}
+		return {status: 200, payload: highlight(body.code, body.language)};
 	} catch (error) {
-		console.error(error)
+		console.error(error);
 
-		return {status: 500, payload: {error: error.message}}
+		return {status: 500, payload: {error: error.message}};
 	}
 }
 
@@ -228,10 +228,10 @@ export async function handleRequest({method, path, token, readBody}) {
 * to fall open through.
 */
 function tokenMatches(supplied) {
-	if (typeof supplied !== 'string') return false
+	if (typeof supplied !== "string") return false;
 
-	const a = Buffer.from(supplied)
-	const b = Buffer.from(TOKEN)
+	var a = Buffer.from(supplied);
+	var b = Buffer.from(TOKEN);
 
-	return a.length === b.length && timingSafeEqual(a, b)
+	return a.length === b.length && timingSafeEqual(a, b);
 }

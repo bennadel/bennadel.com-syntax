@@ -45,7 +45,7 @@
 * host. The page is loopback-only already; this is the second lock, not the
 * first.
 */
-const ALLOWED = new Set(['www.bennadel.com', 'bennadel.com'])
+var ALLOWED = new Set(["www.bennadel.com", "bennadel.com"]);
 
 /**
 * Sent because the blog 403s some clients by User-Agent -- `Python-urllib` is
@@ -53,12 +53,12 @@ const ALLOWED = new Set(['www.bennadel.com', 'bennadel.com'])
 * explicit, honest one also means this traffic is identifiable in the access
 * log as a local tool rather than an unknown scraper.
 */
-const AGENT = 'bennadel-syntax-tools/1.0 (local inspection tool)'
+var AGENT = "bennadel-syntax-tools/1.0 (local inspection tool)";
 
-const BLOCK = /<pre>\s*<code class="language-([^"]+)">([\s\S]*?)<\/code>\s*<\/pre>/g
+var BLOCK = /<pre>\s*<code class="language-([^"]+)">([\s\S]*?)<\/code>\s*<\/pre>/g;
 
 /** The wrapper div that carries the filename, searched for behind each match. */
-const FILENAME = /data-gist-filename="([^"]+)"/g
+var FILENAME = /data-gist-filename="([^"]+)"/g;
 
 /**
 * Comments are separated rather than dropped, because they are real archive
@@ -68,7 +68,7 @@ const FILENAME = /data-gist-filename="([^"]+)"/g
 * first comment article's id; a post with no comments has none, and everything
 * counts as body.
 */
-const COMMENT_START = /id="comments_\d+"/
+var COMMENT_START = /id="comments_\d+"/;
 
 /**
 * Single pass, which is what makes it correct: decoding `&lt;` and `&amp;` in
@@ -79,69 +79,69 @@ const COMMENT_START = /id="comments_\d+"/
 * were the only ones found across a 17-post sample), plus the two other named
 * forms an HTML escaper might reasonably produce and the numeric forms.
 */
-const ENTITIES = {
-	'&lt;': '<',
-	'&gt;': '>',
-	'&amp;': '&',
-	'&quot;': '"',
-	'&apos;': "'",
-	'&nbsp;': ' '
-}
+var ENTITIES = {
+	"&lt;": "<",
+	"&gt;": ">",
+	"&amp;": "&",
+	"&quot;": "\"",
+	"&apos;": "'",
+	"&nbsp;": " "
+};
 
 /**
 * @returns {Promise<{url: URL, title: string|null, blocks: Array, commentCount: number}>}
 */
 export async function fetchBlocks(input, {includeComments = false} = {}) {
-	const url = normalizeUrl(input)
+	var url = normalizeUrl(input);
 
-	const response = await fetch(url, {
-		headers: {'user-agent': AGENT, accept: 'text/html'},
+	var response = await fetch(url, {
+		headers: {"user-agent": AGENT, accept: "text/html"},
 		// Without this a hung connection hangs the page with no explanation. 15s
 		// is long for a static page and short enough to read as "it is stuck".
 		signal: AbortSignal.timeout(15_000),
-		redirect: 'follow'
-	})
+		redirect: "follow"
+	});
 
 	if (!response.ok) {
-		throw new Error(`${url.href} returned ${response.status} ${response.statusText}`)
+		throw new Error(`${url.href} returned ${response.status} ${response.statusText}`);
 	}
 
-	const html = await response.text()
+	var html = await response.text();
 
-	const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)
-	const title = titleMatch ? decodeEntities(titleMatch[1]).trim() : null
+	var titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+	var title = titleMatch ? decodeEntities(titleMatch[1]).trim() : null;
 
-	const boundaryMatch = html.match(COMMENT_START)
-	const boundary = boundaryMatch ? boundaryMatch.index : Infinity
+	var boundaryMatch = html.match(COMMENT_START);
+	var boundary = boundaryMatch ? boundaryMatch.index : Infinity;
 
-	const blocks = []
-	let commentCount = 0
+	var blocks = [];
+	var commentCount = 0;
 
-	BLOCK.lastIndex = 0
+	BLOCK.lastIndex = 0;
 
-	for (let match = BLOCK.exec(html); match; match = BLOCK.exec(html)) {
-		const [, flag, escaped] = match
-		const isComment = match.index > boundary
+	for (var match = BLOCK.exec(html); match; match = BLOCK.exec(html)) {
+		var [, flag, escaped] = match;
+		var isComment = match.index > boundary;
 
-		if (isComment) commentCount++
-		if (isComment && !includeComments) continue
+		if (isComment) commentCount++;
+		if (isComment && !includeComments) continue;
 
 		// Look backwards a short way for the wrapper div's filename. Bounded
 		// deliberately: an unbounded search would happily attach the filename from
 		// a block three paragraphs up once the template changes.
-		const preceding = html.slice(Math.max(0, match.index - 300), match.index)
-		const names = [...preceding.matchAll(FILENAME)]
-		const filename = names.length ? names[names.length - 1][1] : null
+		var preceding = html.slice(Math.max(0, match.index - 300), match.index);
+		var names = [...preceding.matchAll(FILENAME)];
+		var filename = names.length ? names[names.length - 1][1] : null;
 
 		blocks.push({
 			flag,
 			filename,
 			isComment,
 			source: decodeEntities(escaped)
-		})
+		});
 	}
 
-	return {url, title, blocks, commentCount}
+	return {url, title, blocks, commentCount};
 }
 
 /**
@@ -149,48 +149,48 @@ export async function fetchBlocks(input, {includeComments = false} = {}) {
 * scheme-less host, or just the path.
 */
 export function normalizeUrl(input) {
-	const trimmed = String(input).trim()
+	var trimmed = String(input).trim();
 
-	if (!trimmed) throw new Error('No URL given.')
+	if (!trimmed) throw new Error("No URL given.");
 
-	const withScheme = /^https?:\/\//i.test(trimmed)
+	var withScheme = /^https?:\/\//i.test(trimmed)
 		? trimmed
-		: `https://${trimmed.replace(/^\/*/, 'www.bennadel.com/')}`
+		: `https://${trimmed.replace(/^\/*/, "www.bennadel.com/")}`;
 
-	let url
+	var url;
 
 	try {
-		url = new URL(withScheme)
+		url = new URL(withScheme);
 	} catch {
-		throw new Error(`Not a URL: ${trimmed}`)
+		throw new Error(`Not a URL: ${trimmed}`);
 	}
 
 	if (!ALLOWED.has(url.hostname)) {
 		throw new Error(
-			`Refused ${url.hostname}. This tool only fetches ${[...ALLOWED].join(' or ')} ` +
-			'-- it runs server-side inside a Docker network, so it is not a general proxy.'
-		)
+			`Refused ${url.hostname}. This tool only fetches ${[...ALLOWED].join(" or ")} ` +
+			"-- it runs server-side inside a Docker network, so it is not a general proxy."
+		);
 	}
 
 	// Downgrading to http would be a silent change to what was asked for.
-	url.protocol = 'https:'
+	url.protocol = "https:";
 
-	return url
+	return url;
 }
 
 function decodeEntities(value) {
 	return value.replace(/&(?:[a-z]+|#\d+|#x[0-9a-f]+);/gi, (entity) => {
-		const named = ENTITIES[entity.toLowerCase()]
+		var named = ENTITIES[entity.toLowerCase()];
 
-		if (named !== undefined) return named
+		if (named !== undefined) return named;
 
-		const numeric = /^&#x/i.test(entity)
+		var numeric = /^&#x/i.test(entity)
 			? Number.parseInt(entity.slice(3, -1), 16)
-			: Number.parseInt(entity.slice(2, -1), 10)
+			: Number.parseInt(entity.slice(2, -1), 10);
 
 		// An entity this does not know is left verbatim rather than dropped. It
 		// would show up in the rendered block as `&hellip;`, which is legible as
 		// "the extractor missed one" -- silently deleting it would not be.
-		return Number.isNaN(numeric) ? entity : String.fromCodePoint(numeric)
-	})
+		return Number.isNaN(numeric) ? entity : String.fromCodePoint(numeric);
+	});
 }

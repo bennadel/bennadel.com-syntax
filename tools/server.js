@@ -63,21 +63,21 @@
 * that silently fails to fire is worse than no watch flag at all.
 */
 
-import {createServer} from 'node:http'
-import {readdir, readFile} from 'node:fs/promises'
+import {createServer} from "node:http";
+import {readdir, readFile} from "node:fs/promises";
 
-import {init, highlight, normalize, MAX_LINE_LENGTH, longestLine} from '../src/core/highlight.js'
-import {fetchBlocks} from './blog.js'
+import {init, highlight, normalize, MAX_LINE_LENGTH, longestLine} from "../src/core/highlight.js";
+import {fetchBlocks} from "./blog.js";
 
-const PORT = Number(process.env.PORT ?? 3001)
+var PORT = Number(process.env.PORT ?? 3001);
 
 /**
 * The live starry-night instance. Only the scope count is read, for the startup
 * line; highlighting goes through src/core/highlight.js like everywhere else.
 */
-let starryNight
+var starryNight;
 
-const FIXTURES = new URL('../test/__fixtures__/', import.meta.url)
+var FIXTURES = new URL("../test/__fixtures__/", import.meta.url);
 
 /**
 * Resolved through the package exports map (`"./style/*": "./style/*.css"`)
@@ -97,10 +97,10 @@ const FIXTURES = new URL('../test/__fixtures__/', import.meta.url)
 * resolves to `core.css.css`, and import.meta.resolve does not check that the
 * file exists, so the mistake surfaces as a readFile ENOENT rather than here.
 */
-const STYLE = ['core', 'both'].map((name) => ({
+var STYLE = ["core", "both"].map((name) => ({
 	name,
 	url: new URL(import.meta.resolve(`@wooorm/starry-night/style/${name}`))
-}))
+}));
 
 /**
 * The chrome every page here shares: colour tokens, typography, and the badge
@@ -112,7 +112,7 @@ const STYLE = ['core', 'both'].map((name) => ({
 * thing they genuinely disagree on: the fixture list is a reading column, the
 * comparison is two code panels side by side.
 */
-const BASE_CSS = `
+var BASE_CSS = `
 	:root { color-scheme: light dark; --page: 62rem;
 		--fg:#1f2328; --bg:#fff; --muted:#59636e; --line:#d1d9e0; --panel:#f6f8fa; }
 	@media (prefers-color-scheme: dark) {
@@ -147,71 +147,71 @@ const BASE_CSS = `
 	pre { overflow-x:auto; border-radius:6px; padding:1rem; margin:0; background:var(--panel); border:1px solid var(--line); }
 	pre code { font:12px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; }
 	code { font-family:ui-monospace, SFMono-Regular, Menlo, monospace; }
-`
+`;
 
-const ESCAPES = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}
+var ESCAPES = {"&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;"};
 
-const server = createServer(async (request, response) => {
-	const {pathname, searchParams} = new URL(request.url, 'http://localhost')
+var server = createServer(async (request, response) => {
+	var {pathname, searchParams} = new URL(request.url, "http://localhost");
 
 	try {
-		const style = STYLE.find(({name}) => pathname === `/style/${name}.css`)
+		var style = STYLE.find(({name}) => pathname === `/style/${name}.css`);
 
 		if (style) {
-			return send(response, 200, 'text/css; charset=utf-8',
-				await readFile(style.url, 'utf8'))
+			return send(response, 200, "text/css; charset=utf-8",
+				await readFile(style.url, "utf8"));
 		}
 
-		if (pathname === '/') {
-			return send(response, 200, 'text/html; charset=utf-8',
-				page(await loadFixtures()))
+		if (pathname === "/") {
+			return send(response, 200, "text/html; charset=utf-8",
+				page(await loadFixtures()));
 		}
 
 		// GET with the URL in the query string rather than a POST, so a result is
 		// linkable and survives a refresh -- the whole workflow here is "look at
 		// this post, change something in src/, restart, look again".
-		if (pathname === '/blog') {
-			const input = searchParams.get('url')
-			const includeComments = searchParams.get('comments') === '1'
+		if (pathname === "/blog") {
+			var input = searchParams.get("url");
+			var includeComments = searchParams.get("comments") === "1";
 
 			// A failed fetch is an ordinary outcome of pasting a URL, not a crash:
 			// it renders as a message above the form with the input still in it.
 			// The catch-all below stays for genuine bugs, which is why this does
 			// not swallow anything broader than the fetch.
-			const [fetched, error] = input
+			var [fetched, error] = input
 				? await fetchBlocks(input, {includeComments})
 					.then((value) => [value, null], (reason) => [null, reason.message])
-				: [null, null]
+				: [null, null];
 
-			return send(response, 200, 'text/html; charset=utf-8',
-				blogPage({input, includeComments, fetched, error}))
+			return send(response, 200, "text/html; charset=utf-8",
+				blogPage({input, includeComments, fetched, error}));
 		}
 
-		send(response, 404, 'text/plain; charset=utf-8', 'Not found\n')
+		send(response, 404, "text/plain; charset=utf-8", "Not found\n");
 	} catch (error) {
 		// Shown rather than swallowed: this is a local tool, and the stack is the
 		// most useful thing it can put on screen.
-		send(response, 500, 'text/plain; charset=utf-8', `${error.stack}\n`)
+		send(response, 500, "text/plain; charset=utf-8", `${error.stack}\n`);
 	}
-})
+});
 
 try {
 	// Registers exactly what the service registers, and nothing more. Do not add
 	// grammars here: a grammar set of its own is exactly how this page would come
 	// to show output the service does not actually produce.
-	starryNight = await init()
+	starryNight = await init();
 
 	server.listen(PORT, () => {
-		console.log(`tools on ${PORT}, ${starryNight.scopes().length} grammars (/, /blog)`)
-	})
+		console.log(`tools on ${PORT}, ${starryNight.scopes().length} grammars (/, /blog)`);
+	});
 } catch (error) {
-	console.error(error.message)
-	process.exit(1)
+	console.error(error.message);
+	process.exit(1);
 }
 
-process.on('SIGTERM', () => {
-	server.close(() => process.exit(0))
-})
+process.on("SIGTERM", () => {
+	server.close(() => process.exit(0));
+});
 
 /**
 * Same convention test/corpus.test.js reads: `<slug>.<language>.code`, where the
@@ -221,23 +221,23 @@ process.on('SIGTERM', () => {
 * asserts on, which is the one way this tool could actively mislead.
 */
 async function loadFixtures() {
-	const entries = (await readdir(FIXTURES))
-		.filter((name) => name.endsWith('.code'))
-		.sort()
+	var entries = (await readdir(FIXTURES))
+		.filter((name) => name.endsWith(".code"))
+		.sort();
 
 	return Promise.all(entries.map(async (entry) => {
-		const parts = entry.split('.')
-		const language = parts[parts.length - 2]
-		const goldenName = entry.replace(/\.code$/, '.html')
+		var parts = entry.split(".");
+		var language = parts[parts.length - 2];
+		var goldenName = entry.replace(/\.code$/, ".html");
 
-		const code = await readFile(new URL(entry, FIXTURES), 'utf8')
+		var code = await readFile(new URL(entry, FIXTURES), "utf8");
 
 		// A fixture whose golden has not been generated yet is a normal state
 		// mid-change, not an error worth crashing the page over.
-		const golden = await readFile(new URL(goldenName, FIXTURES), 'utf8')
-			.catch(() => null)
+		var golden = await readFile(new URL(goldenName, FIXTURES), "utf8")
+			.catch(() => null);
 
-		const result = highlight(code, language)
+		var result = highlight(code, language);
 
 		return {
 			entry,
@@ -246,24 +246,24 @@ async function loadFixtures() {
 			code,
 			golden,
 			result,
-			lines: code.split('\n').length,
+			lines: code.split("\n").length,
 			// Reported, never enforced. The corpus test is what fails on drift;
 			// this only tells you where to look when it does.
 			drift: golden !== null && golden !== result.html
-		}
-	}))
+		};
+	}));
 }
 
 function page(fixtures) {
-	const drifting = fixtures.filter((fixture) => fixture.drift).length
-	const plain = fixtures.filter((fixture) => !fixture.result.highlighted).length
+	var drifting = fixtures.filter((fixture) => fixture.drift).length;
+	var plain = fixtures.filter((fixture) => !fixture.result.highlighted).length;
 
-	const toc = fixtures
+	var toc = fixtures
 		.map((fixture) => {
-			const id = fixture.entry.replace(/[^a-z0-9]+/gi, '-')
-			return `<li><a href="#${escapeHtml(id)}">${escapeHtml(fixture.entry)}</a></li>`
+			var id = fixture.entry.replace(/[^a-z0-9]+/gi, "-");
+			return `<li><a href="#${escapeHtml(id)}">${escapeHtml(fixture.entry)}</a></li>`;
 		})
-		.join('\n\t\t\t')
+		.join("\n\t\t\t");
 
 	return `<!doctype html>
 <html lang="en">
@@ -271,7 +271,7 @@ function page(fixtures) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>syntax fixtures</title>
-${STYLE.map(({name}) => `<link rel="stylesheet" href="/style/${name}.css">`).join('\n')}
+${STYLE.map(({name}) => `<link rel="stylesheet" href="/style/${name}.css">`).join("\n")}
 <style>
 ${BASE_CSS}
 	nav { border: 1px solid var(--line); border-radius: 6px; padding: 1rem 1rem 1rem 2.25rem; margin: 0 0 2rem; background: var(--panel); }
@@ -287,7 +287,7 @@ ${BASE_CSS}
 <h1>syntax fixtures</h1>
 <p class="lede">
 	${fixtures.length} fixtures &middot; ${plain} rendered as plain text &middot;
-	${drifting === 0 ? 'all goldens match' : `<strong>${drifting} differ from their golden</strong>`} &middot;
+	${drifting === 0 ? "all goldens match" : `<strong>${drifting} differ from their golden</strong>`} &middot;
 	MAX_LINE_LENGTH ${MAX_LINE_LENGTH} &middot;
 	<a href="/blog">check a live post &rarr;</a>
 </p>
@@ -302,9 +302,9 @@ ${BASE_CSS}
 		${toc}
 	</ol>
 </nav>
-${fixtures.map(section).join('\n')}
+${fixtures.map(section).join("\n")}
 </body>
-</html>`
+</html>`;
 }
 
 // ---------------------------------------------------------------------------
@@ -312,66 +312,66 @@ ${fixtures.map(section).join('\n')}
 // ---------------------------------------------------------------------------
 
 function section(fixture) {
-	const {entry, goldenName, language, result, lines, golden, drift} = fixture
-	const id = entry.replace(/[^a-z0-9]+/gi, '-')
+	var {entry, goldenName, language, result, lines, golden, drift} = fixture;
+	var id = entry.replace(/[^a-z0-9]+/gi, "-");
 
-	const status = result.highlighted
-		? badge('highlighted', 'yes', 'ok')
-		: badge('highlighted', 'no -- plain text', 'warn')
+	var status = result.highlighted
+		? badge("highlighted", "yes", "ok")
+		: badge("highlighted", "no -- plain text", "warn");
 
-	const resolved = badge('scope', result.resolvedLanguage ?? 'none', result.resolvedLanguage ? 'ok' : 'warn')
+	var resolved = badge("scope", result.resolvedLanguage ?? "none", result.resolvedLanguage ? "ok" : "warn");
 
-	const goldenBadge = golden === null
-		? badge('golden', 'missing', 'warn')
+	var goldenBadge = golden === null
+		? badge("golden", "missing", "warn")
 		: drift
-			? badge('golden', 'DIFFERS', 'bad')
-			: badge('golden', 'matches', 'ok')
+			? badge("golden", "DIFFERS", "bad")
+			: badge("golden", "matches", "ok");
 
 	return `
 <section id="${escapeHtml(id)}">
 	<h2><a href="#${escapeHtml(id)}">${escapeHtml(entry)}</a></h2>
 	<p class="badges">
-		${badge('flag', language, 'neutral')}
+		${badge("flag", language, "neutral")}
 		${resolved}
 		${status}
-		${badge('lines', String(lines), 'neutral')}
+		${badge("lines", String(lines), "neutral")}
 		${goldenBadge}
 	</p>
-	${drift ? `<p class="drift">Live output differs from <code>${escapeHtml(goldenName)}</code>. Either the golden is stale (run <code>docker compose run --rm test-update</code> and read the diff) or highlighting has regressed. <code>test/corpus.test.js</code> is the authority, not this page.</p>` : ''}
+	${drift ? `<p class="drift">Live output differs from <code>${escapeHtml(goldenName)}</code>. Either the golden is stale (run <code>docker compose run --rm test-update</code> and read the diff) or highlighting has regressed. <code>test/corpus.test.js</code> is the authority, not this page.</p>` : ""}
 	<pre class="render"><code>${result.html}</code></pre>
 	<details>
 		<summary>markup</summary>
 		<pre class="markup"><code>${escapeHtml(result.html)}</code></pre>
 	</details>
-</section>`
+</section>`;
 }
 
 function blogPage({input, includeComments, fetched, error}) {
-	const form = `
+	var form = `
 <form method="get" action="/blog">
-	<input type="url" name="url" value="${escapeHtml(input ?? '')}" placeholder="https://www.bennadel.com/blog/4661-..." autofocus>
-	<label><input type="checkbox" name="comments" value="1"${includeComments ? ' checked' : ''}> include reader comments</label>
+	<input type="url" name="url" value="${escapeHtml(input ?? "")}" placeholder="https://www.bennadel.com/blog/4661-..." autofocus>
+	<label><input type="checkbox" name="comments" value="1"${includeComments ? " checked" : ""}> include reader comments</label>
 	<button type="submit">Highlight</button>
-</form>`
+</form>`;
 
-	let body = ''
+	var body = "";
 
 	if (error) {
-		body = `<p class="error">${escapeHtml(error)}</p>`
+		body = `<p class="error">${escapeHtml(error)}</p>`;
 	} else if (fetched) {
-		const {url, title, blocks, commentCount} = fetched
+		var {url, title, blocks, commentCount} = fetched;
 
-		const skipped = includeComments ? 0 : commentCount
+		var skipped = includeComments ? 0 : commentCount;
 
 		body = `
 <p class="lede">
 	<a href="${escapeHtml(url.href)}">${escapeHtml(title ?? url.href)}</a><br>
-	${blocks.length} code block${blocks.length === 1 ? '' : 's'}
-	${skipped ? `&middot; ${skipped} more in reader comments, not shown` : ''}
-	&middot; flags: ${[...new Set(blocks.map((b) => b.flag))].map((f) => `<code>${escapeHtml(f)}</code>`).join(', ') || 'none'}
+	${blocks.length} code block${blocks.length === 1 ? "" : "s"}
+	${skipped ? `&middot; ${skipped} more in reader comments, not shown` : ""}
+	&middot; flags: ${[...new Set(blocks.map((b) => b.flag))].map((f) => `<code>${escapeHtml(f)}</code>`).join(", ") || "none"}
 </p>
-${blocks.length === 0 ? `<p class="note">No language-tagged code blocks. Usually that just means the post has none. If you know it has code, the blog template has changed and <code>tools/blog.js</code> needs updating &mdash; it matches <code>&lt;pre&gt;&lt;code class="language-*"&gt;</code>.</p>` : ''}
-${blocks.map(blogSection).join('\n')}`
+${blocks.length === 0 ? `<p class="note">No language-tagged code blocks. Usually that just means the post has none. If you know it has code, the blog template has changed and <code>tools/blog.js</code> needs updating &mdash; it matches <code>&lt;pre&gt;&lt;code class="language-*"&gt;</code>.</p>` : ""}
+${blocks.map(blogSection).join("\n")}`;
 	}
 
 	return `<!doctype html>
@@ -380,7 +380,7 @@ ${blocks.map(blogSection).join('\n')}`
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>archive check</title>
-${STYLE.map(({name}) => `<link rel="stylesheet" href="/style/${name}.css">`).join('\n')}
+${STYLE.map(({name}) => `<link rel="stylesheet" href="/style/${name}.css">`).join("\n")}
 <style>
 ${BASE_CSS}
 	:root { --page: 72rem; }
@@ -410,33 +410,33 @@ ${form}
 </p>
 ${body}
 </body>
-</html>`
+</html>`;
 }
 
 function blogSection(block, index) {
-	const source = normalize(block.source)
-	const result = highlight(source, block.flag)
-	const longest = longestLine(source)
-	const preserved = textPreserved(source, result.html)
+	var source = normalize(block.source);
+	var result = highlight(source, block.flag);
+	var longest = longestLine(source);
+	var preserved = textPreserved(source, result.html);
 
-	const label = block.filename ?? `block ${index}`
+	var label = block.filename ?? `block ${index}`;
 
 	return `
 <section>
 	<h2>${escapeHtml(label)}</h2>
 	<p class="badges">
-		${badge('flag', block.flag, 'neutral')}
-		${badge('scope', result.resolvedLanguage ?? 'none', result.resolvedLanguage ? 'ok' : 'warn')}
+		${badge("flag", block.flag, "neutral")}
+		${badge("scope", result.resolvedLanguage ?? "none", result.resolvedLanguage ? "ok" : "warn")}
 		${result.highlighted
-			? badge('highlighted', 'yes', 'ok')
-			: badge('highlighted', 'NO -- plain text', 'bad')}
-		${badge('lines', String(source.split('\n').length), 'neutral')}
-		${badge('longest line', `${longest.length} / ${MAX_LINE_LENGTH}`,
-			longest.length > MAX_LINE_LENGTH ? 'bad' : 'neutral')}
+			? badge("highlighted", "yes", "ok")
+			: badge("highlighted", "NO -- plain text", "bad")}
+		${badge("lines", String(source.split("\n").length), "neutral")}
+		${badge("longest line", `${longest.length} / ${MAX_LINE_LENGTH}`,
+			longest.length > MAX_LINE_LENGTH ? "bad" : "neutral")}
 		${preserved
-			? badge('text preserved', 'yes', 'ok')
-			: badge('text preserved', 'NO -- ESCAPING BUG', 'bad')}
-		${block.isComment ? badge('from', 'reader comment', 'warn') : ''}
+			? badge("text preserved", "yes", "ok")
+			: badge("text preserved", "NO -- ESCAPING BUG", "bad")}
+		${block.isComment ? badge("from", "reader comment", "warn") : ""}
 	</p>
 	<pre class="render"><code>${result.html}</code></pre>
 	<details>
@@ -444,7 +444,7 @@ function blogSection(block, index) {
 		<pre class="markup"><code>${escapeHtml(source)}</code></pre>
 		<pre class="markup"><code>${escapeHtml(result.html)}</code></pre>
 	</details>
-</section>`
+</section>`;
 }
 
 /**
@@ -469,25 +469,25 @@ function textPreserved(source, html) {
 	// actually produce, which is the opposite of what the check is for. Stripping
 	// tags is safe for the same reason the extractor's regex is: a literal `<` in
 	// the source is already `&lt;` by this point and cannot look like a tag.
-	const text = html
-		.replace(/<[^>]*>/g, '')
-		.replace(/&(?:lt|gt|amp);/g, (entity) => ({'&lt;': '<', '&gt;': '>', '&amp;': '&'})[entity])
+	var text = html
+		.replace(/<[^>]*>/g, "")
+		.replace(/&(?:lt|gt|amp);/g, (entity) => ({"&lt;": "<", "&gt;": ">", "&amp;": "&"})[entity]);
 
-	return text === normalize(source)
+	return text === normalize(source);
 }
 
 function badge(label, value, tone) {
-	return `<span class="badge ${tone}">${escapeHtml(label)} <b>${escapeHtml(value)}</b></span>`
+	return `<span class="badge ${tone}">${escapeHtml(label)} <b>${escapeHtml(value)}</b></span>`;
 }
 
 function send(response, status, type, body) {
 	response.writeHead(status, {
-		'content-type': type,
-		'content-length': Buffer.byteLength(body),
+		"content-type": type,
+		"content-length": Buffer.byteLength(body),
 		// Fixtures are re-read per request; caching would defeat that.
-		'cache-control': 'no-store'
-	})
-	response.end(body)
+		"cache-control": "no-store"
+	});
+	response.end(body);
 }
 
 /**
@@ -497,5 +497,5 @@ function send(response, status, type, body) {
 * lest a change made for an inspection page alter the shipped output.
 */
 function escapeHtml(value) {
-	return String(value).replace(/[&<>"]/g, (character) => ESCAPES[character])
+	return String(value).replace(/[&<>"]/g, (character) => ESCAPES[character]);
 }

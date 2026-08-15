@@ -1,4 +1,4 @@
-import {boot, handleRequest} from '../core/service.js'
+import {boot, handleRequest} from "../core/service.js";
 
 /**
 * Boot at module scope, which on Lambda means it lands in the INIT phase rather
@@ -12,7 +12,7 @@ import {boot, handleRequest} from '../core/service.js'
 * CloudWatch Logs. Note that it surfaces as an INIT timeout rather than as the
 * message itself, so read the lines ABOVE the timeout when debugging.
 */
-await boot()
+await boot();
 
 /**
 * Function URL handler, payload format 2.0.
@@ -39,9 +39,9 @@ export async function handler(event) {
 	// already buffered the whole body by this point -- and rejecting on a
 	// *declared* length lets a lying header refuse a perfectly small payload.
 	// service.js measures the actual bytes instead.
-	const readBody = () => event.isBase64Encoded
-		? Buffer.from(event.body ?? '', 'base64').toString('utf8')
-		: (event.body ?? '')
+	var readBody = () => event.isBase64Encoded
+		? Buffer.from(event.body ?? "", "base64").toString("utf8")
+		: (event.body ?? "");
 
 	// Do not make these accesses optional. Payload format 2.0 always carries
 	// rawPath, headers, and requestContext.http.method -- guarding them would be
@@ -56,15 +56,15 @@ export async function handler(event) {
 		// Header names in payload format 2.0 are lowercased by Lambda, so no
 		// case-insensitive lookup is needed. An absent header is undefined, which
 		// tokenMatches rejects -- that is the 401 path, not a missing-data case.
-		token: event.headers['x-highlight-token'],
+		token: event.headers["x-highlight-token"],
 		readBody
-	}))
+	}));
 }
 
 function send({status, payload}) {
 	return {
 		statusCode: status,
-		headers: {'content-type': 'application/json; charset=utf-8'},
+		headers: {"content-type": "application/json; charset=utf-8"},
 		body: JSON.stringify(payload)
-	}
+	};
 }
