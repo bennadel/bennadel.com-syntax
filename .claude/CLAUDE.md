@@ -45,6 +45,11 @@
   for module state assigned inside one function and read by others, where the
   assignment site is the wrong scope (starryNight in highlight.js is the
   example).
+* **An `await` gets its own statement.** Never bury `await` inside a larger
+  expression - a call's arguments (`send(await handleRequest(...))`), a method
+  chain (`(await readdir(dir)).filter(...)`), or an object literal. Assign the
+  awaited value to an intermediary variable first, then use the variable. A
+  ternary whose result is assigned directly to a variable is fine.
 * **Use double quotes for strings, not single quotes.** Template literals are
   fine when interpolating.
 * **End statements with semicolons.** No ASI reliance.

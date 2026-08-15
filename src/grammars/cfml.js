@@ -102,7 +102,8 @@ export async function loadCfmlGrammars() {
 * inline everything they use. `missingScopes()` at boot confirms it.
 */
 async function load(file) {
-	var grammar = JSON.parse(await readFile(new URL(file, DIR), "utf8"));
+	var raw = await readFile(new URL(file, DIR), "utf8");
+	var grammar = JSON.parse(raw);
 
 	applied.set(file, PATCHES.map((patch) => patch(grammar, file)));
 

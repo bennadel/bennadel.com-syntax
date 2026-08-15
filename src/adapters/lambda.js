@@ -50,7 +50,7 @@ export async function handler(event) {
 	// handed a 1.0 event, `?.` would resolve the whole chain to undefined and
 	// every request would 404 with a plausible-looking body. Unguarded, the same
 	// mistake throws a TypeError on the line below, which says what is wrong.
-	return send(await handleRequest({
+	var {status, payload} = await handleRequest({
 		method: event.requestContext.http.method,
 		path: event.rawPath,
 		// Header names in payload format 2.0 are lowercased by Lambda, so no
@@ -58,10 +58,12 @@ export async function handler(event) {
 		// tokenMatches rejects -- that is the 401 path, not a missing-data case.
 		token: event.headers["x-highlight-token"],
 		body
-	}));
+	});
+
+	return send(status, payload);
 }
 
-function send({status, payload}) {
+function send(status, payload) {
 	return {
 		statusCode: status,
 		headers: {"content-type": "application/json; charset=utf-8"},

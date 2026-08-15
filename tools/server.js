@@ -152,13 +152,15 @@ var server = createServer(async (request, response) => {
 		var style = STYLE.find(({name}) => pathname === `/style/${name}.css`);
 
 		if (style) {
-			return send(response, 200, "text/css; charset=utf-8",
-				await readFile(style.url, "utf8"));
+			var css = await readFile(style.url, "utf8");
+
+			return send(response, 200, "text/css; charset=utf-8", css);
 		}
 
 		if (pathname === "/") {
-			return send(response, 200, "text/html; charset=utf-8",
-				page(await loadFixtures()));
+			var fixtures = await loadFixtures();
+
+			return send(response, 200, "text/html; charset=utf-8", page(fixtures));
 		}
 
 		// GET with the URL in the query string rather than a POST, so a result is
@@ -217,7 +219,8 @@ process.on("SIGTERM", () => {
 * asserts on, which is the one way this tool could actively mislead.
 */
 async function loadFixtures() {
-	var entries = (await readdir(FIXTURES))
+	var files = await readdir(FIXTURES);
+	var entries = files
 		.filter((name) => name.endsWith(".code"))
 		.sort();
 

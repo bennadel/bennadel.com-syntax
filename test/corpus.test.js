@@ -90,7 +90,8 @@ var updated = 0;
 console.log("");
 console.log("golden fixtures");
 
-var entries = (await readdir(DIR))
+var files = await readdir(DIR);
+var entries = files
 	.filter((name) => name.endsWith(".code"))
 	.sort();
 

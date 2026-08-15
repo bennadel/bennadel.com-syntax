@@ -197,7 +197,9 @@ export async function init() {
 	// `boot()` calls missingScopes() straight after this. These grammars inline
 	// everything and declare no dependencies, so it should stay empty; if it ever
 	// does not, a patch has introduced an include that is not registered.
-	await starryNight.register(await loadCfmlGrammars());
+	var grammars = await loadCfmlGrammars();
+
+	await starryNight.register(grammars);
 
 	return starryNight;
 }

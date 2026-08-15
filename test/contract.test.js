@@ -191,7 +191,9 @@ async function callServer({method, path, token, body}) {
 			body
 		});
 
-		return {status: response.status, body: await response.text()};
+		var body = await response.text();
+
+		return {status: response.status, body};
 	} catch (error) {
 		// Surface transport failures as data rather than letting them abort
 		// the run.
