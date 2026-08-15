@@ -23,15 +23,10 @@ var PORT = Number(process.env.PORT ?? 3000);
 */
 // Boot before creating the server, mirroring lambda.js, where boot is the
 // first thing the module does. Throws on a missing token or unmet grammar
-// scopes. Exiting rather than letting it propagate, because a non-zero exit is
-// already meaningful to Docker and Compose -- and because the message is more
-// useful than a stack trace.
-try {
-	var starryNight = await boot();
-} catch (error) {
-	console.error(error.message);
-	process.exit(1);
-}
+// scopes, and the throw is deliberately uncaught: a top-level throw exits
+// non-zero, which is all Docker and Compose need -- the same way an INIT
+// failure surfaces on Lambda.
+await boot();
 
 var server = createServer(async (request, response) => {
 	// llhttp accepts request-targets that are not valid URLs (`//%25`, `//[`),
@@ -66,7 +61,7 @@ var server = createServer(async (request, response) => {
 });
 
 server.listen(PORT, () => {
-	console.log(`listening on ${PORT}, ${starryNight.scopes().length} grammars`);
+	console.log(`listening on ${PORT}`);
 });
 
 process.on("SIGTERM", () => {
