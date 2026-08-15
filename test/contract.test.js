@@ -177,8 +177,7 @@ async function callLambda({method, path, token, body}) {
 
 /**
 * Drive the HTTP adapter over a real socket. Not an in-process call: the whole
-* point is that the transport is exercised, including the streaming body guard
-* that has no Lambda equivalent.
+* point is that the transport is exercised.
 */
 async function callServer({method, path, token, body}) {
 	const headers = {'content-type': 'application/json'}
@@ -194,8 +193,8 @@ async function callServer({method, path, token, body}) {
 
 		return {status: response.status, body: await response.text()}
 	} catch (error) {
-		// A 413 closes the connection, so surface transport failures as data
-		// rather than letting them abort the run.
+		// Surface transport failures as data rather than letting them abort
+		// the run.
 		return {status: 'FETCH_FAILED', body: error.message}
 	}
 }

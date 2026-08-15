@@ -36,7 +36,7 @@ import {init, highlight, MAX_LINE_LENGTH} from './highlight.js'
 
 const TOKEN = process.env.HIGHLIGHT_TOKEN ?? ''
 
-export const MAX_BYTES = Number(process.env.MAX_BYTES ?? 262144)
+const MAX_BYTES = Number(process.env.MAX_BYTES ?? 262144)
 
 // One string, one place -- it has to stay in sync with the shape checks in
 // handleRequest, and it is returned from more than one call site.
@@ -109,14 +109,13 @@ export async function boot() {
 * Handle one request.
 *
 * `readBody` is a FUNCTION, not a string, and that is load-bearing. It is called
-* only after authorization passes, which preserves the ordering server.js
-* has always had: an unauthenticated caller must not be able to push MAX_BYTES
-* of payload before being told no. Passing an already-assembled string here
-* would have quietly turned a 401-then-read into a read-then-401.
+* only after authorization passes: an unauthenticated caller's body is never
+* read before being told no. Passing an already-assembled string here would
+* have quietly turned a 401-then-read into a read-then-401.
 *
-* The adapters supply very different implementations -- Lambda hands back an
-* already-buffered string, the HTTP server returns a promise over a stream that
-* enforces the size cap mid-upload and rejects with a tagged error.
+* The adapters supply different implementations -- Lambda hands back an
+* already-buffered string, the HTTP server returns a promise that buffers the
+* stream.
 *
 * @param {object} request
 * @param {string} request.method
@@ -149,17 +148,15 @@ export async function handleRequest({method, path, token, readBody}) {
 	try {
 		raw = await readBody()
 	} catch (error) {
-		// The node:http adapter's streaming guard throws a 413 tagged this way. Anything
-		// untagged is a genuine transport failure.
-		const status = error.status ?? 500
+		// A rejection here is a transport failure (a socket error), not a
+		// contract outcome.
+		console.error(error)
 
-		if (status === 500) console.error(error)
-
-		return {status, payload: {error: error.message}}
+		return {status: 500, payload: {error: error.message}}
 	}
 
 	// Authoritative, unlike a declared Content-Length, which can lie or be
-	// absent. The HTTP adapter has usually rejected long before this.
+	// absent.
 	if (Buffer.byteLength(raw, 'utf8') > MAX_BYTES) {
 		return {status: 413, payload: {error: 'Payload too large'}}
 	}

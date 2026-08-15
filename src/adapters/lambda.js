@@ -27,13 +27,6 @@ await boot()
 * method, path, and headers out of the event envelope, and rendering the result
 * back into the response object Lambda expects.
 *
-* What deliberately does NOT carry over from server.js:
-*
-*   - The mid-stream payload guard. Lambda buffers the entire body before the
-*     handler runs, so there is no stream left to reject during. The size check
-*     in service.js is what remains, and Lambda's own 6 MB invocation ceiling is
-*     the real outer bound.
-*
 * @param {object} event   Function URL event, payload format 2.0.
 * @returns {Promise<{statusCode: number, headers: object, body: string}>}
 */
