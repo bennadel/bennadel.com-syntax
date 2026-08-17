@@ -37,22 +37,21 @@
 * mounts it and no image stage copies it.
 */
 
+import {execFile} from "node:child_process";
 import {createHash} from "node:crypto";
 import {readdir, readFile, writeFile} from "node:fs/promises";
+import {promisify} from "node:util";
 
-import {
-	init,
-	highlight,
-	normalize,
-	longestLine,
-	MAX_LINE_LENGTH
-} from "../src/core/highlight.js";
+import {loadConfig} from "../src/core/config.js";
+import {init, highlight, normalize, longestLine} from "../src/core/highlight.js";
 import {applied as cfmlPatches} from "../src/grammars/cfml.js";
-import {assertPositiveInt} from "../src/core/api.js";
 
 var DIR = new URL("./__fixtures__/", import.meta.url);
 var GRAMMARS = new URL("../src/grammars/", import.meta.url);
+var SERVER_ADAPTER = new URL("../src/adapters/server.js", import.meta.url);
 var UPDATE = process.argv.includes("--update");
+
+var execFileAsync = promisify(execFile);
 
 /**
 * Vendored grammar files and their upstream SHA-256s, from cfmleditor commit
@@ -78,7 +77,11 @@ var SOURCES = {
 */
 var EXPECT_PLAIN = new Set(["text"]);
 
-await init();
+// No token in this env object matters here -- loadConfig does not require one,
+// which is itself asserted below.
+var config = loadConfig(process.env);
+
+await init(config);
 
 var failures = 0;
 var updated = 0;
@@ -177,16 +180,33 @@ if (!UPDATE) {
 	assertEqual("trailing newline", longestLine("abc\n").length, 3);
 
 	console.log("");
-	console.log("assertPositiveInt()");
+	console.log("loadConfig()");
 
-	// boot() calls this on MAX_BYTES and MAX_LINE_LENGTH. NaN is the case that
-	// matters: a garbled env var like "2OO" parses to NaN, and every guard using
-	// these values is a `>` comparison, which NaN silently defeats.
-	assertThrows("rejects NaN (a garbled env var)", () => assertPositiveInt("X", Number("2OO")));
-	assertThrows("rejects zero (an empty env var)", () => assertPositiveInt("X", 0));
-	assertThrows("rejects a negative", () => assertPositiveInt("X", -1));
-	assertThrows("rejects a fraction", () => assertPositiveInt("X", 3.5));
-	assertEqual("returns a valid value unchanged", assertPositiveInt("X", 200), 200);
+	// The garbled cases are the ones that matter: "2OO" parses to NaN, every
+	// guard using these values is a `>` comparison, and `n > NaN` is always
+	// false -- so an unvalidated typo silently turns the guard off.
+	assertThrows("garbled MAX_BYTES refused", () => loadConfig({MAX_BYTES: "2OO"}), "MAX_BYTES");
+	assertThrows("empty MAX_BYTES refused", () => loadConfig({MAX_BYTES: ""}), "MAX_BYTES");
+	assertThrows("garbled MAX_LINE_LENGTH refused", () => loadConfig({MAX_LINE_LENGTH: "2OO"}), "MAX_LINE_LENGTH");
+	assertThrows("negative MAX_LINE_LENGTH refused", () => loadConfig({MAX_LINE_LENGTH: "-1"}), "MAX_LINE_LENGTH");
+
+	var defaults = loadConfig({});
+	assertEqual("default MAX_BYTES", defaults.maxBytes, 262144);
+	assertEqual("default MAX_LINE_LENGTH", defaults.maxLineLength, 200);
+	// Not throwing on an empty env IS the assertion: tools/ and this test run
+	// the highlighting core without a credential, so an absent token must be a
+	// boot()-level refusal, never a parse error.
+	assertEqual("no token is not a config error", defaults.token, "");
+
+	console.log("");
+	console.log("boot() refusal kills the process");
+
+	// The one case that has to be a child process, because the exit code IS the
+	// behaviour: an adapter's boot() failure must kill the process non-zero,
+	// which is the only signal Docker's restart loop and a failed Lambda INIT
+	// ever see. The token is the variable used because its check lives in
+	// boot() rather than loadConfig(), so no in-process test covers it.
+	await assertBootRefuses("missing HIGHLIGHT_TOKEN", {HIGHLIGHT_TOKEN: ""});
 
 	console.log("");
 	console.log("highlight() guards");
@@ -201,17 +221,17 @@ if (!UPDATE) {
 
 	// The ReDoS guard. This is the behaviour MAX_LINE_LENGTH exists for, and it
 	// must degrade to escaped plain text rather than throwing or truncating.
-	var long = highlight("a".repeat(MAX_LINE_LENGTH + 1), "cfml");
+	var long = highlight("a".repeat(config.maxLineLength + 1), "cfml");
 	assertEqual("over-long line refuses", long.highlighted, false);
 	assertEqual("over-long line resolves to null", long.resolvedLanguage, null);
-	assertEqual("over-long line returns all of it", long.html.length, MAX_LINE_LENGTH + 1);
+	assertEqual("over-long line returns all of it", long.html.length, config.maxLineLength + 1);
 
-	var atLimit = highlight("a".repeat(MAX_LINE_LENGTH), "cfml");
+	var atLimit = highlight("a".repeat(config.maxLineLength), "cfml");
 	assertEqual("exactly at the limit still highlights", atLimit.highlighted, true);
 
 	// One over-long line poisons the whole block -- highlighting is all or
 	// nothing, so callers never get a partially-highlighted result.
-	var mixed = highlight(`<cfset a = 1>\n${"b".repeat(MAX_LINE_LENGTH + 1)}`, "cfml");
+	var mixed = highlight(`<cfset a = 1>\n${"b".repeat(config.maxLineLength + 1)}`, "cfml");
 	assertEqual("one long line refuses the whole block", mixed.highlighted, false);
 
 	console.log("");
@@ -573,14 +593,45 @@ function assertEqual(name, actual, expected) {
 	fail(name, `expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
 }
 
-function assertThrows(name, fn) {
+function assertThrows(name, fn, fragment) {
 	try {
 		fn();
-	} catch {
-		return pass(name);
+	} catch (error) {
+		if (error.message.includes(fragment)) return pass(name);
+
+		return fail(name, `threw, but without naming ${fragment}: ${error.message}`);
 	}
 
 	fail(name, "expected a throw, got none");
+}
+
+/**
+* Import the real server adapter in a child process whose environment has
+* `overrides` applied on top of this process's env, and assert the child exits
+* non-zero with an error naming the broken variable. Importing IS booting --
+* the adapter awaits boot() at module scope -- and exit code plus stderr are
+* the whole contract, the same signal Docker and a failed Lambda INIT act on.
+*
+* The timeout is the failure mode for a regression: if boot() stopped
+* refusing, the adapter would bind its port and the child would never exit.
+*/
+async function assertBootRefuses(name, overrides) {
+	var variable = Object.keys(overrides)[0];
+	var script = `await import("${SERVER_ADAPTER.href}");`;
+
+	try {
+		await execFileAsync(
+			process.execPath,
+			["--input-type=module", "-e", script],
+			{env: {...process.env, ...overrides}, timeout: 15000}
+		);
+	} catch (error) {
+		if (error.stderr.includes(variable)) return pass(name);
+
+		return fail(name, `refused, but without naming ${variable}: ${error.stderr.slice(0, 200)}`);
+	}
+
+	fail(name, "expected boot() to refuse, and it booted");
 }
 
 /**

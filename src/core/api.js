@@ -1,6 +1,7 @@
 import {timingSafeEqual} from "node:crypto";
 
-import {init, highlight, MAX_LINE_LENGTH} from "./highlight.js";
+import {loadConfig} from "./config.js";
+import {init, highlight} from "./highlight.js";
 
 /**
 * Transport-neutral request handling: auth, routing, validation, and the call
@@ -9,6 +10,7 @@ import {init, highlight, MAX_LINE_LENGTH} from "./highlight.js";
 * The layering, which is the directory structure rather than a convention:
 *
 *   src/core/highlight.js       pure highlighting, no I/O concepts at all
+*   src/core/config.js          every env var, parsed and validated once
 *   src/core/api.js             this file -- requests, but not transports
 *   src/adapters/server.js      node:http adapter
 *   src/adapters/lambda.js      Function URL adapter
@@ -34,36 +36,20 @@ import {init, highlight, MAX_LINE_LENGTH} from "./highlight.js";
 * agree byte for byte.
 */
 
-var TOKEN = process.env.HIGHLIGHT_TOKEN ?? "";
-
-var MAX_BYTES = Number(process.env.MAX_BYTES ?? 262144);
+// Module state: assigned by boot(), read by handleRequest and tokenMatches.
+var config;
 
 // One string, one place -- it has to stay in sync with the shape checks in
 // handleRequest, and it is returned from more than one call site.
 var BAD_SHAPE = "Expected { code: string, language?: string }";
 
 /**
-* Reject a numeric config value that is not a positive integer, naming the
-* variable so the message points straight at the env var to fix. Validates the
-* already-parsed number rather than the raw string, which keeps one parse site
-* and covers every bad input: NaN (a garbled value), 0 (an empty env var), and
-* negatives or fractions.
-*/
-export function assertPositiveInt(name, value) {
-	if (!Number.isInteger(value) || value <= 0) {
-		throw new Error(`${name} must be a positive integer; check the ${name} env var (got ${value})`);
-	}
-
-	return value;
-}
-
-/**
 * Startup checks shared by both adapters. Throws; the caller decides whether
 * that means process.exit (container) or a failed INIT (Lambda).
 *
-* Order matters. The token check runs BEFORE init() so a misconfigured process
-* dies immediately rather than spending ~2.3 s compiling grammars it must never
-* use.
+* Order matters. loadConfig() and the token check run BEFORE init() so a
+* misconfigured process dies immediately rather than spending ~2.3 s compiling
+* grammars it must never use.
 *
 * On the token: do NOT add a permissive fallback for an unset one. Treating "no
 * token configured" as "allow everything" is reasonable on a laptop and
@@ -71,14 +57,9 @@ export function assertPositiveInt(name, value) {
 * two situations are indistinguishable -- what it produces is an open
 * highlighting service with a healthy /health check and no other signal. That
 * shipped once here, and only a deliberate unauthenticated probe caught it.
-*
-* On the numeric config: MAX_BYTES and MAX_LINE_LENGTH are read as Number(env),
-* which yields NaN for a garbled value like "2OO". Every guard that uses them is
-* a `>` comparison, and `n > NaN` is always false -- so a typo turns off the
-* payload cap and the ReDoS guard at once, silently, leaving the same open
-* service the token check guards against. Validated here rather than at the
-* const so the throw surfaces through the adapter's boot() handler as a clean
-* exit rather than an uncaught import-time stack trace.
+* The check lives here rather than in loadConfig() because tools/ and the
+* corpus test run the highlighting core tokenlessly on purpose -- an empty
+* token is fatal only to the thing that serves requests.
 *
 * On the scopes: grammar dependencies resolve silently when unmet --
 * source.cfscript depends on source.sql, and a missing dependency degrades
@@ -88,14 +69,13 @@ export function assertPositiveInt(name, value) {
 * @returns {Promise<object>} the initialized starry-night instance
 */
 export async function boot() {
-	if (!TOKEN) {
+	config = loadConfig(process.env);
+
+	if (!config.token) {
 		throw new Error("HIGHLIGHT_TOKEN is not set -- refusing to start");
 	}
 
-	assertPositiveInt("MAX_BYTES", MAX_BYTES);
-	assertPositiveInt("MAX_LINE_LENGTH", MAX_LINE_LENGTH);
-
-	var starryNight = await init();
+	var starryNight = await init(config);
 	var missing = starryNight.missingScopes();
 
 	if (missing.length > 0) {
@@ -140,7 +120,7 @@ export async function handleRequest({method, path, token, body}) {
 
 	// Authoritative, unlike a declared Content-Length, which can lie or be
 	// absent.
-	if (Buffer.byteLength(body, "utf8") > MAX_BYTES) {
+	if (Buffer.byteLength(body, "utf8") > config.maxBytes) {
 		return {status: 413, payload: {error: "Payload too large"}};
 	}
 
@@ -205,14 +185,14 @@ export async function handleRequest({method, path, token, body}) {
 * timingSafeEqual throws on mismatched lengths -- that leaks token length, which
 * is not worth defending.
 *
-* TOKEN is guaranteed non-empty by boot(), so there is no "unconfigured" branch
-* to fall open through.
+* The token is guaranteed non-empty by boot(), so there is no "unconfigured"
+* branch to fall open through.
 */
 function tokenMatches(supplied) {
 	if (typeof supplied !== "string") return false;
 
 	var a = Buffer.from(supplied);
-	var b = Buffer.from(TOKEN);
+	var b = Buffer.from(config.token);
 
 	return a.length === b.length && timingSafeEqual(a, b);
 }

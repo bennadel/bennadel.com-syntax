@@ -10,7 +10,7 @@
 #
 #   node -p "require('@wooorm/starry-night/package.json').version"
 #   node -e "import('/app/src/core/highlight.js').then(async m => {
-#     const sn = await m.init(); console.log(sn.scopes().length) })"
+#     const sn = await m.init({maxLineLength: 200}); console.log(sn.scopes().length) })"
 #
 # This is a throwaway container (--rm) with src/ and tools/ mounted read-only, so
 # nothing you do in here can change the repo or persist. It is `run`, not `exec`,

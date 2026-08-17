@@ -5,7 +5,10 @@ import {loadCfmlGrammars, CFML_TAG, CFML_SCRIPT} from "../grammars/cfml.js";
 
 var starryNight;
 
-// Refuse to highlight a block containing a line longer than this.
+// Refuse to highlight a block containing a line longer than this. Set by
+// init() from config rather than read from the environment here -- this module
+// stays free of I/O concepts, env vars included; core/config.js owns the
+// parsing and the default.
 //
 // This is the ReDoS guard, and line length is the right dimension because
 // TextMate grammars tokenize line by line -- vscode-textmate hands one line at
@@ -17,20 +20,10 @@ var starryNight;
 // ambiguous pattern and only ~30 characters, so no input inspection can catch
 // it -- Lambda's SIGKILL on timeout is the only thing that stops that case.
 //
-// 200 is deliberately far stricter than VS Code's equivalent
-// `editor.maxTokenizationLineLength` (20,000). Anything over 200 in this
-// archive is a minified bundle or a base64 data URI, and highlighting those is
-// worthless. Env-overridable so a backfill can be re-run at a higher limit
-// without rebuilding the image.
-//
 // Note this counts UTF-16 code units, not glyphs, so a line of CJK or emoji
 // hits the limit sooner than its visible length suggests. Correct for the
 // purpose: regex work tracks code units.
-//
-// Exported so test/corpus.test.js can assert the boundary from both sides --
-// exactly at the limit still highlights, one over refuses -- without hardcoding
-// 200 in a second place that could drift.
-export var MAX_LINE_LENGTH = Number(process.env.MAX_LINE_LENGTH ?? 200);
+var maxLineLength;
 
 // Local overrides layered on top of Linguist's alias set. Linguist already
 // resolves the common cases ('js', 'cfm', 'cfml', 'bash'); this is only for
@@ -151,14 +144,14 @@ export function highlight(code, flag) {
 	// this never runs on a block that was not going to be highlighted anyway.
 	var longest = longestLine(source);
 
-	if (longest.length > MAX_LINE_LENGTH) {
+	if (longest.length > maxLineLength) {
 		// Loud on purpose. A silent refusal means unhighlighted HTML gets stored
 		// and the omission is discovered months later while reading the archive.
 		// The caller knows which post or comment it is holding; this only has to
 		// supply the reason it can pair with its own identifier.
 		console.warn(
 			`highlight: refused ${scope} -- line ${longest.number} is ` +
-			`${longest.length} chars, limit ${MAX_LINE_LENGTH}`
+			`${longest.length} chars, limit ${maxLineLength}`
 		);
 
 		return plain(source);
@@ -185,7 +178,11 @@ export function highlight(code, flag) {
 	};
 }
 
-export async function init() {
+/**
+* @param {object} config   loadConfig() output; only maxLineLength is read.
+*/
+export async function init(config) {
+	maxLineLength = config.maxLineLength;
 	starryNight = await createStarryNight(all);
 
 	// After the stock set. These declare their own scope names, so this ADDS

@@ -37,12 +37,15 @@ process.env.HIGHLIGHT_TOKEN = TOKEN;
 process.env.PORT = String(PORT);
 
 var {handler} = await import("../src/adapters/lambda.js");
+var {loadConfig} = await import("../src/core/config.js");
 await import("../src/adapters/server.js");
 
 // server.js calls listen() at module scope; give it a moment to bind.
 await new Promise((resolve) => setTimeout(resolve, 300));
 
-var MAX_BYTES = Number(process.env.MAX_BYTES ?? 262144);
+// Sized via the same parse the service uses, rather than re-deriving the
+// default here where it could drift.
+var MAX_BYTES = loadConfig(process.env).maxBytes;
 
 var cases = [
 	// Routing and method handling.

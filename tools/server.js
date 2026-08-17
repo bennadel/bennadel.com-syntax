@@ -66,7 +66,8 @@
 import {createServer} from "node:http";
 import {readdir, readFile} from "node:fs/promises";
 
-import {init, highlight, normalize, MAX_LINE_LENGTH, longestLine} from "../src/core/highlight.js";
+import {loadConfig} from "../src/core/config.js";
+import {init, highlight, normalize, longestLine} from "../src/core/highlight.js";
 import {fetchBlocks} from "./blog.js";
 
 var PORT = Number(process.env.PORT ?? 3001);
@@ -196,8 +197,12 @@ try {
 	// grammars here: a grammar set of its own is exactly how this page would come
 	// to show output the service does not actually produce. Only the scope count
 	// is read, for the startup line; highlighting goes through
-	// src/core/highlight.js like everywhere else.
-	var starryNight = await init();
+	// src/core/highlight.js like everywhere else. Same for the config: parsed by
+	// loadConfig so this page shows the limit the service would actually apply.
+	// No token is needed -- loadConfig does not require one, and this tool holds
+	// no credential by design.
+	var config = loadConfig(process.env);
+	var starryNight = await init(config);
 
 	server.listen(PORT, () => {
 		console.log(`tools on ${PORT}, ${starryNight.scopes().length} grammars (/, /blog)`);
@@ -287,7 +292,7 @@ ${BASE_CSS}
 <p class="lede">
 	${fixtures.length} fixtures &middot; ${plain} rendered as plain text &middot;
 	${drifting === 0 ? "all goldens match" : `<strong>${drifting} differ from their golden</strong>`} &middot;
-	MAX_LINE_LENGTH ${MAX_LINE_LENGTH} &middot;
+	MAX_LINE_LENGTH ${config.maxLineLength} &middot;
 	<a href="/blog">check a live post &rarr;</a>
 </p>
 <p class="note">
@@ -430,8 +435,8 @@ function blogSection(block, index) {
 			? badge("highlighted", "yes", "ok")
 			: badge("highlighted", "NO -- plain text", "bad")}
 		${badge("lines", String(source.split("\n").length), "neutral")}
-		${badge("longest line", `${longest.length} / ${MAX_LINE_LENGTH}`,
-			longest.length > MAX_LINE_LENGTH ? "bad" : "neutral")}
+		${badge("longest line", `${longest.length} / ${config.maxLineLength}`,
+			longest.length > config.maxLineLength ? "bad" : "neutral")}
 		${preserved
 			? badge("text preserved", "yes", "ok")
 			: badge("text preserved", "NO -- ESCAPING BUG", "bad")}
