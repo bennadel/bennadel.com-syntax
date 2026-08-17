@@ -14,7 +14,10 @@ var PORT = Number(process.env.PORT ?? 3000);
 * internet. Do not add transport-level defenses here (a mid-stream size guard,
 * a Content-Length pre-check) on the strength of "what if it were exposed" --
 * it never is, and service.js already enforces the payload cap on the actual
-* bytes for both adapters.
+* bytes for both adapters. The same goes for rescue try/catches around the
+* handler: a malformed request line or a mid-read socket error crashes the
+* process, and for a dev-only server a stack trace and a restart beat
+* defensive plumbing.
 *
 * This serves JSON and nothing else. Do not add a route that renders HTML: this
 * stays an API rather than a mix of API and page rendering. Looking at
@@ -29,26 +32,8 @@ var PORT = Number(process.env.PORT ?? 3000);
 await boot();
 
 var server = createServer(async (request, response) => {
-	// llhttp accepts request-targets that are not valid URLs (`//%25`, `//[`),
-	// and `new URL` throws on them. Unguarded, that rejection is unhandled and
-	// Node kills the process -- a pre-auth crash from one malformed line. Lambda
-	// never sees this: its Function URL hands service.js an already-parsed path.
-	try {
-		var url = new URL(request.url, "http://localhost");
-	} catch {
-		send(response, 400, {error: "Bad request"});
-
-		return;
-	}
-
-	try {
-		var body = await readBody(request);
-	} catch (error) {
-		console.error(error);
-		send(response, 500, {error: error.message});
-
-		return;
-	}
+	var url = new URL(request.url, "http://localhost");
+	var body = await readBody(request);
 
 	var {status, payload} = await handleRequest({
 		method: request.method,
