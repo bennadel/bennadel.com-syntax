@@ -29,7 +29,7 @@
 * This is a SEPARATE SERVICE so that the split stays intact: the API serves JSON
 * and nothing else, and page rendering lives here, on its own port, in its own
 * directory, never packaged. Do not add a rendering route to an adapter. The
-* API's routing is a whitelist in src/core/service.js -- anything that is not
+* API's routing is a whitelist in src/core/api.js -- anything that is not
 * /highlight or /health is 404 -- so a page route cannot appear there by
 * accident, only on purpose.
 *

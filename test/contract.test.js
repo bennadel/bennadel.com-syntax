@@ -3,7 +3,7 @@
 *
 * The API contract must be identical against both adapters, and this is what
 * holds that up. Both adapters must stay thin: auth, routing,
-* validation, and the highlight call belong in src/core/service.js. Moving any
+* validation, and the highlight call belong in src/core/api.js. Moving any
 * of it back into one adapter produces a divergence nothing else would catch --
 * it surfaces only as the ColdFusion client behaving differently against prod
 * than against local, which is close to the worst place to find it.

@@ -48,7 +48,7 @@ import {
 	MAX_LINE_LENGTH
 } from "../src/core/highlight.js";
 import {applied as cfmlPatches} from "../src/grammars/cfml.js";
-import {assertPositiveInt} from "../src/core/service.js";
+import {assertPositiveInt} from "../src/core/api.js";
 
 var DIR = new URL("./__fixtures__/", import.meta.url);
 var GRAMMARS = new URL("../src/grammars/", import.meta.url);

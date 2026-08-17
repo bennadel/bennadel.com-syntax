@@ -1,19 +1,19 @@
 import {createServer} from "node:http";
 
-import {boot, handleRequest} from "../core/service.js";
+import {boot, handleRequest} from "../core/api.js";
 
 var PORT = Number(process.env.PORT ?? 3000);
 
 /**
 * Deliberately thin. Auth, routing, validation, and the highlight call all live
-* in ../core/service.js, shared with lambda.js -- see the note there on why
+* in ../core/api.js, shared with lambda.js -- see the note there on why
 * that file exists. What remains here is node:http-specific: buffering the body
 * and writing the response.
 *
 * This is the development adapter; lambda.js is the one that faces the
 * internet. Do not add transport-level defenses here (a mid-stream size guard,
 * a Content-Length pre-check) on the strength of "what if it were exposed" --
-* it never is, and service.js already enforces the payload cap on the actual
+* it never is, and api.js already enforces the payload cap on the actual
 * bytes for both adapters. The same goes for rescue try/catches around the
 * handler: a malformed request line or a mid-read socket error crashes the
 * process, and for a dev-only server a stack trace and a restart beat
@@ -54,7 +54,7 @@ process.on("SIGTERM", () => {
 });
 
 /**
-* Buffer the request body and return the raw string, letting service.js do the
+* Buffer the request body and return the raw string, letting api.js do the
 * parsing and the size check -- JSON and the payload cap are contract concerns,
 * not transport ones.
 */

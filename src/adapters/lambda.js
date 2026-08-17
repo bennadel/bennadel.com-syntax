@@ -1,4 +1,4 @@
-import {boot, handleRequest} from "../core/service.js";
+import {boot, handleRequest} from "../core/api.js";
 
 /**
 * Boot at module scope, which on Lambda means it lands in the INIT phase rather
@@ -19,7 +19,7 @@ await boot();
 *
 * Deliberately thin, and it must stay that way. Auth, routing, size checks, JSON
 * parsing, input validation, and the highlight call all belong in
-* ../core/service.js, shared with server.js. That is what makes the identical
+* ../core/api.js, shared with server.js. That is what makes the identical
 * contract across both adapters a checked property rather than a promise;
 * test/contract.test.js drives both and diffs the results.
 *
@@ -38,7 +38,7 @@ export async function handler(event) {
 	// Do not add a Content-Length pre-check here. It saves nothing -- Lambda has
 	// already buffered the whole body by this point -- and rejecting on a
 	// *declared* length lets a lying header refuse a perfectly small payload.
-	// service.js measures the actual bytes instead.
+	// api.js measures the actual bytes instead.
 	var body = event.isBase64Encoded
 		? Buffer.from(event.body ?? "", "base64").toString("utf8")
 		: (event.body ?? "");

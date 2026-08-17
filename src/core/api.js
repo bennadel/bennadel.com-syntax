@@ -9,7 +9,7 @@ import {init, highlight, MAX_LINE_LENGTH} from "./highlight.js";
 * The layering, which is the directory structure rather than a convention:
 *
 *   src/core/highlight.js       pure highlighting, no I/O concepts at all
-*   src/core/service.js         this file -- requests, but not transports
+*   src/core/api.js             this file -- requests, but not transports
 *   src/adapters/server.js      node:http adapter
 *   src/adapters/lambda.js      Function URL adapter
 *

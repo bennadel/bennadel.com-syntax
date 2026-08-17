@@ -31,7 +31,7 @@ The boundary that carries weight here is **what ships versus what does not**, an
 
 | path | what it is | ships |
 |---|---|---|
-| `src/core/` | `highlight.js`, the pure function over `{code, language}`; `service.js`, transport-neutral auth, routing and validation | yes |
+| `src/core/` | `highlight.js`, the pure function over `{code, language}`; `api.js`, transport-neutral auth, routing and validation | yes |
 | `src/adapters/` | `server.js` for `node:http`, `lambda.js` for a Function URL. Transport only — no logic that both would need | yes |
 | `src/grammars/` | The two cfmleditor CFML grammars, vendored byte-identical, plus `cfml.js` which loads and patches them in memory | yes |
 | `test/` | `corpus.test.js` (golden output), `contract.test.js` (adapter parity), `__fixtures__/` | no |
