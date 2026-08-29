@@ -17,8 +17,8 @@ await boot();
 /**
 * Function URL handler, payload format 2.0.
 *
-* Deliberately thin, and it must stay that way. Auth, routing, size checks, JSON
-* parsing, input validation, and the highlight call all belong in
+* Deliberately thin, and it must stay that way. Auth, routing, size checks,
+* response serialization, and the highlight call all belong in
 * ../core/api.js, shared with server.js. That is what makes the identical
 * contract across both adapters a checked property rather than a promise;
 * test/contract.test.js drives both and diffs the results.
@@ -31,9 +31,9 @@ await boot();
 * @returns {Promise<{statusCode: number, headers: object, body: string}>}
 */
 export async function handler(event) {
-	// Lambda base64-encodes bodies it classifies as binary. For application/json
-	// it normally does not, but the flag is authoritative and honouring it costs
-	// nothing.
+	// Lambda base64-encodes bodies it classifies as binary, and it classifies by
+	// Content-Type -- which this contract ignores, so clients send anything or
+	// nothing and the flag is routinely true. It is authoritative; honour it.
 	//
 	// Do not add a Content-Length pre-check here. It saves nothing -- Lambda has
 	// already buffered the whole body by this point -- and rejecting on a
@@ -44,15 +44,22 @@ export async function handler(event) {
 		: (event.body ?? "");
 
 	// Do not make these accesses optional. Payload format 2.0 always carries
-	// rawPath, headers, and requestContext.http.method -- guarding them would be
-	// claiming a doubt that does not exist. It also costs something real: format
-	// 1.0 spells these `httpMethod` and `path`, so if this function were ever
-	// handed a 1.0 event, `?.` would resolve the whole chain to undefined and
-	// every request would 404 with a plausible-looking body. Unguarded, the same
-	// mistake throws a TypeError on the line below, which says what is wrong.
-	var {status, payload} = await handleRequest({
+	// rawPath, rawQueryString (empty string when there is no query), headers,
+	// and requestContext.http.method -- guarding them would be claiming a doubt
+	// that does not exist. It also costs something real: format 1.0 spells these
+	// `httpMethod` and `path`, so if this function were ever handed a 1.0 event,
+	// `?.` would resolve the whole chain to undefined and every request would
+	// 404 with a plausible-looking body. Unguarded, the same mistake throws a
+	// TypeError on the line below, which says what is wrong.
+	var {status, headers, body: responseBody} = await handleRequest({
 		method: event.requestContext.http.method,
 		path: event.rawPath,
+		// Parsed with URLSearchParams rather than read from
+		// event.queryStringParameters so the decoding (`+` as space,
+		// percent-escapes, first value wins on duplicates) is the same parser
+		// server.js's url.searchParams uses -- the byte-for-byte agreement that
+		// test/contract.test.js asserts depends on it.
+		language: new URLSearchParams(event.rawQueryString).get("language"),
 		// Header names in payload format 2.0 are lowercased by Lambda, so no
 		// case-insensitive lookup is needed. An absent header is undefined, which
 		// tokenMatches rejects -- that is the 401 path, not a missing-data case.
@@ -60,13 +67,9 @@ export async function handler(event) {
 		body
 	});
 
-	return send(status, payload);
-}
-
-function send(status, payload) {
 	return {
 		statusCode: status,
-		headers: {"content-type": "application/json; charset=utf-8"},
-		body: JSON.stringify(payload)
+		headers,
+		body: responseBody
 	};
 }

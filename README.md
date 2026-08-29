@@ -5,7 +5,7 @@ by [Ben Nadel][ben-nadel]
 
 On my blogging platform, the fenced code-block syntax highlighting has historically been provided by GitHub (via publish-time Gist creation). And it's always bothered me that this is the one remaining _core_ part of the blogging workflow that I feel like I don't own. As such, with the aide of **Claude Code**, I've finally set out to make my own self-hosted syntax highlighting service.
 
-The API takes `{code, language}` as a JSON body and returns escaped HTML with `pl-*` token classes — the same vocabulary GitHub's Markdown API emits, so existing CSS works unchanged. Output is identical to GitHub for languages where it ships the same TextMate grammar and diverges where GitHub ships a different one.
+The API takes the raw code as the POST body (Content-Type is ignored) with the language as an optional `?language=` query parameter, and returns escaped HTML with `pl-*` token classes — the same vocabulary GitHub's Markdown API emits, so existing CSS works unchanged. The response body is the HTML fragment itself, with metadata in the `X-Highlighted` and `X-Language` headers; errors return JSON `{error}`. Output is identical to GitHub for languages where it ships the same TextMate grammar and diverges where GitHub ships a different one.
 
 The API runs locally in Docker and is deployed to AWS Lambda as a zip (Click-Ops for the win - baby-stepping my way to a working solution).
 
@@ -19,11 +19,12 @@ The API runs locally in Docker and is deployed to AWS Lambda as a zip (Click-Ops
 Then in another terminal:
 
 ```bash
-curl -s -X POST http://127.0.0.1:3000/highlight \
-  -H 'content-type: application/json' \
+curl -si -X POST 'http://127.0.0.1:3000/highlight?language=cfml' \
   -H 'x-highlight-token: dev-local-only' \
-  -d '{"code":"<cfscript>x = 1;</cfscript>","language":"cfml"}'
+  --data-binary '<cfscript>x = 1;</cfscript>'
 ```
+
+Use `--data-binary` when posting from a file (`--data-binary @file.cfm`) — plain `-d` strips newlines. The `-i` shows the `X-Highlighted` and `X-Language` response headers alongside the HTML body.
 
 ## Repository Layout
 
@@ -31,7 +32,7 @@ The boundary that carries weight here is **what ships versus what does not**, an
 
 | path | what it is | ships |
 |---|---|---|
-| `src/core/` | `highlight.js`, the pure function over `{code, language}`; `config.js`, every env var parsed and validated once; `api.js`, transport-neutral auth, routing and validation | yes |
+| `src/core/` | `highlight.js`, the pure function over code plus a language flag; `config.js`, every env var parsed and validated once; `api.js`, transport-neutral auth, routing and response serialization | yes |
 | `src/adapters/` | `server.js` for `node:http`, `lambda.js` for a Function URL. Transport only — no logic that both would need | yes |
 | `src/grammars/` | The two cfmleditor CFML grammars, vendored byte-identical, plus `cfml.js` which loads and patches them in memory | yes |
 | `test/` | `corpus.test.js` (golden output), `contract.test.js` (adapter parity), `__fixtures__/` | no |
@@ -87,7 +88,7 @@ Two suites, deliberately separate because they answer different questions.
 | suite | question it answers |
 |---|---|
 | `test/corpus.test.js` | Does `highlight()` still produce the exact bytes it produced when a human last approved them? |
-| `test/contract.test.js` | Do `src/adapters/server.js` and `src/adapters/lambda.js` return **identical** status and body for the same request? |
+| `test/contract.test.js` | Do `src/adapters/server.js` and `src/adapters/lambda.js` return **identical** status, headers, and body for the same request? |
 
 **The corpus** targets `src/core/highlight.js` directly rather than a packaging artifact, so it needs no port or container and separates "did the grammar output change?" from "did the transport change?". Each case is a pair of files in `test/__fixtures__/` — `<slug>.<language>.code` holding hand-written input, and a generated `.html` sibling holding the expected output. The language comes from the filename, so adding a case is one file plus a regenerate. It also asserts the things golden files cannot express: `normalize()`'s CRLF handling, `longestLine()`, the `MAX_LINE_LENGTH` boundary from both sides, and that escaping produces GitHub's exact entity form on both the highlighted and unhighlighted paths.
 
@@ -121,10 +122,10 @@ Upload the zip in the Lambda console. **Handler is `src/adapters/lambda.handler`
 
 | | |
 |---|---|
-| `POST /highlight` | The service. Requires `x-highlight-token`. |
+| `POST /highlight?language=<flag>` | The service. Requires `x-highlight-token`. The request body is the raw code text; its Content-Type is ignored. `language` is optional. A 200 body is the highlighted HTML fragment (`text/html`), with `X-Highlighted: true\|false` and `X-Language` (the resolved language — always present, empty when nothing resolved) as headers. Errors are JSON `{error}`. |
 | `GET /health` | `{"ok":true}`. Unauthenticated. |
 
-`highlighted: false` is **not an error** — it means the language was unrecognized or a line exceeded `MAX_LINE_LENGTH`, and `html` is escaped plain text. Still HTTP 200. Callers never branch on it — one degradation path, never a third case to special-case.
+`X-Highlighted: false` is **not an error** — it means the language was unrecognized or a line exceeded `MAX_LINE_LENGTH`, and the body is escaped plain text. Still HTTP 200. Callers never branch on it — one degradation path, never a third case to special-case.
 
 ## Configuration
 
@@ -211,13 +212,12 @@ URL=https://<id>.lambda-url.us-east-1.on.aws
 
 curl -s "$URL/health"                                    # {"ok":true}
 
-curl -s -X POST "$URL/highlight" \
-  -H 'content-type: application/json' \
+curl -si -X POST "$URL/highlight?language=cfml" \
   -H "x-highlight-token: $HIGHLIGHT_TOKEN" \
-  -d '{"code":"<cfscript>x = 1;</cfscript>","language":"cfml"}'   # highlighted:true
+  --data-binary '<cfscript>x = 1;</cfscript>'             # x-highlighted: true
 
 curl -s -o /dev/null -w '%{http_code}\n' -X POST "$URL/highlight" \
-  -H 'content-type: application/json' -d '{"code":"x"}'  # 401
+  -d 'x'                                                  # 401
 ```
 
 - **Read the `REPORT` line in CloudWatch Logs** on the first deploy. Its `Init Duration` replaces the largest estimate in the design docs, where every latency figure is a Mac measurement multiplied by an assumed 2× for Graviton.

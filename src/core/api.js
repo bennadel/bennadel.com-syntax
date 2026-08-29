@@ -31,17 +31,16 @@ import {init, highlight} from "./highlight.js";
 * possible place to find it.
 *
 * This file knows nothing about sockets, streams, or Lambda event shapes. It
-* takes a description of a request and returns a status plus a payload; the
-* adapters do the serializing. test/contract.test.js drives both and asserts they
+* takes a description of a request and returns a status, the response headers,
+* and the final body string; the adapters write all three verbatim. The
+* serialization happens here because it is contract -- which content-type a
+* status carries, and which metadata headers ride on a 200, must not be able to
+* diverge between adapters. test/contract.test.js drives both and asserts they
 * agree byte for byte.
 */
 
 // Module state: assigned by boot(), read by handleRequest and tokenMatches.
 var config;
-
-// One string, one place -- it has to stay in sync with the shape checks in
-// handleRequest, and it is returned from more than one call site.
-var BAD_SHAPE = "Expected { code: string, language?: string }";
 
 /**
 * Startup checks shared by both adapters. Throws; the caller decides whether
@@ -95,65 +94,34 @@ export async function boot() {
 * @param {object} request
 * @param {string} request.method
 * @param {string} request.path
+* @param {string|null} request.language   ?language= query value, null when absent
 * @param {string|undefined} request.token   x-highlight-token header, if any
-* @param {string} request.body   raw request body, empty string when absent
-* @returns {Promise<{status: number, payload: object}>}
+* @param {string} request.body   raw code text, empty string when absent
+* @returns {Promise<{status: number, headers: object, body: string}>}
 */
-export async function handleRequest({method, path, token, body}) {
+export async function handleRequest({method, path, language, token, body}) {
 	// Unauthenticated, and reveals nothing beyond liveness. Serves the container
 	// healthcheck locally, and is the target for a keep-warm ping on Lambda.
 	if (method === "GET" && path === "/health") {
-		return {status: 200, payload: {ok: true}};
+		return jsonResponse(200, {ok: true});
 	}
 
 	if (path !== "/highlight") {
-		return {status: 404, payload: {error: "Not found"}};
+		return jsonResponse(404, {error: "Not found"});
 	}
 
 	if (method !== "POST") {
-		return {status: 405, payload: {error: "Method not allowed"}};
+		return jsonResponse(405, {error: "Method not allowed"});
 	}
 
 	if (!tokenMatches(token)) {
-		return {status: 401, payload: {error: "Unauthorized"}};
+		return jsonResponse(401, {error: "Unauthorized"});
 	}
 
 	// Authoritative, unlike a declared Content-Length, which can lie or be
 	// absent.
 	if (Buffer.byteLength(body, "utf8") > config.maxBytes) {
-		return {status: 413, payload: {error: "Payload too large"}};
-	}
-
-	try {
-		var input = JSON.parse(body);
-	} catch {
-		return {status: 400, payload: {error: "Invalid JSON"}};
-	}
-
-	// Parsing cleanly is not the same as being handed an object: `null`, `42`,
-	// `"x"` and `[]` are all valid JSON documents. Establish it once here, so
-	// every property read below is a plain access rather than a guarded one --
-	// `null` is the case that would otherwise throw, since typeof null is
-	// 'object'. An array falls through to the `code` check and fails there.
-	if (input === null || typeof input !== "object") {
-		return {status: 400, payload: {error: BAD_SHAPE}};
-	}
-
-	if (typeof input.code !== "string") {
-		return {status: 400, payload: {error: BAD_SHAPE}};
-	}
-
-	// `language` needs the same check as `code`, for a less obvious reason:
-	// resolveScope() calls String(language), which THROWS on an object with a
-	// non-callable toString -- {"language":{"toString":1}} raises "Cannot convert
-	// object to primitive value". Unvalidated, that let a caller trigger a 500,
-	// the one status reserved for the service itself being broken.
-	//
-	// null and undefined pass deliberately. Both already mean "no language" and
-	// yield highlighted:false, and a JSON client serializing an absent value as
-	// null is ordinary. Rejecting it would break a working call for no gain.
-	if (input.language != null && typeof input.language !== "string") {
-		return {status: 400, payload: {error: BAD_SHAPE}};
+		return jsonResponse(413, {error: "Payload too large"});
 	}
 
 	// An unknown language or an over-long line is NOT an error -- highlight()
@@ -171,12 +139,36 @@ export async function handleRequest({method, path, token, body}) {
 	// which is uncatchable. That failure is only ever visible from outside the
 	// process. See the MAX_LINE_LENGTH notes in core/highlight.js.
 	try {
-		return {status: 200, payload: highlight(input.code, input.language)};
+		var result = highlight(body, language);
+
+		// x-language is emitted even when nothing resolved -- an empty value
+		// rather than an absent header, so a client reads it unconditionally.
+		return {
+			status: 200,
+			headers: {
+				"content-type": "text/html; charset=utf-8",
+				"x-highlighted": String(result.highlighted),
+				"x-language": result.resolvedLanguage ?? ""
+			},
+			body: result.html
+		};
 	} catch (error) {
 		console.error(error);
 
-		return {status: 500, payload: {error: error.message}};
+		return jsonResponse(500, {error: error.message});
 	}
+}
+
+/**
+* Every non-200 speaks JSON; only a successful highlight returns HTML. Header
+* names are lowercase everywhere so the two adapters emit identical bytes.
+*/
+function jsonResponse(status, payload) {
+	return {
+		status,
+		headers: {"content-type": "application/json; charset=utf-8"},
+		body: JSON.stringify(payload)
+	};
 }
 
 /**

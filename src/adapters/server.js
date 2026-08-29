@@ -19,8 +19,8 @@ var PORT = Number(process.env.PORT ?? 3000);
 * process, and for a dev-only server a stack trace and a restart beat
 * defensive plumbing.
 *
-* This serves JSON and nothing else. Do not add a route that renders HTML: this
-* stays an API rather than a mix of API and page rendering. Looking at
+* This serves the API and nothing else. Do not add a route that renders a page:
+* this stays an API rather than a mix of API and page rendering. Looking at
 * highlighted output is what tools/ is for, and asserting it is correct is what
 * test/corpus.test.js is for -- neither job belongs in an adapter.
 */
@@ -35,14 +35,19 @@ var server = createServer(async (request, response) => {
 	var url = new URL(request.url, "http://localhost");
 	var body = await readBody(request);
 
-	var {status, payload} = await handleRequest({
+	var {status, headers, body: responseBody} = await handleRequest({
 		method: request.method,
 		path: url.pathname,
+		language: url.searchParams.get("language"),
 		token: request.headers["x-highlight-token"],
 		body
 	});
 
-	send(response, status, payload);
+	response.writeHead(status, {
+		...headers,
+		"content-length": Buffer.byteLength(responseBody)
+	});
+	response.end(responseBody);
 });
 
 server.listen(PORT, () => {
@@ -55,8 +60,7 @@ process.on("SIGTERM", () => {
 
 /**
 * Buffer the request body and return the raw string, letting api.js do the
-* parsing and the size check -- JSON and the payload cap are contract concerns,
-* not transport ones.
+* size check -- the payload cap is a contract concern, not a transport one.
 */
 function readBody(request) {
 	return new Promise((resolve, reject) => {
@@ -68,12 +72,3 @@ function readBody(request) {
 	});
 }
 
-function send(response, status, payload) {
-	var body = JSON.stringify(payload);
-
-	response.writeHead(status, {
-		"content-type": "application/json; charset=utf-8",
-		"content-length": Buffer.byteLength(body)
-	});
-	response.end(body);
-}

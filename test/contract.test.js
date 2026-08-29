@@ -2,19 +2,26 @@
 * Adapter contract test.
 *
 * The API contract must be identical against both adapters, and this is what
-* holds that up. Both adapters must stay thin: auth, routing,
-* validation, and the highlight call belong in src/core/api.js. Moving any
-* of it back into one adapter produces a divergence nothing else would catch --
-* it surfaces only as the ColdFusion client behaving differently against prod
-* than against local, which is close to the worst place to find it.
+* holds that up. Both adapters must stay thin: auth, routing, the payload cap,
+* response serialization, and the highlight call belong in src/core/api.js.
+* Moving any of it back into one adapter produces a divergence nothing else
+* would catch -- it surfaces only as the ColdFusion client behaving differently
+* against prod than against local, which is close to the worst place to find
+* it.
 *
-* So this asserts two separate things per case:
+* So this asserts three separate things per case:
 *
 *   1. Each adapter returns the expected status.
-*   2. Both adapters return the SAME status and the SAME body.
+*   2. Both adapters return the SAME status, the SAME body, and the SAME
+*      contract headers (content-type, x-highlighted, x-language). Transport
+*      headers -- date, content-length, connection -- are deliberately not
+*      compared.
+*   3. Where a case pins them, the coarse header expectations hold:
+*      x-highlighted exactly, and only whether x-language is empty, never its
+*      value.
 *
-* The second is the one worth having. It turns "identical contract" from a claim
-* into a checked property.
+* The second is the one worth having. It turns "identical contract" from a
+* claim into a checked property.
 *
 * NOT the golden corpus -- test/corpus.test.js targets src/core/highlight.js and
 * verifies highlighting OUTPUT. This verifies the request/response envelope and
@@ -47,6 +54,17 @@ await new Promise((resolve) => setTimeout(resolve, 300));
 // default here where it could drift.
 var MAX_BYTES = loadConfig(process.env).maxBytes;
 
+// Request fields: `query` is the raw query string WITHOUT the leading `?`,
+// kept separate from `path` because the two adapters receive it differently --
+// callServer appends it to the URL, callLambda hands it to the event as
+// rawQueryString, which Lambda never folds into rawPath. `contentType` exists
+// only to prove the contract ignores it; fetch cannot send a string body
+// without one.
+//
+// Expectation fields, both optional: `highlighted` pins the x-highlighted
+// value exactly; `resolved` pins only whether x-language is empty. Neither
+// ever pins the resolved value itself -- a grammar change must not fail a
+// transport test.
 var cases = [
 	// Routing and method handling.
 	{name: "GET /health", status: 200,
@@ -58,98 +76,109 @@ var cases = [
 
 	// Auth. The 401 cases are the regression guard for the fail-open bug.
 	{name: "no token header", status: 401,
-		request: {method: "POST", path: "/highlight", body: json({code: "x"})}},
+		request: {method: "POST", path: "/highlight", body: "x"}},
 	{name: "wrong token", status: 401,
-		request: {method: "POST", path: "/highlight", token: "nope", body: json({code: "x"})}},
+		request: {method: "POST", path: "/highlight", token: "nope", body: "x"}},
 	{name: "token of different length", status: 401,
-		request: {method: "POST", path: "/highlight", token: "a", body: json({code: "x"})}},
+		request: {method: "POST", path: "/highlight", token: "a", body: "x"}},
 
-	// Body parsing.
-	{name: "malformed JSON", status: 400,
-		request: {method: "POST", path: "/highlight", token: TOKEN, body: "{nope"}},
-	// Every one of these parses cleanly and is not an object. `null` is the one
-	// that would throw rather than 400 if the shape checks read properties off
-	// the parsed value directly.
-	{name: "JSON null body", status: 400,
-		request: {method: "POST", path: "/highlight", token: TOKEN, body: "null"}},
-	{name: "JSON number body", status: 400,
-		request: {method: "POST", path: "/highlight", token: TOKEN, body: "42"}},
-	{name: "JSON string body", status: 400,
-		request: {method: "POST", path: "/highlight", token: TOKEN, body: "\"x\""}},
-	{name: "JSON array body", status: 400,
-		request: {method: "POST", path: "/highlight", token: TOKEN, body: "[]"}},
-	{name: "missing code", status: 400,
-		request: {method: "POST", path: "/highlight", token: TOKEN, body: json({language: "cfml"})}},
-	{name: "code is a number", status: 400,
-		request: {method: "POST", path: "/highlight", token: TOKEN, body: json({code: 42})}},
-
-	// language validation -- regression guard for the String() throw.
-	{name: "language {toString:1}", status: 400,
-		request: {method: "POST", path: "/highlight", token: TOKEN, body: json({code: "x", language: {toString: 1}})}},
-	{name: "language {}", status: 400,
-		request: {method: "POST", path: "/highlight", token: TOKEN, body: json({code: "x", language: {}})}},
-	{name: "language []", status: 400,
-		request: {method: "POST", path: "/highlight", token: TOKEN, body: json({code: "x", language: []})}},
-	{name: "language 42", status: 400,
-		request: {method: "POST", path: "/highlight", token: TOKEN, body: json({code: "x", language: 42})}},
-	{name: "language null (legal)", status: 200,
-		request: {method: "POST", path: "/highlight", token: TOKEN, body: json({code: "x", language: null})}},
-	{name: "language absent (legal)", status: 200,
-		request: {method: "POST", path: "/highlight", token: TOKEN, body: json({code: "x"})}},
-
-	// Payload cap.
+	// Payload cap, measured on the actual code bytes.
 	{name: "body over MAX_BYTES", status: 413,
 		request: {method: "POST", path: "/highlight", token: TOKEN,
-			body: json({code: "x".repeat(MAX_BYTES + 1024)})}},
+			body: "x".repeat(MAX_BYTES + 1024)}},
 
-	// Highlighting outcomes. Coarse on purpose -- status and the highlighted
-	// flag only, so grammar changes do not fail a transport test.
-	{name: "valid cfml", status: 200,
-		request: {method: "POST", path: "/highlight", token: TOKEN,
-			body: json({code: "<cfset a = 1>", language: "cfml"})}},
-	{name: "unknown language", status: 200,
-		request: {method: "POST", path: "/highlight", token: TOKEN,
-			body: json({code: "x = 1", language: "not-a-language"})}},
-	{name: "empty code", status: 200,
-		request: {method: "POST", path: "/highlight", token: TOKEN,
-			body: json({code: "", language: "cfml"})}},
-	{name: "line over MAX_LINE_LENGTH", status: 200,
-		request: {method: "POST", path: "/highlight", token: TOKEN,
-			body: json({code: "a".repeat(500), language: "cfml"})}}
+	// Highlighting outcomes.
+	{name: "valid cfml", status: 200, highlighted: "true", resolved: true,
+		request: {method: "POST", path: "/highlight", query: "language=cfml",
+			token: TOKEN, body: "<cfset a = 1>"}},
+	{name: "unknown language", status: 200, highlighted: "false", resolved: false,
+		request: {method: "POST", path: "/highlight", query: "language=not-a-language",
+			token: TOKEN, body: "x = 1"}},
+	{name: "no language param", status: 200, highlighted: "false", resolved: false,
+		request: {method: "POST", path: "/highlight", token: TOKEN, body: "x = 1"}},
+	{name: "empty language value", status: 200, highlighted: "false", resolved: false,
+		request: {method: "POST", path: "/highlight", query: "language=",
+			token: TOKEN, body: "x = 1"}},
+	{name: "empty body", status: 200,
+		request: {method: "POST", path: "/highlight", query: "language=cfml",
+			token: TOKEN, body: ""}},
+	{name: "line over MAX_LINE_LENGTH", status: 200, highlighted: "false",
+		request: {method: "POST", path: "/highlight", query: "language=cfml",
+			token: TOKEN, body: "a".repeat(500)}},
+
+	// Query-string decoding. Both adapters must run the same parser --
+	// lambda.js goes through URLSearchParams for exactly this agreement.
+	{name: "percent-encoded language", status: 200, highlighted: "true", resolved: true,
+		request: {method: "POST", path: "/highlight", query: "language=c%66ml",
+			token: TOKEN, body: "<cfset a = 1>"}},
+	{name: "plus decodes to a space", status: 200, highlighted: "false", resolved: false,
+		request: {method: "POST", path: "/highlight", query: "language=cf+ml",
+			token: TOKEN, body: "x = 1"}},
+	{name: "duplicate language, first wins", status: 200, highlighted: "true", resolved: true,
+		request: {method: "POST", path: "/highlight", query: "language=cfml&language=xml",
+			token: TOKEN, body: "<cfset a = 1>"}},
+	{name: "unrelated params ignored", status: 200, highlighted: "true", resolved: true,
+		request: {method: "POST", path: "/highlight", query: "foo=bar&language=cfml",
+			token: TOKEN, body: "<cfset a = 1>"}},
+
+	// The body is code, never an envelope. A payload that happens to be
+	// well-formed JSON -- declared as such, even -- is highlighted as the
+	// literal text it is.
+	{name: "JSON-shaped body is literal code", status: 200, highlighted: "false", resolved: false,
+		request: {method: "POST", path: "/highlight", contentType: "application/json",
+			token: TOKEN, body: "{\"code\":\"x\",\"language\":\"cfml\"}"}},
+	{name: "malformed-JSON-shaped body too", status: 200, highlighted: "false", resolved: false,
+		request: {method: "POST", path: "/highlight", token: TOKEN, body: "{nope"}}
 ];
 
 var failures = 0;
 
 console.log("");
-console.log("case".padEnd(32), "lambda".padEnd(8), "server".padEnd(8), "match", "expected");
-console.log("-".repeat(78));
+console.log("case".padEnd(34), "lambda".padEnd(8), "server".padEnd(8), "match", "expected");
+console.log("-".repeat(80));
 
-for (var {name, request, status} of cases) {
+for (var {name, request, status, highlighted, resolved} of cases) {
 	var lambda = await callLambda(request);
 	var server = await callServer(request);
 
-	var match = lambda.status === server.status && lambda.body === server.body;
+	var match = lambda.status === server.status
+		&& lambda.body === server.body
+		&& lambda.headers["content-type"] === server.headers["content-type"]
+		&& lambda.headers["x-highlighted"] === server.headers["x-highlighted"]
+		&& lambda.headers["x-language"] === server.headers["x-language"];
 	var expected = lambda.status === status && server.status === status;
-	var ok = match && expected;
+
+	// Checked against one adapter only -- `match` already covers the other.
+	var headersOk = true;
+
+	if (highlighted !== undefined) {
+		headersOk = headersOk && lambda.headers["x-highlighted"] === highlighted;
+	}
+
+	if (resolved !== undefined) {
+		headersOk = headersOk && (lambda.headers["x-language"] !== "") === resolved;
+	}
+
+	var ok = match && expected && headersOk;
 
 	if (!ok) failures++;
 
 	console.log(
-		name.padEnd(32),
+		name.padEnd(34),
 		String(lambda.status).padEnd(8),
 		String(server.status).padEnd(8),
-		(match ? "yes" : "NO").padEnd(6),
+		(match && headersOk ? "yes" : "NO").padEnd(6),
 		expected ? String(status) : `WANTED ${status}`
 	);
 
-	// Only dump bodies when something is wrong -- a passing run stays readable.
-	if (!match) {
-		console.log("   lambda body:", lambda.body.slice(0, 200));
-		console.log("   server body:", server.body.slice(0, 200));
+	// Only dump details when something is wrong -- a passing run stays readable.
+	if (!match || !headersOk) {
+		console.log("   lambda:", JSON.stringify(lambda.headers), lambda.body.slice(0, 200));
+		console.log("   server:", JSON.stringify(server.headers), server.body.slice(0, 200));
 	}
 }
 
-console.log("-".repeat(78));
+console.log("-".repeat(80));
 console.log(failures === 0
 	? `PASS -- ${cases.length} cases, both adapters agree`
 	: `FAIL -- ${failures} of ${cases.length} cases`);
@@ -162,51 +191,67 @@ process.exit(failures === 0 ? 0 : 1);
 * rather than mocking, because the shape of that event IS part of what this
 * test is pinning down.
 */
-async function callLambda({method, path, token, body}) {
+async function callLambda({method, path, query, token, body, contentType}) {
 	var headers = {};
 
 	if (token !== undefined) headers["x-highlight-token"] = token;
 	if (body !== undefined) headers["content-length"] = String(Buffer.byteLength(body));
+	if (contentType !== undefined) headers["content-type"] = contentType;
 
 	var result = await handler({
 		rawPath: path,
+		rawQueryString: query ?? "",
 		requestContext: {http: {method}},
 		headers,
 		body
 	});
 
-	return {status: result.statusCode, body: result.body};
+	return {
+		status: result.statusCode,
+		headers: contractHeaders((name) => result.headers[name]),
+		body: result.body
+	};
 }
 
 /**
 * Drive the HTTP adapter over a real socket. Not an in-process call: the whole
 * point is that the transport is exercised.
 */
-async function callServer({method, path, token, body}) {
-	var headers = {"content-type": "application/json"};
+async function callServer({method, path, query, token, body, contentType}) {
+	// A content-type is always sent (fetch will not send a string body without
+	// one), and one case overrides it -- the contract ignores the header, and
+	// varying it is how that stays proven.
+	var headers = {"content-type": contentType ?? "text/plain"};
 
 	if (token !== undefined) headers["x-highlight-token"] = token;
 
+	var url = `http://127.0.0.1:${PORT}${path}${query ? `?${query}` : ""}`;
+
 	try {
-		var response = await fetch(`http://127.0.0.1:${PORT}${path}`, {
-			method,
-			headers,
-			body
-		});
+		var response = await fetch(url, {method, headers, body});
+		var responseBody = await response.text();
 
-		var body = await response.text();
-
-		return {status: response.status, body};
+		return {
+			status: response.status,
+			headers: contractHeaders((name) => response.headers.get(name)),
+			body: responseBody
+		};
 	} catch (error) {
 		// Surface transport failures as data rather than letting them abort
 		// the run.
-		return {status: "FETCH_FAILED", body: error.message};
+		return {status: "FETCH_FAILED", headers: contractHeaders(() => null), body: error.message};
 	}
 }
 
-// A function declaration rather than a const, so it can live down here: `cases`
-// is built at module scope and calls this, which only works because the
-// declaration hoists.
-function json(value) {
-	return JSON.stringify(value);
+/**
+* Pluck the contract headers through an adapter-specific reader (a plain
+* object for lambda, a Fetch Headers for the server), normalizing "absent" to
+* null on both sides so the parity comparison is a plain equality.
+*/
+function contractHeaders(read) {
+	return {
+		"content-type": read("content-type") ?? null,
+		"x-highlighted": read("x-highlighted") ?? null,
+		"x-language": read("x-language") ?? null
+	};
 }
