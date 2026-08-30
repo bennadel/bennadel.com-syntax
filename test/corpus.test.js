@@ -425,6 +425,13 @@ if (!UPDATE) {
 	assertEqual("CFML tag in a trailing comment stays embedding.cfml.cfs",
 		asCfc("component {\n\t// replaces <cfoutput> usage\n\tfunction f() {}\n}"), "embedding.cfml.cfs");
 
+	// A Lucee tag island is the third false-positive trap: real tag syntax,
+	// legally inside script, sitting at the start of a line exactly like the
+	// tag-based code the pattern hunts for. Routing on it would send the
+	// component to the tag grammar and past the cfs-side island handling.
+	assertEqual("tag island inside script stays embedding.cfml.cfs",
+		asCfc("component {\n\tfunction f() {\n\t\t```\n\t\t<cfset x = 1 />\n\t\t```\n\t}\n}"), "embedding.cfml.cfs");
+
 	// The refinement keys off the scope, not the tag, so the explicit script
 	// spellings get the same correction.
 	assertEqual("\"cfs\" with tag-based content -> embedding.cfml",
@@ -523,13 +530,52 @@ if (!UPDATE) {
 	assertEqual("safe-navigation patch reaches cfscript nested in tags",
 		insideTag.html.includes("<span class=\"pl-k\">?.</span>"), true);
 
-	// Both patches must have actually run on both files. A patch that silently
+	// -- tag islands --------------------------------------------------------------
+
+	// Lucee tag islands: tag syntax between ``` fences, inside script. Upstream
+	// ships the rule in the tag grammar only, wired only at top-of-script; the
+	// tag-island patch ports it to the cfs file and wires BOTH files into the
+	// statement dispatch. Asserted inside a function body because that is the
+	// case upstream gets wrong in both grammars -- and where a cfquery island
+	// actually lives.
+	var island = highlight(
+		"component {\n\tfunction getTasks() {\n\t\t```\n\t\t<cfquery name=\"q\">\n\t\t\tSELECT\n\t\t\t\tt.id\n\t\t\tFROM\n\t\t\t\ttask t\n\t\t</cfquery>\n\t\t```\n\t}\n}",
+		"cfc"
+	);
+
+	assertEqual("island component routes to the script grammar",
+		island.resolvedLanguage, "embedding.cfml.cfs");
+	assertEqual("island cfquery is a tag",
+		island.html.includes("<span class=\"pl-ent\">cfquery</span>"), true);
+	assertEqual("island cfquery embeds SQL",
+		island.html.includes("<span class=\"pl-k\">SELECT</span>"), true);
+	// The failure mode all of this exists to prevent: the tag-in-script
+	// attribute scanner marking the SQL invalid.illegal -> pl-ii, white on red.
+	assertEqual("island body carries no illegal tokens",
+		island.html.includes("pl-ii"), false);
+
+	// The same island nested in <cfscript> in a TAG file. The rule is
+	// upstream's own here, but reaching it from a function body is the patch's
+	// wiring, so this direction gets its own assertion.
+	var islandInTag = highlight(
+		"<cfscript>\ncomponent {\n\tfunction getTasks() {\n\t\t```\n\t\t<cfquery name=\"q\">\n\t\t\tSELECT t.id FROM task t\n\t\t</cfquery>\n\t\t```\n\t}\n}\n</cfscript>",
+		"cfm"
+	);
+
+	assertEqual("island in a tag-file function embeds SQL",
+		islandInTag.html.includes("<span class=\"pl-k\">SELECT</span>"), true);
+	assertEqual("island in a tag-file function carries no illegal tokens",
+		islandInTag.html.includes("pl-ii"), false);
+
+	// ---------------------------------------------------------------------------
+
+	// Every patch must have actually run on both files. A patch that silently
 	// stops applying looks fixed and is not, and the anchor assertions inside
 	// src/grammars/cfml.js only fire if the ANCHOR moved -- not if someone quietly
 	// drops a patch from the list.
 	assertEqual("every vendored grammar is patched",
 		[...cfmlPatches.values()].map((names) => names.join(",")).join(" | "),
-		"bare-include,safe-navigation | bare-include,safe-navigation");
+		"bare-include,safe-navigation,tag-island | bare-include,safe-navigation,tag-island");
 
 	// The vendored files are byte-identical to upstream, and this is what makes
 	// that a fact rather than an intention. Both patches are applied to the

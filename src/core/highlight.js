@@ -314,7 +314,16 @@ function refineScope(scope, source) {
 * as tag-based as a full file.
 */
 function looksTagBased(source) {
-	return /^[ \t]*<cf[a-z]/im.test(source);
+	// Lucee tag islands -- tag syntax legally embedded IN script between ```
+	// fences -- must not count as evidence of a tag-based file: an island's
+	// `<cfquery>` sits at the start of a line exactly like real tag code, and
+	// routing the surrounding component to the tag grammar is the false
+	// positive this function exists to avoid. Only PAIRED fences are stripped:
+	// on a lone ``` (a truncated fragment), the conservative reading is to
+	// leave the source alone rather than discard everything after it.
+	var withoutIslands = source.replace(/```[\s\S]*?```/g, "");
+
+	return /^[ \t]*<cf[a-z]/im.test(withoutIslands);
 }
 
 /**

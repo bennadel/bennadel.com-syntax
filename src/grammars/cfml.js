@@ -80,7 +80,7 @@ export var CFML_SCRIPT = "embedding.cfml.cfs";
 */
 export var applied = new Map();
 
-var PATCHES = [patchBareInclude, patchSafeNavigation];
+var PATCHES = [patchBareInclude, patchSafeNavigation, patchTagIsland];
 
 export async function loadCfmlGrammars() {
 	return Promise.all([
@@ -247,4 +247,94 @@ function patchSafeNavigation(grammar, file) {
 	});
 
 	return "safe-navigation";
+}
+
+/**
+* Lucee tag islands -- tag syntax embedded in cfscript between ``` fences --
+* render as a wall of errors in script files. Without a rule for the fence,
+* island content falls through to the tag-in-script rules: the opening tag's
+* `<` reads as an operator, and after its `>` the parser stays in the
+* attribute scanner, rendering a cfquery body as attribute names (`pl-e`)
+* and, for anything an attribute name cannot contain,
+* `invalid.illegal.attribute-name.cfml` -- `pl-ii`, white on red. SQL like
+* `t.id,` lit up as errors is how this was noticed.
+*
+* The rule itself is not ours -- it is UPSTREAM'S. cfml.tmLanguage.json
+* carries `source-cfml-script-tagisland` and wires it into
+* `source-cfml-script-main`. But upstream ships two gaps, both patched here:
+*
+*   1. The cfs build lacks the rule ENTIRELY -- no repository entry, no
+*      include -- so a script-based component gets no island handling at all.
+*      The entry is copied in verbatim, and where a file already carries it,
+*      the copy is ASSERTED against the original on every load: if upstream
+*      evolves the rule, the load fails and says to re-copy rather than drift.
+*
+*   2. In BOTH files the include sits only in `main`, the top-of-script
+*      dispatch -- so an island works at the top of a <cfscript> block and
+*      nowhere else. Function bodies, blocks, and struct literals dispatch
+*      through `source-cfml-script-statements` (fifteen include sites,
+*      measured), never through main. An island inside a function -- where a
+*      cfquery actually lives -- fell through to the tag-in-script attribute
+*      scanner in upstream's own tag grammar. The include is added to the
+*      statements dispatch, which every one of those contexts reaches.
+*
+* A begin/end rule, which "patch TOKENS, never STRUCTURE" above reads as
+* forbidding. The prohibition is against structural claims a lexer cannot
+* soundly make; this is upstream's own structure, re-wired to where the
+* content actually occurs, and it makes no new parse claim at all.
+*/
+function patchTagIsland(grammar, file) {
+	var ISLAND = "source-cfml-script-tagisland";
+	var STATEMENTS = "source-cfml-script-statements";
+
+	// Verbatim copy of the rule in cfml.tmLanguage.json, key order included --
+	// the fidelity check below compares serialized forms.
+	var rule = {
+		begin: "(```)",
+		contentName: "source.cfml",
+		end: "(```)",
+		patterns: [
+			{include: "#cfml-tags"},
+			{include: "#text-html-cfml"}
+		]
+	};
+
+	// Unguarded for the same reason as the patches above: a rename throws a
+	// TypeError that names the expression.
+	var statements = grammar.repository[STATEMENTS].patterns;
+	var existing = grammar.repository[ISLAND];
+
+	if (existing) {
+		// The tag grammar. Nothing to install, but the copy above must still
+		// match what it was copied from.
+		if (JSON.stringify(existing) !== JSON.stringify(rule)) {
+			throw new Error(`${file}: ${ISLAND} no longer matches the copy in patchTagIsland; re-copy it rather than letting the two files drift`);
+		}
+	} else {
+		// The cfs grammar. The island body is handed entirely to these two
+		// includes, so the port is only sound while the file inlines both.
+		for (var required of ["cfml-tags", "text-html-cfml"]) {
+			if (!grammar.repository[required]) {
+				throw new Error(`${file}: repository no longer has ${required}; the tag-island rule has nothing to hand the island body to`);
+			}
+		}
+
+		grammar.repository[ISLAND] = rule;
+	}
+
+	// If upstream wires the statements dispatch themselves, this patch shrinks
+	// to the fidelity check above -- delete the push rather than duplicating
+	// their include.
+	if (statements.some((p) => p.include === `#${ISLAND}`)) {
+		throw new Error(`${file}: ${STATEMENTS} now includes ${ISLAND} itself; shrink patchTagIsland accordingly`);
+	}
+
+	// Appended, not unshifted. TextMate awards a position to the rule that
+	// matches EARLIEST at it, using list order only to break ties, and nothing
+	// else in the statement rules claims a backtick -- so the fence is won by
+	// the island rule even from the back of the list, where it cannot get in
+	// front of a real statement rule on some other input.
+	statements.push({include: `#${ISLAND}`});
+
+	return "tag-island";
 }
