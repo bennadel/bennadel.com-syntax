@@ -80,7 +80,7 @@ export var CFML_SCRIPT = "embedding.cfml.cfs";
 */
 export var applied = new Map();
 
-var PATCHES = [patchBareInclude, patchSafeNavigation, patchTagIsland];
+var PATCHES = [patchBareInclude, patchSafeNavigation, patchTagIsland, patchBadAmpersand];
 
 export async function loadCfmlGrammars() {
 	return Promise.all([
@@ -337,4 +337,60 @@ function patchTagIsland(grammar, file) {
 	statements.push({include: `#${ISLAND}`});
 
 	return "tag-island";
+}
+
+/**
+* Bare `&` renders as invalid.illegal -> pl-ii, white on red.
+*
+* cfmleditor's character-reference rule set -- included in HTML text and
+* attribute-value contexts -- tries the real entity forms first (`&name;`,
+* `&#123;`, `&#xAB;`) and then ends with a catch-all that brands every
+* remaining ampersand `invalid.illegal.bad-ampersand.html`. That is HTML4
+* pedantry: `href="?a=1&b=2"` is legal HTML5 (`&b` names no entity, so there
+* is no ambiguity), and the archive is twenty years of exactly that URL shape,
+* so the strictness lights up ordinary attribute values as errors.
+*
+* It is also a divergence from the baseline this project matches: GitHub's
+* `text.html.basic` renders the same snippet with no illegal token --
+* measured on 2026-08-30 against the starry-night registration, not assumed
+* from the old html.tmbundle it descends from.
+*
+* The patch deletes ONLY the catch-all. The entity rules stay, so `&rarr;`
+* keeps its character-reference highlighting; a bare `&` is simply unclaimed
+* and falls through to plain text, which is GitHub's rendering.
+*/
+function patchBadAmpersand(grammar, file) {
+	// Both HTML-content contexts carry their own copy of the rule set: the
+	// general one, and the twin used inside <cfoutput> blocks.
+	var ENTRIES = [
+		"text-html-cfml-character-reference",
+		"text-html-cfml-cfoutput-character-reference"
+	];
+
+	var CATCH_ALL = "invalid.illegal.bad-ampersand.html";
+
+	for (var entry of ENTRIES) {
+		// Unguarded for the same reason as the patches above: a rename throws a
+		// TypeError that names the expression.
+		var patterns = grammar.repository[entry].patterns;
+
+		var index = patterns.findIndex((p) => p.name === CATCH_ALL && p.match === "&");
+
+		// Anchor check. If upstream drops the catch-all themselves, remove this
+		// patch rather than leaving it to fail silently against nothing.
+		if (index < 0) {
+			throw new Error(`${file}: ${entry} no longer carries the ${CATCH_ALL} catch-all; remove patchBadAmpersand`);
+		}
+
+		patterns.splice(index, 1);
+	}
+
+	// The two entries above must be the ONLY carriers. A third copy appearing
+	// elsewhere in an upstream update would survive this patch and put pl-ii
+	// ampersands back in some context nobody re-tested -- fail loudly instead.
+	if (JSON.stringify(grammar.repository).includes(CATCH_ALL)) {
+		throw new Error(`${file}: ${CATCH_ALL} now appears outside the two character-reference entries; extend patchBadAmpersand to cover it`);
+	}
+
+	return "bad-ampersand";
 }

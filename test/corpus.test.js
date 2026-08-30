@@ -567,6 +567,27 @@ if (!UPDATE) {
 	assertEqual("island in a tag-file function carries no illegal tokens",
 		islandInTag.html.includes("pl-ii"), false);
 
+	// -- bad ampersand ------------------------------------------------------------
+
+	// cfmleditor brands every `&` that is not a complete entity as
+	// invalid.illegal -> pl-ii, which lights up twenty years of
+	// `href="?a=1&b=2"` URLs as errors. GitHub's text.html.basic renders the
+	// same ampersand plain, and the bad-ampersand patch restores that. Both
+	// HTML contexts are asserted because each has its own copy of the rule set.
+	var ampersand = highlight("<a href=\"./spa.cfm?showBanner=1&spaRoute=/x\">Goto</a> &rarr;", "cfm");
+	assertEqual("bare & in an attribute is not illegal",
+		ampersand.html.includes("pl-ii"), false);
+	// The patch must delete ONLY the catch-all: real character references keep
+	// their highlighting, or the patch has cut too deep.
+	assertEqual("&rarr; is still a character reference",
+		ampersand.html.includes("<span class=\"pl-en\">rarr</span>"), true);
+
+	var ampersandInCfoutput = highlight("<cfoutput><a href=\"?a=#x#&b=2\">x</a> & &rarr;</cfoutput>", "cfm");
+	assertEqual("bare & inside cfoutput is not illegal",
+		ampersandInCfoutput.html.includes("pl-ii"), false);
+	assertEqual("&rarr; inside cfoutput is still a character reference",
+		ampersandInCfoutput.html.includes("<span class=\"pl-en\">rarr</span>"), true);
+
 	// ---------------------------------------------------------------------------
 
 	// Every patch must have actually run on both files. A patch that silently
@@ -575,7 +596,7 @@ if (!UPDATE) {
 	// drops a patch from the list.
 	assertEqual("every vendored grammar is patched",
 		[...cfmlPatches.values()].map((names) => names.join(",")).join(" | "),
-		"bare-include,safe-navigation,tag-island | bare-include,safe-navigation,tag-island");
+		"bare-include,safe-navigation,tag-island,bad-ampersand | bare-include,safe-navigation,tag-island,bad-ampersand");
 
 	// The vendored files are byte-identical to upstream, and this is what makes
 	// that a fact rather than an intention. Both patches are applied to the
