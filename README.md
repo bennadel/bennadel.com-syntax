@@ -134,7 +134,7 @@ Upload the zip in the Lambda console. **Handler is `src/adapters/lambda.handler`
 | `PORT` | `3000` | Read by both `src/adapters/server.js` and Lambda. |
 | `HIGHLIGHT_TOKEN` | **required** | Shared secret. Both adapters refuse to start without it. `dev-local-only` in Compose. |
 | `MAX_BYTES` | `262144` | Payload cap (256 KB). |
-| `MAX_LINE_LENGTH` | `200` | ReDoS guard. Any block with a longer line is returned as plain text. |
+| `MAX_LINE_LENGTH` | `2000` | ReDoS guard. Any block with a longer line is returned as plain text. |
 
 ### Generating a token
 

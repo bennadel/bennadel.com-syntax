@@ -45,7 +45,7 @@ services:
       # payload size -- is the dimension that drives Oniguruma cost, because
       # grammars tokenize line by line. Listed explicitly at its default so the
       # knob is discoverable; raise it temporarily to re-run a backfill.
-      MAX_LINE_LENGTH: "200"
+      MAX_LINE_LENGTH: "2000"
 
     # The service writes nothing to disk. It has no database driver, no
     # credentials, and no state.

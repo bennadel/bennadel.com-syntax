@@ -192,7 +192,7 @@ if (!UPDATE) {
 
 	var defaults = loadConfig({});
 	assertEqual("default MAX_BYTES", defaults.maxBytes, 262144);
-	assertEqual("default MAX_LINE_LENGTH", defaults.maxLineLength, 200);
+	assertEqual("default MAX_LINE_LENGTH", defaults.maxLineLength, 2000);
 	// Not throwing on an empty env IS the assertion: tools/ and this test run
 	// the highlighting core without a credential, so an absent token must be a
 	// boot()-level refusal, never a parse error.

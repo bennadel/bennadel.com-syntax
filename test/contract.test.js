@@ -51,8 +51,9 @@ await import("../src/adapters/server.js");
 await new Promise((resolve) => setTimeout(resolve, 300));
 
 // Sized via the same parse the service uses, rather than re-deriving the
-// default here where it could drift.
+// defaults here where they could drift.
 var MAX_BYTES = loadConfig(process.env).maxBytes;
+var MAX_LINE_LENGTH = loadConfig(process.env).maxLineLength;
 
 // Request fields: `query` is the raw query string WITHOUT the leading `?`,
 // kept separate from `path` because the two adapters receive it differently --
@@ -104,7 +105,7 @@ var cases = [
 			token: TOKEN, body: ""}},
 	{name: "line over MAX_LINE_LENGTH", status: 200, highlighted: "false",
 		request: {method: "POST", path: "/highlight", query: "language=cfml",
-			token: TOKEN, body: "a".repeat(500)}},
+			token: TOKEN, body: "a".repeat(MAX_LINE_LENGTH + 1)}},
 
 	// Query-string decoding. Both adapters must run the same parser --
 	// lambda.js goes through URLSearchParams for exactly this agreement.

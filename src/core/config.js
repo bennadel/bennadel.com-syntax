@@ -27,12 +27,18 @@ export function loadConfig(env) {
 		maxBytes: Number(env.MAX_BYTES ?? 262144),
 
 		// ReDoS guard threshold -- the guard in highlight() explains why line
-		// length is the dimension that matters. 200 is deliberately far stricter
-		// than VS Code's equivalent `editor.maxTokenizationLineLength` (20,000):
-		// anything over 200 in this archive is a minified bundle or a base64 data
-		// URI, and highlighting those is worthless. Env-overridable so a backfill
-		// can be re-run at a higher limit without rebuilding the image.
-		maxLineLength: Number(env.MAX_LINE_LENGTH ?? 200)
+		// length is the dimension that matters. 2000 is sized from both ends: a
+		// human-written line stays under it, including a prose paragraph inside
+		// an HTML block left unwrapped on one line, while minified bundles and
+		// base64 data URIs run to many thousands, so the junk still gets refused.
+		// Do not reach for VS Code's equivalent default
+		// (`editor.maxTokenizationLineLength`, 20,000): the per-line cost is
+		// quadratic -- ~20ms per 2000-char line in the densest grammars
+		// (minified JS, measured 2026-08-30) -- and at 20,000 a payload of
+		// MAX_BYTES of such lines extrapolates past the Lambda timeout.
+		// Env-overridable so a backfill can be re-run at a different limit
+		// without rebuilding the image.
+		maxLineLength: Number(env.MAX_LINE_LENGTH ?? 2000)
 	};
 
 	assertPositiveInt("MAX_BYTES", config.maxBytes);
