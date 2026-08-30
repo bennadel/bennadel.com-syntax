@@ -1,0 +1,63 @@
+<span class="pl-k">component</span>
+	<span class="pl-e">output</span> = <span class="pl-s">false</span>
+	<span class="pl-e">hint</span> = <span class="pl-s"><span class="pl-pds">"</span>I define the application settings and event handlers.<span class="pl-pds">"</span></span>
+	{
+
+	<span class="pl-c">// Define the application settings.</span>
+	<span class="pl-c1">this</span>.<span class="pl-smi">name</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>MySqlXDevApiTesting<span class="pl-pds">"</span></span>;
+	<span class="pl-c1">this</span>.<span class="pl-smi">applicationTimeout</span> <span class="pl-k">=</span> <span class="pl-c1">createTimeSpan</span>( <span class="pl-c1">0</span>, <span class="pl-c1">1</span>, <span class="pl-c1">0</span>, <span class="pl-c1">0</span> );
+	<span class="pl-c1">this</span>.<span class="pl-smi">sessionManagement</span> <span class="pl-k">=</span> <span class="pl-c1">false</span>;
+
+	<span class="pl-c">// ---</span>
+	<span class="pl-c">// LIFE-CYCLE METHODS.</span>
+	<span class="pl-c">// ---</span>
+
+	<span class="pl-c">/**</span>
+<span class="pl-c">	* I get called once to initialize the application state.</span>
+<span class="pl-c">	*/</span>
+	<span class="pl-k">public</span> <span class="pl-c1">void</span> <span class="pl-k">function</span> <span class="pl-en">onApplicationStart</span>() {
+
+		<span class="pl-c1">application</span>.<span class="pl-smi">xDevApi</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">XDevApiHelper</span>(
+			<span class="pl-e">username</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>root<span class="pl-pds">"</span></span>,
+			<span class="pl-e">password</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>password<span class="pl-pds">"</span></span>,
+			<span class="pl-e">databaseServer</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>127.0.0.1<span class="pl-pds">"</span></span>,
+			<span class="pl-e">defaultSchema</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>doc_demo<span class="pl-pds">"</span></span>,
+			<span class="pl-e">jarPaths</span> <span class="pl-k">=</span> [
+				<span class="pl-c1">expandPath</span>( <span class="pl-s"><span class="pl-pds">"</span>./jars/mysql-connector-java-8.0.22.jar<span class="pl-pds">"</span></span> ),
+				<span class="pl-c1">expandPath</span>( <span class="pl-s"><span class="pl-pds">"</span>./jars/protobuf-java-3.19.4.jar<span class="pl-pds">"</span></span> )
+			]
+		);
+
+	}
+
+
+	<span class="pl-c">/**</span>
+<span class="pl-c">	* I get called once to teardown the application state.</span>
+<span class="pl-c">	*/</span>
+	<span class="pl-k">public</span> <span class="pl-c1">void</span> <span class="pl-k">function</span> <span class="pl-en">onApplicationEnd</span>( <span class="pl-k">required</span> <span class="pl-c1">struct</span> <span class="pl-smi">applicationScope</span> ) {
+
+		<span class="pl-smi">applicationScope</span>.<span class="pl-smi">xDevApi</span><span class="pl-k">?.</span><span class="pl-en">teardown</span>();
+
+	}
+
+
+	<span class="pl-c">/**</span>
+<span class="pl-c">	* I get called once to initialize the request state.</span>
+<span class="pl-c">	*/</span>
+	<span class="pl-k">public</span> <span class="pl-c1">void</span> <span class="pl-k">function</span> <span class="pl-en">onRequestStart</span>() {
+
+		<span class="pl-c">// If the reset flag exists, re-initialize the ColdFusion application.</span>
+		<span class="pl-k">if</span> ( <span class="pl-c1">url</span>.<span class="pl-c1">keyExists</span>( <span class="pl-s"><span class="pl-pds">"</span>init<span class="pl-pds">"</span></span> ) ) {
+
+			<span class="pl-c">// It's important that we call the applicationStop() function so that our</span>
+			<span class="pl-c">// onApplicationEnd() method is called and we can clean-up the database</span>
+			<span class="pl-c">// connections being held-open by X DevAPI before we create a new connection</span>
+			<span class="pl-c">// pool in the onApplicationStart() event handler.</span>
+			<span class="pl-c1">applicationStop</span>();
+			<span class="pl-c1">location</span>( <span class="pl-e">url</span> <span class="pl-k">=</span> <span class="pl-c1">cgi</span>.<span class="pl-smi">script_name</span>, <span class="pl-e">addToken</span> <span class="pl-k">=</span> <span class="pl-c1">false</span> );
+
+		}
+
+	}
+
+}

@@ -1,0 +1,172 @@
+&lt;!doctype html&gt;
+&lt;<span class="pl-ent">html</span> <span class="pl-e">lang</span>=<span class="pl-s"><span class="pl-pds">"</span>en<span class="pl-pds">"</span></span>&gt;
+&lt;<span class="pl-ent">head</span>&gt;
+	&lt;<span class="pl-ent">meta</span> <span class="pl-e">charset</span>=<span class="pl-s"><span class="pl-pds">"</span>utf-8<span class="pl-pds">"</span></span> /&gt;
+	&lt;<span class="pl-ent">meta</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>viewport<span class="pl-pds">"</span></span> <span class="pl-e">content</span>=<span class="pl-s"><span class="pl-pds">"</span>width=device-width, initial-scale=1<span class="pl-pds">"</span></span> /&gt;
+	&lt;<span class="pl-ent">title</span>&gt;
+		Rotating Table Headers With CSS Transform
+	&lt;/<span class="pl-ent">title</span>&gt;
+	&lt;<span class="pl-ent">style</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/css<span class="pl-pds">"</span></span>&gt;
+
+		<span class="pl-ent">body</span> {
+			<span class="pl-c1">font-family</span>: <span class="pl-c1">verdana</span>, <span class="pl-c1">arial</span>, <span class="pl-c1">sans-serif</span> ;
+		}
+
+		<span class="pl-ent">table</span> {
+			<span class="pl-c1">border-collapse</span>: <span class="pl-c1">collapse</span> ;
+		}
+		<span class="pl-ent">tbody</span> <span class="pl-ent">th</span> {
+			<span class="pl-c1">padding</span>: <span class="pl-c1">4</span><span class="pl-k">px</span> <span class="pl-c1">15</span><span class="pl-k">px</span> <span class="pl-c1">4</span><span class="pl-k">px</span> <span class="pl-c1">0</span><span class="pl-k">px</span> ;
+			<span class="pl-c1">text-align</span>: <span class="pl-c1">right</span> ;
+		}
+		<span class="pl-ent">tbody</span> <span class="pl-ent">td</span> {
+			<span class="pl-c1">border</span>: <span class="pl-c1">1</span><span class="pl-k">px</span> <span class="pl-c1">solid</span> <span class="pl-c1">#cccccc</span> ;
+			<span class="pl-c1">padding</span>: <span class="pl-c1">8</span><span class="pl-k">px</span> <span class="pl-c1">15</span><span class="pl-k">px</span> <span class="pl-c1">8</span><span class="pl-k">px</span> <span class="pl-c1">15</span><span class="pl-k">px</span> ;
+			<span class="pl-c1">text-align</span>: <span class="pl-c1">center</span> ;
+		}
+
+		<span class="pl-e">.rotated-th</span> {
+			<span class="pl-c">/**</span>
+<span class="pl-c">			* Since the rotated text is taken out of the DOM flow (position: absolute), we</span>
+<span class="pl-c">			* need to artificially consume vertical space so that the rotated headers</span>
+<span class="pl-c">			* don't overlap with the content above the table.</span>
+<span class="pl-c">			*/</span>
+			<span class="pl-c1">height</span>: <span class="pl-c1">110</span><span class="pl-k">px</span> ;
+			<span class="pl-c1">position</span>: <span class="pl-c1">relative</span> ;
+		}
+		<span class="pl-c">/**</span>
+<span class="pl-c">		* When an element is transform rotated, it still takes up the amount of space that</span>
+<span class="pl-c">		* it would have if not rotated. As such, I'm making the label "position: absolute"</span>
+<span class="pl-c">		* so that it doesn't take up any space ("absolute" takes it out of the DOM flow).</span>
+<span class="pl-c">		* Instead, I'm deferring the space allocation to the parent DIV.</span>
+<span class="pl-c">		*/</span>
+		<span class="pl-e">.rotated-th__label</span> {
+			<span class="pl-c1">bottom</span>: <span class="pl-c1">5</span><span class="pl-k">px</span> ;
+			<span class="pl-c1">left</span>: <span class="pl-c1">50</span><span class="pl-k">%</span> ;
+			<span class="pl-c1">position</span>: <span class="pl-c1">absolute</span> ;
+			<span class="pl-c1">transform</span>: <span class="pl-c1">rotate</span>( <span class="pl-c1">-45</span><span class="pl-k">deg</span> ) ;
+			<span class="pl-c1">transform-origin</span>: <span class="pl-c1">center</span> <span class="pl-c1">left</span> ;
+			<span class="pl-c1">white-space</span>: <span class="pl-c1">nowrap</span> ;
+		}
+
+	&lt;/<span class="pl-ent">style</span>&gt;
+&lt;/<span class="pl-ent">head</span>&gt;
+&lt;<span class="pl-ent">body</span>&gt;
+
+	&lt;<span class="pl-ent">h1</span>&gt;
+		Rotating Table Headers With CSS Transform
+	&lt;/<span class="pl-ent">h1</span>&gt;
+
+	&lt;<span class="pl-ent">table</span>&gt;
+	&lt;<span class="pl-ent">thead</span>&gt;
+		&lt;<span class="pl-ent">tr</span>&gt;
+			&lt;<span class="pl-ent">th</span>&gt;
+				<span class="pl-c">&lt;!-- Plan type. --&gt;</span>
+			&lt;/<span class="pl-ent">th</span>&gt;
+			&lt;<span class="pl-ent">th</span>&gt;
+				&lt;<span class="pl-ent">div</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>rotated-th<span class="pl-pds">"</span></span>&gt;
+					&lt;<span class="pl-ent">span</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>rotated-th__label<span class="pl-pds">"</span></span>&gt;
+						Feature One
+					&lt;/<span class="pl-ent">span</span>&gt;
+				&lt;/<span class="pl-ent">div</span>&gt;
+			&lt;/<span class="pl-ent">th</span>&gt;
+			&lt;<span class="pl-ent">th</span>&gt;
+				&lt;<span class="pl-ent">div</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>rotated-th<span class="pl-pds">"</span></span>&gt;
+					&lt;<span class="pl-ent">span</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>rotated-th__label<span class="pl-pds">"</span></span>&gt;
+						Feature Two
+					&lt;/<span class="pl-ent">span</span>&gt;
+				&lt;/<span class="pl-ent">div</span>&gt;
+			&lt;/<span class="pl-ent">th</span>&gt;
+			&lt;<span class="pl-ent">th</span>&gt;
+				&lt;<span class="pl-ent">div</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>rotated-th<span class="pl-pds">"</span></span>&gt;
+					&lt;<span class="pl-ent">span</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>rotated-th__label<span class="pl-pds">"</span></span>&gt;
+						Feature Three
+					&lt;/<span class="pl-ent">span</span>&gt;
+				&lt;/<span class="pl-ent">div</span>&gt;
+			&lt;/<span class="pl-ent">th</span>&gt;
+			&lt;<span class="pl-ent">th</span>&gt;
+				&lt;<span class="pl-ent">div</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>rotated-th<span class="pl-pds">"</span></span>&gt;
+					&lt;<span class="pl-ent">span</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>rotated-th__label<span class="pl-pds">"</span></span>&gt;
+						Feature Four
+					&lt;/<span class="pl-ent">span</span>&gt;
+				&lt;/<span class="pl-ent">div</span>&gt;
+			&lt;/<span class="pl-ent">th</span>&gt;
+			&lt;<span class="pl-ent">th</span>&gt;
+				&lt;<span class="pl-ent">div</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>rotated-th<span class="pl-pds">"</span></span>&gt;
+					&lt;<span class="pl-ent">span</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>rotated-th__label<span class="pl-pds">"</span></span>&gt;
+						Feature Five
+					&lt;/<span class="pl-ent">span</span>&gt;
+				&lt;/<span class="pl-ent">div</span>&gt;
+			&lt;/<span class="pl-ent">th</span>&gt;
+			&lt;<span class="pl-ent">th</span>&gt;
+				&lt;<span class="pl-ent">div</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>rotated-th<span class="pl-pds">"</span></span>&gt;
+					&lt;<span class="pl-ent">span</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>rotated-th__label<span class="pl-pds">"</span></span>&gt;
+						Feature Six
+					&lt;/<span class="pl-ent">span</span>&gt;
+				&lt;/<span class="pl-ent">div</span>&gt;
+			&lt;/<span class="pl-ent">th</span>&gt;
+			&lt;<span class="pl-ent">th</span>&gt;
+				&lt;<span class="pl-ent">div</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>rotated-th<span class="pl-pds">"</span></span>&gt;
+					&lt;<span class="pl-ent">span</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>rotated-th__label<span class="pl-pds">"</span></span>&gt;
+						Feature Seven
+					&lt;/<span class="pl-ent">span</span>&gt;
+				&lt;/<span class="pl-ent">div</span>&gt;
+			&lt;/<span class="pl-ent">th</span>&gt;
+		&lt;/<span class="pl-ent">tr</span>&gt;
+	&lt;/<span class="pl-ent">thead</span>&gt;
+	&lt;<span class="pl-ent">tbody</span>&gt;
+		&lt;<span class="pl-ent">tr</span>&gt;
+			&lt;<span class="pl-ent">th</span> <span class="pl-e">scope</span>=<span class="pl-s"><span class="pl-pds">"</span>row<span class="pl-pds">"</span></span>&gt; Free Plan &lt;/<span class="pl-ent">th</span>&gt;
+			&lt;<span class="pl-ent">td</span>&gt; <span class="pl-c1">&amp;</span><span class="pl-en">#9989</span><span class="pl-c1">;</span> &lt;/<span class="pl-ent">td</span>&gt;
+			&lt;<span class="pl-ent">td</span>&gt; &lt;/<span class="pl-ent">td</span>&gt;
+			&lt;<span class="pl-ent">td</span>&gt; &lt;/<span class="pl-ent">td</span>&gt;
+			&lt;<span class="pl-ent">td</span>&gt; &lt;/<span class="pl-ent">td</span>&gt;
+			&lt;<span class="pl-ent">td</span>&gt; &lt;/<span class="pl-ent">td</span>&gt;
+			&lt;<span class="pl-ent">td</span>&gt; &lt;/<span class="pl-ent">td</span>&gt;
+			&lt;<span class="pl-ent">td</span>&gt; &lt;/<span class="pl-ent">td</span>&gt;
+		&lt;/<span class="pl-ent">tr</span>&gt;
+		&lt;<span class="pl-ent">tr</span>&gt;
+			&lt;<span class="pl-ent">th</span> <span class="pl-e">scope</span>=<span class="pl-s"><span class="pl-pds">"</span>row<span class="pl-pds">"</span></span>&gt; Starter Plan &lt;/<span class="pl-ent">th</span>&gt;
+			&lt;<span class="pl-ent">td</span>&gt; <span class="pl-c1">&amp;</span><span class="pl-en">#9989</span><span class="pl-c1">;</span> &lt;/<span class="pl-ent">td</span>&gt;
+			&lt;<span class="pl-ent">td</span>&gt; <span class="pl-c1">&amp;</span><span class="pl-en">#9989</span><span class="pl-c1">;</span> &lt;/<span class="pl-ent">td</span>&gt;
+			&lt;<span class="pl-ent">td</span>&gt; &lt;/<span class="pl-ent">td</span>&gt;
+			&lt;<span class="pl-ent">td</span>&gt; &lt;/<span class="pl-ent">td</span>&gt;
+			&lt;<span class="pl-ent">td</span>&gt; &lt;/<span class="pl-ent">td</span>&gt;
+			&lt;<span class="pl-ent">td</span>&gt; &lt;/<span class="pl-ent">td</span>&gt;
+			&lt;<span class="pl-ent">td</span>&gt; &lt;/<span class="pl-ent">td</span>&gt;
+		&lt;/<span class="pl-ent">tr</span>&gt;
+		&lt;<span class="pl-ent">tr</span>&gt;
+			&lt;<span class="pl-ent">th</span> <span class="pl-e">scope</span>=<span class="pl-s"><span class="pl-pds">"</span>row<span class="pl-pds">"</span></span>&gt; Professional Plan &lt;/<span class="pl-ent">th</span>&gt;
+			&lt;<span class="pl-ent">td</span>&gt; <span class="pl-c1">&amp;</span><span class="pl-en">#9989</span><span class="pl-c1">;</span> &lt;/<span class="pl-ent">td</span>&gt;
+			&lt;<span class="pl-ent">td</span>&gt; <span class="pl-c1">&amp;</span><span class="pl-en">#9989</span><span class="pl-c1">;</span> &lt;/<span class="pl-ent">td</span>&gt;
+			&lt;<span class="pl-ent">td</span>&gt; <span class="pl-c1">&amp;</span><span class="pl-en">#9989</span><span class="pl-c1">;</span> &lt;/<span class="pl-ent">td</span>&gt;
+			&lt;<span class="pl-ent">td</span>&gt; &lt;/<span class="pl-ent">td</span>&gt;
+			&lt;<span class="pl-ent">td</span>&gt; &lt;/<span class="pl-ent">td</span>&gt;
+			&lt;<span class="pl-ent">td</span>&gt; &lt;/<span class="pl-ent">td</span>&gt;
+			&lt;<span class="pl-ent">td</span>&gt; &lt;/<span class="pl-ent">td</span>&gt;
+		&lt;/<span class="pl-ent">tr</span>&gt;
+		&lt;<span class="pl-ent">tr</span>&gt;
+			&lt;<span class="pl-ent">th</span> <span class="pl-e">scope</span>=<span class="pl-s"><span class="pl-pds">"</span>row<span class="pl-pds">"</span></span>&gt; Comprehensive Plan &lt;/<span class="pl-ent">th</span>&gt;
+			&lt;<span class="pl-ent">td</span>&gt; <span class="pl-c1">&amp;</span><span class="pl-en">#9989</span><span class="pl-c1">;</span> &lt;/<span class="pl-ent">td</span>&gt;
+			&lt;<span class="pl-ent">td</span>&gt; <span class="pl-c1">&amp;</span><span class="pl-en">#9989</span><span class="pl-c1">;</span> &lt;/<span class="pl-ent">td</span>&gt;
+			&lt;<span class="pl-ent">td</span>&gt; <span class="pl-c1">&amp;</span><span class="pl-en">#9989</span><span class="pl-c1">;</span> &lt;/<span class="pl-ent">td</span>&gt;
+			&lt;<span class="pl-ent">td</span>&gt; <span class="pl-c1">&amp;</span><span class="pl-en">#9989</span><span class="pl-c1">;</span> &lt;/<span class="pl-ent">td</span>&gt;
+			&lt;<span class="pl-ent">td</span>&gt; &lt;/<span class="pl-ent">td</span>&gt;
+			&lt;<span class="pl-ent">td</span>&gt; &lt;/<span class="pl-ent">td</span>&gt;
+			&lt;<span class="pl-ent">td</span>&gt; &lt;/<span class="pl-ent">td</span>&gt;
+		&lt;/<span class="pl-ent">tr</span>&gt;
+		&lt;<span class="pl-ent">tr</span>&gt;
+			&lt;<span class="pl-ent">th</span> <span class="pl-e">scope</span>=<span class="pl-s"><span class="pl-pds">"</span>row<span class="pl-pds">"</span></span>&gt; Ultra Comprehensive Plan &lt;/<span class="pl-ent">th</span>&gt;
+			&lt;<span class="pl-ent">td</span>&gt; <span class="pl-c1">&amp;</span><span class="pl-en">#9989</span><span class="pl-c1">;</span> &lt;/<span class="pl-ent">td</span>&gt;
+			&lt;<span class="pl-ent">td</span>&gt; <span class="pl-c1">&amp;</span><span class="pl-en">#9989</span><span class="pl-c1">;</span> &lt;/<span class="pl-ent">td</span>&gt;
+			&lt;<span class="pl-ent">td</span>&gt; <span class="pl-c1">&amp;</span><span class="pl-en">#9989</span><span class="pl-c1">;</span> &lt;/<span class="pl-ent">td</span>&gt;
+			&lt;<span class="pl-ent">td</span>&gt; <span class="pl-c1">&amp;</span><span class="pl-en">#9989</span><span class="pl-c1">;</span> &lt;/<span class="pl-ent">td</span>&gt;
+			&lt;<span class="pl-ent">td</span>&gt; <span class="pl-c1">&amp;</span><span class="pl-en">#9989</span><span class="pl-c1">;</span> &lt;/<span class="pl-ent">td</span>&gt;
+			&lt;<span class="pl-ent">td</span>&gt; <span class="pl-c1">&amp;</span><span class="pl-en">#9989</span><span class="pl-c1">;</span> &lt;/<span class="pl-ent">td</span>&gt;
+			&lt;<span class="pl-ent">td</span>&gt; <span class="pl-c1">&amp;</span><span class="pl-en">#9989</span><span class="pl-c1">;</span> &lt;/<span class="pl-ent">td</span>&gt;
+		&lt;/<span class="pl-ent">tr</span>&gt;
+	&lt;/<span class="pl-ent">tbody</span>&gt;
+	&lt;/<span class="pl-ent">table</span>&gt;
+
+&lt;/<span class="pl-ent">body</span>&gt;
+&lt;/<span class="pl-ent">html</span>&gt;

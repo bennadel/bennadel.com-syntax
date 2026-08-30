@@ -1,0 +1,99 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8" />
+
+	<title>
+		Invalid Inline JSON (JavaScript Object Notation) Characters
+	</title>
+</head>
+<body>
+
+	<h1>
+		Invalid Inline JSON (JavaScript Object Notation) Characters
+	</h1>
+
+	<!-- To log the failed characters. -->
+	<textarea rows="20" cols="10" class="errorLog"></textarea>
+
+	<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.js"></script>
+	<script type="text/javascript">
+
+		var errorLog = $( "textarea.errorLog" ).val( "" );
+		var body = $( "body" );
+
+
+		// Populate the ASCII values that we want to test. When it
+		// comes to INLINE JSON, the rules about which characters are
+		// bad are less clear (to me). So, we'll test a huge range.
+		var asciiValues = [];
+
+		for ( var i = 0 ; i < 10000 ; i++ ) {
+
+			asciiValues.push( i );
+
+		}
+
+
+		// As the IFrames load, their last call is to log the success
+		// of the given charCode. This will only get called if the
+		// inline JSON does not cause a parsing error.
+		function logSuccess( charCode ) {
+
+			// Remove the charCode from the error log.
+			errorLog.val(
+				errorLog.val()
+					.replace( new RegExp( "\\b" + charCode + "\\b\\s*", "" ), "" )
+			);
+
+		}
+
+
+		// This function will recurslively test each value, one at a
+		// time so we don't overwhelm the browser with thousands of
+		// HTTP requests. Notice that it doesn't call itself until the
+		// iframe has been loaded.
+		(function testNextValue() {
+
+			if ( ! asciiValues.length ) {
+
+				return;
+
+			}
+
+			// Get the next value off the array (pop from front).
+			var charCode = asciiValues.shift();
+
+			// Assume that this charCode will fail and append it to
+			// the error log. This way, the charCode will only be
+			// flagged as OK if the inline JSON doesn't cause a
+			// parsing error.
+			errorLog[ 0 ].value += ( charCode + "\n" );
+
+			var frame = $( "<iframe></iframe>" )
+				.prop( "src", ( "./inline.cfm?charCode=" + charCode ) )
+				.height( 1 )
+				.width( 1 )
+			;
+
+			// When the IFrame has loaded, we can assume this single
+			// test is complete.
+			frame.load(
+				function( event ) {
+
+					frame.remove();
+
+					testNextValue();
+
+				}
+			);
+
+			// Append to the body so the IFrame loads.
+			body.append( frame );
+
+		})(); // NOTE: Self-invokcation to kick-it-off!
+
+	</script>
+
+</body>
+</html>

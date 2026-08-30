@@ -1,0 +1,151 @@
+&lt;<span class="pl-ent">cfscript</span>&gt;
+
+	<span class="pl-ent">param</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>url.userID<span class="pl-pds">"</span></span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>numeric<span class="pl-pds">"</span></span> <span class="pl-e">default</span>=<span class="pl-c1">0</span>;
+	<span class="pl-ent">param</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>form.action<span class="pl-pds">"</span></span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>string<span class="pl-pds">"</span></span> <span class="pl-e">default</span>=<span class="pl-s"><span class="pl-pds">""</span></span>;
+	<span class="pl-ent">param</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>form.taskID<span class="pl-pds">"</span></span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>string<span class="pl-pds">"</span></span> <span class="pl-e">default</span>=<span class="pl-c1">0</span>;
+	<span class="pl-ent">param</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>form.taskName<span class="pl-pds">"</span></span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>string<span class="pl-pds">"</span></span> <span class="pl-e">default</span>=<span class="pl-s"><span class="pl-pds">""</span></span>;
+
+	<span class="pl-c">// ------------------------------------------------------------------------------- //</span>
+	<span class="pl-c">// ------------------------------------------------------------------------------- //</span>
+
+	<span class="pl-smi">users</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">lib.MasterDAO</span>()
+		.<span class="pl-en">getUsersByFilter</span>( <span class="pl-e">id</span> <span class="pl-k">=</span> <span class="pl-c1">val</span>( <span class="pl-c1">url</span>.<span class="pl-smi">userID</span> ) )
+	;
+
+	<span class="pl-k">if</span> ( <span class="pl-k">!</span> <span class="pl-smi">users</span>.<span class="pl-c1">len</span>() ) {
+
+		<span class="pl-c1">location</span>(
+			<span class="pl-e">url</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>./index.cfm<span class="pl-pds">"</span></span>,
+			<span class="pl-e">addToken</span> <span class="pl-k">=</span> <span class="pl-c1">false</span>
+		);
+
+	}
+
+	<span class="pl-smi">user</span> <span class="pl-k">=</span> <span class="pl-smi">users</span>.<span class="pl-c1">first</span>();
+	<span class="pl-smi">userDAO</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">lib.UserDAO</span>( <span class="pl-smi">user</span>.<span class="pl-smi">id</span> );
+	<span class="pl-smi">userDAO</span>.<span class="pl-en">ensureDatabase</span>();
+
+	<span class="pl-c">// ------------------------------------------------------------------------------- //</span>
+	<span class="pl-c">// ------------------------------------------------------------------------------- //</span>
+
+	<span class="pl-k">if</span> ( <span class="pl-c1">form</span>.<span class="pl-smi">action</span>.<span class="pl-c1">len</span>() ) {
+
+		<span class="pl-c">// CAUTION: I'm not doing any data massaging or validation here - I just want to</span>
+		<span class="pl-c">// keep the code really simple so as to focus on the SQLite aspects.</span>
+		<span class="pl-k">switch</span> ( <span class="pl-c1">form</span>.<span class="pl-smi">action</span> ) {
+			<span class="pl-k">case</span> <span class="pl-s"><span class="pl-pds">"</span>addTask<span class="pl-pds">"</span></span>:
+
+				<span class="pl-smi">userDAO</span>.<span class="pl-en">addTask</span>( <span class="pl-c1">form</span>.<span class="pl-smi">taskName</span> );
+
+			<span class="pl-k">break</span>;
+			<span class="pl-k">case</span> <span class="pl-s"><span class="pl-pds">"</span>deleteTask<span class="pl-pds">"</span></span>:
+
+				<span class="pl-smi">userDAO</span>.<span class="pl-en">deleteTasksByFilter</span>( <span class="pl-e">id</span> <span class="pl-k">=</span> <span class="pl-c1">val</span>( <span class="pl-c1">form</span>.<span class="pl-smi">taskID</span> ) );
+
+			<span class="pl-k">break</span>;
+			<span class="pl-k">case</span> <span class="pl-s"><span class="pl-pds">"</span>toggleTask<span class="pl-pds">"</span></span>:
+
+				<span class="pl-smi">task</span> <span class="pl-k">=</span> <span class="pl-smi">userDAO</span>
+					.<span class="pl-en">getTasksByFilter</span>( <span class="pl-e">id</span> <span class="pl-k">=</span> <span class="pl-c1">val</span>( <span class="pl-c1">form</span>.<span class="pl-smi">taskID</span> ) )
+					.<span class="pl-c1">first</span>()
+				;
+				<span class="pl-smi">userDAO</span>.<span class="pl-en">updateTask</span>(
+					<span class="pl-e">id</span> <span class="pl-k">=</span> <span class="pl-smi">task</span>.<span class="pl-smi">id</span>,
+					<span class="pl-e">isComplete</span> <span class="pl-k">=</span> <span class="pl-k">!</span> <span class="pl-smi">task</span>.<span class="pl-smi">isComplete</span>
+				);
+
+			<span class="pl-k">break</span>;
+		}
+
+		<span class="pl-c">// BEST PRACTICE: Always refresh the page so that a CMD+R doesn't resubmit the</span>
+		<span class="pl-c">// form and perform the same action twice.</span>
+		<span class="pl-c1">location</span>(
+			<span class="pl-e">url</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>./tasks.cfm?userID=#<span class="pl-c1">encodeForUrl</span>( <span class="pl-smi">user</span>.<span class="pl-smi">id</span> )#<span class="pl-pds">"</span></span>,
+			<span class="pl-e">addToken</span> <span class="pl-k">=</span> <span class="pl-c1">false</span>
+		);
+
+	}
+
+	<span class="pl-c">// ------------------------------------------------------------------------------- //</span>
+	<span class="pl-c">// ------------------------------------------------------------------------------- //</span>
+
+	<span class="pl-smi">tasks</span> <span class="pl-k">=</span> <span class="pl-smi">userDAO</span>.<span class="pl-en">getTasksByFilter</span>();
+
+&lt;/<span class="pl-ent">cfscript</span>&gt;
+&lt;<span class="pl-ent">cfoutput</span>&gt;
+	&lt;!doctype html&gt;
+	&lt;<span class="pl-ent">html</span> <span class="pl-e">lang</span>=<span class="pl-s"><span class="pl-pds">"</span>en<span class="pl-pds">"</span></span>&gt;
+	&lt;<span class="pl-ent">head</span>&gt;
+		&lt;<span class="pl-ent">meta</span> <span class="pl-e">charset</span>=<span class="pl-s"><span class="pl-pds">"</span>utf-8<span class="pl-pds">"</span></span> /&gt;
+		&lt;<span class="pl-ent">meta</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>viewport<span class="pl-pds">"</span></span> <span class="pl-e">content</span>=<span class="pl-s"><span class="pl-pds">"</span>width=device-width, initial-scale=1<span class="pl-pds">"</span></span> /&gt;
+		&lt;<span class="pl-ent">link</span> <span class="pl-e">rel</span>=<span class="pl-s"><span class="pl-pds">"</span>stylesheet<span class="pl-pds">"</span></span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/css<span class="pl-pds">"</span></span> <span class="pl-e">href</span>=<span class="pl-s"><span class="pl-pds">"</span>./public/main.css<span class="pl-pds">"</span></span> /&gt;
+	&lt;/<span class="pl-ent">head</span>&gt;
+	&lt;<span class="pl-ent">body</span>&gt;
+
+		&lt;<span class="pl-ent">h1</span>&gt;
+			#<span class="pl-c1">encodeForHtml</span>( <span class="pl-smi">user</span>.<span class="pl-smi">name</span> )#
+		&lt;/<span class="pl-ent">h1</span>&gt;
+
+		&lt;<span class="pl-ent">p</span>&gt;
+			<span class="pl-c1">&amp;</span><span class="pl-en">larr</span><span class="pl-c1">;</span> &lt;<span class="pl-ent">a</span> <span class="pl-e">href</span>=<span class="pl-s"><span class="pl-pds">"</span>./index.cfm<span class="pl-pds">"</span></span>&gt;Back to users&lt;/<span class="pl-ent">a</span>&gt;
+		&lt;/<span class="pl-ent">p</span>&gt;
+
+		&lt;<span class="pl-ent">form</span> <span class="pl-e">method</span>=<span class="pl-s"><span class="pl-pds">"</span>post<span class="pl-pds">"</span></span> <span class="pl-e">action</span>=<span class="pl-s"><span class="pl-pds">"</span>./tasks.cfm?userID=#<span class="pl-c1">encodeForUrl</span>( <span class="pl-smi">user</span>.<span class="pl-smi">id</span> )#<span class="pl-pds">"</span></span>&gt;
+			&lt;<span class="pl-ent">input</span>
+				<span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text<span class="pl-pds">"</span></span>
+				<span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>taskName<span class="pl-pds">"</span></span>
+				<span class="pl-e">placeholder</span>=<span class="pl-s"><span class="pl-pds">"</span>Task...<span class="pl-pds">"</span></span>
+				<span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">""</span></span>
+				<span class="pl-e">autofocus</span>
+				<span class="pl-e">autocomplete</span>=<span class="pl-s"><span class="pl-pds">"</span>off<span class="pl-pds">"</span></span>
+				<span class="pl-e">size</span>=<span class="pl-s"><span class="pl-pds">"</span>40<span class="pl-pds">"</span></span>
+				<span class="pl-e">data-1p-ignore</span>
+			/&gt;
+			&lt;<span class="pl-ent">button</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>submit<span class="pl-pds">"</span></span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>action<span class="pl-pds">"</span></span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>addTask<span class="pl-pds">"</span></span>&gt;
+				Add Task
+			&lt;/<span class="pl-ent">button</span>&gt;
+		&lt;/<span class="pl-ent">form</span>&gt;
+
+		&lt;<span class="pl-ent">h2</span>&gt;
+			Tasks
+		&lt;/<span class="pl-ent">h2</span>&gt;
+
+		&lt;<span class="pl-ent">cfloop</span> <span class="pl-e">index</span>=<span class="pl-s"><span class="pl-pds">"</span>i<span class="pl-pds">"</span></span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>task<span class="pl-pds">"</span></span> <span class="pl-e">array</span>=<span class="pl-s"><span class="pl-pds">"</span>#<span class="pl-smi">tasks</span>#<span class="pl-pds">"</span></span>&gt;
+
+			&lt;<span class="pl-ent">form</span> <span class="pl-e">method</span>=<span class="pl-s"><span class="pl-pds">"</span>post<span class="pl-pds">"</span></span> <span class="pl-e">action</span>=<span class="pl-s"><span class="pl-pds">"</span>./tasks.cfm?userID=#<span class="pl-c1">encodeForUrl</span>( <span class="pl-smi">user</span>.<span class="pl-smi">id</span> )#<span class="pl-pds">"</span></span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>item<span class="pl-pds">"</span></span>&gt;
+				&lt;<span class="pl-ent">input</span>
+					<span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>hidden<span class="pl-pds">"</span></span>
+					<span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>taskID<span class="pl-pds">"</span></span>
+					<span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>#<span class="pl-c1">encodeForHtmlAttribute</span>( <span class="pl-smi">task</span>.<span class="pl-smi">id</span> )#<span class="pl-pds">"</span></span>
+				/&gt;
+				&lt;<span class="pl-ent">button</span>
+					<span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>submit<span class="pl-pds">"</span></span>
+					<span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>action<span class="pl-pds">"</span></span>
+					<span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>toggleTask<span class="pl-pds">"</span></span>&gt;
+					Toggle
+				&lt;/<span class="pl-ent">button</span>&gt;
+				&lt;<span class="pl-ent">span</span> <span class="pl-e">data-completed</span>=<span class="pl-s"><span class="pl-pds">"</span>#<span class="pl-c1">yesNoFormat</span>( <span class="pl-smi">task</span>.<span class="pl-smi">isComplete</span> )#<span class="pl-pds">"</span></span>&gt;
+					#<span class="pl-c1">dateFormat</span>( <span class="pl-smi">task</span>.<span class="pl-smi">createdAt</span>, <span class="pl-s"><span class="pl-pds">"</span>yyyy-mm-dd<span class="pl-pds">"</span></span> )#:
+					#<span class="pl-c1">encodeForHtml</span>( <span class="pl-smi">task</span>.<span class="pl-smi">name</span> )#
+				&lt;/<span class="pl-ent">span</span>&gt;
+				&lt;<span class="pl-ent">button</span>
+					<span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>submit<span class="pl-pds">"</span></span>
+					<span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>action<span class="pl-pds">"</span></span>
+					<span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>deleteTask<span class="pl-pds">"</span></span>
+					<span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>push-right<span class="pl-pds">"</span></span>&gt;
+					Delete
+				&lt;/<span class="pl-ent">button</span>&gt;
+			&lt;/<span class="pl-ent">form</span>&gt;
+
+		&lt;/<span class="pl-ent">cfloop</span>&gt;
+
+		&lt;<span class="pl-ent">cfif</span> <span class="pl-k">!</span> <span class="pl-smi">tasks</span>.<span class="pl-c1">len</span>()&gt;
+			&lt;<span class="pl-ent">p</span>&gt;
+				&lt;<span class="pl-ent">em</span>&gt;No tasks.&lt;/<span class="pl-ent">em</span>&gt;
+			&lt;/<span class="pl-ent">p</span>&gt;
+		&lt;/<span class="pl-ent">cfif</span>&gt;
+
+	&lt;/<span class="pl-ent">body</span>&gt;
+	&lt;/<span class="pl-ent">html</span>&gt;
+
+&lt;/<span class="pl-ent">cfoutput</span>&gt;

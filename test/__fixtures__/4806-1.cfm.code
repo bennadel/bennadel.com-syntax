@@ -1,0 +1,132 @@
+<cfoutput>
+<style type="text/css">
+
+	<!---
+		Note: styles don't seem to cascade properly in the PDF implementation; as such,
+		I'm brute-force applying a base style to all elements with zero specificity.
+	--->
+	* {
+		box-sizing: border-box ;
+		color: black ;
+		font-family: arial, verdana, sans-serif ;
+		font-size: 14px ;
+		font-weight: 400 ;
+		line-height: 1.4 ;
+		margin-bottom: 0 ;
+		margin-top: 0 ;
+	}
+
+	body {
+		margin: 0 ;
+		padding: 0 ;
+	}
+
+	h1, h2, h3, h4, h5, th, dt, strong, {
+		font-weight: 700 ;
+	}
+	.fw-normal {
+		font-weight: 400 ;
+	}
+	.fw-bold {
+		font-weight: 700 ;
+	}
+
+	table {
+		border-collapse: collapse ;
+		border-spacing: 0 ;
+		width: 100% ;
+	}
+	th, td {
+		padding: 0 ;
+		text-align: left ;
+		vertical-align: top ;
+	}
+	[align="right"] {
+		text-align: right !important ;
+	}
+	[align="center"] {
+		text-align: center !important ;;
+	}
+	[valign="bottom"] {
+		vertical-align: bottom !important ;
+	}
+	[valign="middle"] {
+		vertical-align: middle !important ;
+	}
+
+	img {
+		border: 0 ;
+		display: block ;
+	}
+
+	<!--- Bootstrap inspired utility classes. ---->
+
+	.d-block { display: block ; }
+
+	.text-start  { text-align: left ; }
+	.text-center { text-align: center ; }
+	.text-end    { text-align: right ; }
+
+	.no-wrap { white-space: nowrap ; }
+
+	<!--- Padding utilities. --->
+	<cfloop index="i" from="0" to="50">
+		.p-#i#  { padding: #i#px ; }
+		.pt-#i# { padding-top: #i#px !important ; }
+		.pb-#i# { padding-bottom: #i#px !important ; }
+		.ps-#i# { padding-left: #i#px !important ; }
+		.pe-#i# { padding-right: #i#px !important ; }
+	</cfloop>
+
+	<!--- Margin utilities. --->
+	<cfloop index="i" from="0" to="50">
+		.m-#i#  { margin: #i#px ; }
+		.mt-#i# { margin-top: #i#px !important ; }
+		.mb-#i# { margin-bottom: #i#px !important ; }
+		.ms-#i# { margin-left: #i#px !important ; }
+		.me-#i# { margin-right: #i#px !important ; }
+	</cfloop>
+
+	<!--- Font-size utilities. --->
+	<cfloop index="i" from="1" to="50">
+		.fs-#i# { font-size: #i#px ; }
+	</cfloop>
+
+	<!--- Line-height utilities (1...3 increments of 0.1). --->
+	<cfloop index="i" from="0" to="20">
+		.lh-#i# { line-height: #numberFormat( 1 + ( i * 0.1 ), "0.00" )# ; }
+	</cfloop>
+
+	<!--- Border utilities. --->
+	<cfloop index="i" from="0" to="10">
+		.b-#i#  { border: #i#px solid black ; }
+		.bt-#i# { border-top: #i#px solid black !important ; }
+		.bb-#i# { border-bottom: #i#px solid black !important ; }
+		.bs-#i# { border-left: #i#px solid black !important ; }
+		.be-#i# { border-right: #i#px solid black !important ; }
+	</cfloop>
+
+	<!--- Width utilities. --->
+	<cfloop index="i" from="1" to="100">
+		.w-#i# { width: #i#% ; }
+	</cfloop>
+
+	<!--- Rule utilities. --->
+	hr {
+		border: 1px solid black ;	
+		border-width: 1px 0 0 0 ;
+		margin: 26px 0 ;
+	}
+	<cfloop index="i" from="1" to="10">
+		.hr-#i# { border-top-width: #i#px ; }
+	</cfloop>
+
+	<!--- Color utilities. --->
+	<cfloop index="i" item="h" array="#reMatch( '.', '0123456789ABCDEF' )#">
+		.black-#i# { color: ###h##h##h# ; }
+		.red-#i# { color: ##f#h##h# ; }
+		.blue-#i# { color: ###h##h#f ; }
+	</cfloop>
+
+</style>
+</cfoutput>

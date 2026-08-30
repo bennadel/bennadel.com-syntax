@@ -1,0 +1,65 @@
+<cfscript>
+
+	public query function getLogsByFilter(
+		numeric id = 0,
+		string jobID = "",
+		numeric assetID = 0
+		) {
+
+		var results = queryExecute(
+			"
+				SELECT
+					l.id,
+					l.assetID,
+					l.jobID,
+					l.status,
+					l.errorMessage,
+					l.createdAt,
+					l.updatedAt,
+					l.version,
+					l.type
+				FROM
+					layer_sync_log l
+				WHERE
+					(
+							:id <=> NULL
+						OR
+							l.id = :id
+					)
+				AND
+					(
+							:jobID <=> NULL
+						OR
+							l.jobID = :jobID
+					)
+				AND
+					(
+							:assetID <=> NULL
+						OR
+							l.assetID = :assetID
+					)
+			",
+			{
+				id: {
+					value: id,
+					cfsqltype: "cf_sql_integer",
+					null: ! id
+				},
+				jobID: {
+					value: jobID,
+					cfsqltype: "cf_sql_varchar",
+					null: ! jobID.len()
+				},
+				assetID: {
+					value: assetID,
+					cfsqltype: "cf_sql_integer",
+					null: ! assetID
+				}
+			}
+		);
+
+		return( results );
+
+	}
+
+</cfscript>

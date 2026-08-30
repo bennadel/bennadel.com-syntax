@@ -1,0 +1,27 @@
+<span class="pl-c">/* By default, we'll use the REDUCED MOTION version of the animation. */</span>
+<span class="pl-e">:root</span> {
+	<span class="pl-v">--transform-start</span>: <span class="pl-c1">1.0</span> ;
+	<span class="pl-v">--transform-end</span>: <span class="pl-c1">1.0</span> ;
+}
+
+<span class="pl-c">/*</span>
+<span class="pl-c">	Then, if the user has NO PREFERENCE for motion, we can OVERRIDE the</span>
+<span class="pl-c">	animation definition to include both the motion and non-motion properties.</span>
+<span class="pl-c">*/</span>
+<span class="pl-k">@media</span> ( prefers-reduced-motion: no-preference ) {
+	<span class="pl-e">:root</span> {
+		<span class="pl-v">--transform-start</span>: <span class="pl-c1">0.7</span> ;
+		<span class="pl-v">--transform-end</span>: <span class="pl-c1">1.0</span> ;
+	}
+}
+
+<span class="pl-k">@keyframes</span> <span class="pl-v">modal-enter</span> {
+	<span class="pl-e">from</span> {
+		<span class="pl-c1">opacity</span>: <span class="pl-c1">0</span> ;
+		<span class="pl-c1">transform</span>: <span class="pl-c1">scale</span>( <span class="pl-c1">var</span>( <span class="pl-v">--transform-start</span> ) ) ;
+	}
+	<span class="pl-e">to</span> {
+		<span class="pl-c1">opacity</span>: <span class="pl-c1">1</span> ;
+		<span class="pl-c1">transform</span>: <span class="pl-c1">scale</span>( <span class="pl-c1">var</span>( <span class="pl-v">--transform-end</span> ) ) ;
+	}
+}

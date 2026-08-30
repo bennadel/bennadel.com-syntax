@@ -1,0 +1,127 @@
+<span class="pl-c">&lt;!--- Param the form values. ---&gt;</span>
+&lt;<span class="pl-ent">cfparam</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>form.submitted<span class="pl-pds">"</span></span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>boolean<span class="pl-pds">"</span></span> <span class="pl-e">default</span>=<span class="pl-s"><span class="pl-pds">"</span>false<span class="pl-pds">"</span></span> /&gt;
+&lt;<span class="pl-ent">cfparam</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>form.sprite<span class="pl-pds">"</span></span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>string<span class="pl-pds">"</span></span> <span class="pl-e">default</span>=<span class="pl-s"><span class="pl-pds">""</span></span> /&gt;
+
+
+<span class="pl-c">&lt;!--- ----------------------------------------------------- ---&gt;</span>
+<span class="pl-c">&lt;!--- ----------------------------------------------------- ---&gt;</span>
+
+
+<span class="pl-c">&lt;!--- Check to see if the form has been submitted. ---&gt;</span>
+&lt;<span class="pl-ent">cfif</span> (
+	<span class="pl-c1">form</span>.<span class="pl-smi">submitted</span> <span class="pl-k">&amp;&amp;</span>
+	<span class="pl-c1">len</span>( <span class="pl-c1">form</span>.<span class="pl-smi">sprite</span> )
+	)&gt;
+
+
+	<span class="pl-c">&lt;!--- Upload the file. ---&gt;</span>
+	&lt;<span class="pl-ent">cffile</span>
+		<span class="pl-e">result</span>=<span class="pl-s"><span class="pl-pds">"</span>upload<span class="pl-pds">"</span></span>
+		<span class="pl-e">action</span>=<span class="pl-s"><span class="pl-pds">"</span>upload<span class="pl-pds">"</span></span>
+		<span class="pl-e">filefield</span>=<span class="pl-s"><span class="pl-pds">"</span>sprite<span class="pl-pds">"</span></span>
+		<span class="pl-e">destination</span>=<span class="pl-s"><span class="pl-pds">"</span>#<span class="pl-c1">expandPath</span>( <span class="pl-pds">'</span>./uploads/<span class="pl-pds">'</span> )#<span class="pl-pds">"</span></span>
+		<span class="pl-e">nameconflict</span>=<span class="pl-s"><span class="pl-pds">"</span>makeunique<span class="pl-pds">"</span></span>
+		/&gt;
+
+	<span class="pl-c">&lt;!--- Map the spirte elements within the uploading file. ---&gt;</span>
+	&lt;<span class="pl-ent">cfset</span> <span class="pl-smi">spriteMapper</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">SpriteMapper</span>(
+		<span class="pl-c1">imageNew</span>( <span class="pl-s"><span class="pl-pds">"</span>#<span class="pl-smi">upload</span>.<span class="pl-smi">serverDirectory</span>#/#<span class="pl-smi">upload</span>.<span class="pl-smi">serverFile</span>#<span class="pl-pds">"</span></span> )
+		) /&gt;
+
+
+&lt;/<span class="pl-ent">cfif</span>&gt;
+
+
+<span class="pl-c">&lt;!--- ----------------------------------------------------- ---&gt;</span>
+<span class="pl-c">&lt;!--- ----------------------------------------------------- ---&gt;</span>
+
+
+&lt;<span class="pl-ent">cfcontent</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/html; charset=utf-8<span class="pl-pds">"</span></span> /&gt;
+&lt;<span class="pl-ent">cfoutput</span>&gt;
+
+	&lt;!doctype html&gt;
+	&lt;<span class="pl-ent">html</span>&gt;
+	&lt;<span class="pl-ent">head</span>&gt;
+		&lt;<span class="pl-ent">title</span>&gt;CSS Sprite Coordinates&lt;/<span class="pl-ent">title</span>&gt;
+	&lt;/<span class="pl-ent">head</span>&gt;
+	&lt;<span class="pl-ent">body</span>&gt;
+
+		&lt;<span class="pl-ent">h1</span>&gt;
+			CSS Sprite Coordinates
+		&lt;/<span class="pl-ent">h1</span>&gt;
+
+		&lt;<span class="pl-ent">form</span>
+			<span class="pl-e">method</span>=<span class="pl-s"><span class="pl-pds">"</span>post<span class="pl-pds">"</span></span>
+			<span class="pl-e">action</span>=<span class="pl-s"><span class="pl-pds">"</span>#<span class="pl-c1">cgi</span>.<span class="pl-smi">script_name</span>#<span class="pl-pds">"</span></span>
+			<span class="pl-e">enctype</span>=<span class="pl-s"><span class="pl-pds">"</span>multipart/form-data<span class="pl-pds">"</span></span>&gt;
+
+			&lt;<span class="pl-ent">input</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>hidden<span class="pl-pds">"</span></span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>submitted<span class="pl-pds">"</span></span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span> /&gt;
+
+			&lt;<span class="pl-ent">p</span>&gt;
+				Upload your CSS sprite PNG:&lt;<span class="pl-ent">br</span> /&gt;
+				&lt;<span class="pl-ent">input</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>file<span class="pl-pds">"</span></span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>sprite<span class="pl-pds">"</span></span> <span class="pl-e">size</span>=<span class="pl-s"><span class="pl-pds">"</span>50<span class="pl-pds">"</span></span> /&gt;
+			&lt;/<span class="pl-ent">p</span>&gt;
+
+			&lt;<span class="pl-ent">p</span>&gt;
+				&lt;<span class="pl-ent">input</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>submit<span class="pl-pds">"</span></span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>Upload<span class="pl-pds">"</span></span> /&gt;
+			&lt;/<span class="pl-ent">p</span>&gt;
+
+		&lt;/<span class="pl-ent">form</span>&gt;
+
+
+		<span class="pl-c">&lt;!---</span>
+<span class="pl-c">			Check to see if we have our sprite mapper. If so, then</span>
+<span class="pl-c">			we can access the shapes and output the coordinates.</span>
+<span class="pl-c">		---&gt;</span>
+		&lt;<span class="pl-ent">cfif</span> <span class="pl-k">!</span><span class="pl-c1">isNull</span>( <span class="pl-smi">spriteMapper</span> )&gt;
+
+			&lt;<span class="pl-ent">h2</span>&gt;
+				Sprite Results:
+			&lt;/<span class="pl-ent">h2</span>&gt;
+
+			<span class="pl-c">&lt;!---</span>
+<span class="pl-c">				To make the output easier to read, we're going to</span>
+<span class="pl-c">				create classes rather than inline styles. As such,</span>
+<span class="pl-c">				we'll need an index counter to make the class</span>
+<span class="pl-c">				names unique.</span>
+<span class="pl-c">			---&gt;</span>
+			&lt;<span class="pl-ent">cfset</span> <span class="pl-smi">classIndex</span> <span class="pl-k">=</span> <span class="pl-c1">0</span> /&gt;
+
+			<span class="pl-c">&lt;!--- Output each shape. ---&gt;</span>
+			&lt;<span class="pl-ent">cfloop</span>
+				<span class="pl-e">index</span>=<span class="pl-s"><span class="pl-pds">"</span>shape<span class="pl-pds">"</span></span>
+				<span class="pl-e">array</span>=<span class="pl-s"><span class="pl-pds">"</span>#<span class="pl-smi">spriteMapper</span>.<span class="pl-en">getShapes</span>()#<span class="pl-pds">"</span></span>&gt;
+
+
+				&lt;<span class="pl-ent">cfset</span> <span class="pl-smi">classIndex</span><span class="pl-k">++</span> /&gt;
+
+				<span class="pl-c">&lt;!--- Get the dimensions and offset of the sprite. ---&gt;</span>
+				&lt;<span class="pl-ent">cfset</span> <span class="pl-smi">box</span> <span class="pl-k">=</span> <span class="pl-smi">shape</span>.<span class="pl-en">getBoundingBox</span>() /&gt;
+
+				&lt;<span class="pl-ent">style</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/css<span class="pl-pds">"</span></span>&gt;
+
+					<span class="pl-cce">##</span><span class="pl-e">sprite</span>#<span class="pl-smi">classIndex</span># {
+						<span class="pl-c1">background-image</span>: <span class="pl-c1">url</span>( <span class="pl-s"><span class="pl-pds">"</span>./uploads/#<span class="pl-smi">upload</span>.<span class="pl-smi">serverFile</span>#<span class="pl-pds">"</span></span> ) ;
+						<span class="pl-c1">background-position</span>: -#<span class="pl-smi">box</span>.<span class="pl-smi">minX</span>#px -#<span class="pl-smi">box</span>.<span class="pl-smi">minY</span>#px ;
+						<span class="pl-c1">background-repeat</span>: <span class="pl-c1">no-repeat</span> ;
+						<span class="pl-c1">border</span>: <span class="pl-c1">5</span><span class="pl-k">px</span> <span class="pl-c1">solid</span> <span class="pl-cce">##</span><span class="pl-c1">D0D0D0</span> ;
+						<span class="pl-c1">height</span>: #<span class="pl-smi">box</span>.<span class="pl-smi">height</span>#px ;
+						<span class="pl-c1">margin-bottom</span>: <span class="pl-c1">30</span><span class="pl-k">px</span> ;
+						<span class="pl-c1">width</span>: #<span class="pl-smi">box</span>.<span class="pl-smi">width</span>#px ;
+						}
+
+				&lt;/<span class="pl-ent">style</span>&gt;
+
+				&lt;<span class="pl-ent">div</span> <span class="pl-e">id</span>=<span class="pl-s"><span class="pl-pds">"</span>sprite#<span class="pl-smi">classIndex</span>#<span class="pl-pds">"</span></span>&gt;
+					&lt;<span class="pl-ent">br</span> /&gt;
+				&lt;/<span class="pl-ent">div</span>&gt;
+
+
+			&lt;/<span class="pl-ent">cfloop</span>&gt;
+
+		&lt;/<span class="pl-ent">cfif</span>&gt;
+
+	&lt;/<span class="pl-ent">body</span>&gt;
+	&lt;/<span class="pl-ent">html</span>&gt;
+
+&lt;/<span class="pl-ent">cfoutput</span>&gt;

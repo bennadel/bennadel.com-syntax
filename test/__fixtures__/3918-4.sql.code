@@ -1,0 +1,15 @@
+EXPLAIN SELECT
+	m.id,
+	m.slug,
+	m.message
+FROM
+	secret_message m
+WHERE
+	-- NOTE: We have to perform the CASE INSENSITIVE search first so that we
+	-- can leverage the INDEX on the table column, `slug`. If we try to go
+	-- directly to the COLLATE directive, the query won't use the index and
+	-- we do a full-table scan.
+	m.slug = 'aaaa'
+AND
+	m.slug COLLATE utf8_bin = 'aaaa'
+;

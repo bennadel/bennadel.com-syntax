@@ -1,0 +1,146 @@
+&lt;<span class="pl-k">cffunction</span>
+	<span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span><span class="pl-en">dealerMustHit</span><span class="pl-pds">"</span></span>
+	<span class="pl-e">access</span>=<span class="pl-s"><span class="pl-pds">"</span><span class="pl-k">public</span><span class="pl-pds">"</span></span>
+	<span class="pl-e">returntype</span>=<span class="pl-s"><span class="pl-pds">"</span><span class="pl-c1">boolean</span><span class="pl-pds">"</span></span>
+	<span class="pl-e">output</span>=<span class="pl-s"><span class="pl-pds">"</span>false<span class="pl-pds">"</span></span>
+	<span class="pl-e">hint</span>=<span class="pl-s"><span class="pl-pds">"</span>I determine if the given dealer hand must hit (less than 17).<span class="pl-pds">"</span></span>&gt;
+
+	<span class="pl-c">&lt;!--- Define arguments. ---&gt;</span>
+	&lt;<span class="pl-ent">cfargument</span>
+		<span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span><span class="pl-smi">hand</span><span class="pl-pds">"</span></span>
+		<span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span><span class="pl-c1">array</span><span class="pl-pds">"</span></span>
+		<span class="pl-e">required</span>=<span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span>
+		<span class="pl-e">hint</span>=<span class="pl-s"><span class="pl-pds">"</span>I am the dealer hand being checked for hit requirement.<span class="pl-pds">"</span></span>
+		/&gt;
+
+	<span class="pl-c">&lt;!--- Return true if the hand sum is less than 17. ---&gt;</span>
+	&lt;<span class="pl-ent">cfreturn</span> (<span class="pl-en">getHandTotal</span>( <span class="pl-c1">arguments</span>.<span class="pl-smi">hand</span> ) <span class="pl-k">lt</span> <span class="pl-c1">17</span>) /&gt;
+&lt;/<span class="pl-k">cffunction</span>&gt;
+
+
+&lt;<span class="pl-k">cffunction</span>
+	<span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span><span class="pl-en">getHandTotal</span><span class="pl-pds">"</span></span>
+	<span class="pl-e">access</span>=<span class="pl-s"><span class="pl-pds">"</span><span class="pl-k">public</span><span class="pl-pds">"</span></span>
+	<span class="pl-e">returntype</span>=<span class="pl-s"><span class="pl-pds">"</span><span class="pl-c1">numeric</span><span class="pl-pds">"</span></span>
+	<span class="pl-e">output</span>=<span class="pl-s"><span class="pl-pds">"</span>false<span class="pl-pds">"</span></span>
+	<span class="pl-e">hint</span>=<span class="pl-s"><span class="pl-pds">"</span>I get the total sum of the cards in the given blackjack hand.<span class="pl-pds">"</span></span>&gt;
+
+	<span class="pl-c">&lt;!--- Define arguments. ---&gt;</span>
+	&lt;<span class="pl-ent">cfargument</span>
+		<span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span><span class="pl-smi">hand</span><span class="pl-pds">"</span></span>
+		<span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span><span class="pl-c1">array</span><span class="pl-pds">"</span></span>
+		<span class="pl-e">required</span>=<span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span>
+		<span class="pl-e">hint</span>=<span class="pl-s"><span class="pl-pds">"</span>I am the blackjack hand being counted (summed).<span class="pl-pds">"</span></span>
+		/&gt;
+
+	<span class="pl-c">&lt;!--- Define the local scope. ---&gt;</span>
+	&lt;<span class="pl-ent">cfset</span> <span class="pl-k">var</span> <span class="pl-c1">local</span> <span class="pl-k">=</span> {} /&gt;
+
+	<span class="pl-c">&lt;!--- Create a running total for the cards. ---&gt;</span>
+	&lt;<span class="pl-ent">cfset</span> <span class="pl-c1">local</span>.<span class="pl-smi">sum</span> <span class="pl-k">=</span> <span class="pl-c1">0</span> /&gt;
+
+	<span class="pl-c">&lt;!---</span>
+<span class="pl-c">		Loop over cards to get the initial count. On the first</span>
+<span class="pl-c">		pass, the Aces (A) will be counted as 11. If the hand</span>
+<span class="pl-c">		is bust, they will be re-tallied with Ace being 2.</span>
+<span class="pl-c">	---&gt;</span>
+	&lt;<span class="pl-ent">cfloop</span>
+		<span class="pl-e">index</span>=<span class="pl-s"><span class="pl-pds">"</span>local.card<span class="pl-pds">"</span></span>
+		<span class="pl-e">array</span>=<span class="pl-s"><span class="pl-pds">"</span>#<span class="pl-c1">arguments</span>.<span class="pl-smi">hand</span>#<span class="pl-pds">"</span></span>&gt;
+
+		<span class="pl-c">&lt;!--- Check to see what kind of card we have. ---&gt;</span>
+		&lt;<span class="pl-ent">cfif</span> <span class="pl-c1">isNumeric</span>( <span class="pl-c1">local</span>.<span class="pl-smi">card</span> )&gt;
+
+			<span class="pl-c">&lt;!--- Simply add given value. ---&gt;</span>
+			&lt;<span class="pl-ent">cfset</span> <span class="pl-c1">local</span>.<span class="pl-smi">sum</span> <span class="pl-k">+=</span> <span class="pl-c1">local</span>.<span class="pl-smi">card</span> /&gt;
+
+		&lt;<span class="pl-ent">cfelseif</span> (<span class="pl-c1">toString</span>( <span class="pl-c1">local</span>.<span class="pl-smi">card</span> ) <span class="pl-k">eq</span> <span class="pl-s"><span class="pl-pds">"</span>A<span class="pl-pds">"</span></span>)&gt;
+
+			<span class="pl-c">&lt;!--- On the first pass, add the Ace as an 11. ---&gt;</span>
+			&lt;<span class="pl-ent">cfset</span> <span class="pl-c1">local</span>.<span class="pl-smi">sum</span> <span class="pl-k">+=</span> <span class="pl-c1">11</span> /&gt;
+
+		&lt;<span class="pl-ent">cfelse</span>&gt;
+
+			<span class="pl-c">&lt;!---</span>
+<span class="pl-c">				All other cards will be face cards at this time,</span>
+<span class="pl-c">				which will 10.</span>
+<span class="pl-c">			---&gt;</span>
+			&lt;<span class="pl-ent">cfset</span> <span class="pl-c1">local</span>.<span class="pl-smi">sum</span> <span class="pl-k">+=</span> <span class="pl-c1">10</span> /&gt;
+
+		&lt;/<span class="pl-ent">cfif</span>&gt;
+
+	&lt;/<span class="pl-ent">cfloop</span>&gt;
+
+
+	<span class="pl-c">&lt;!---</span>
+<span class="pl-c">		Now that we have summed the cards for the first time,</span>
+<span class="pl-c">		check to see if the hand is bust.</span>
+<span class="pl-c">	---&gt;</span>
+	&lt;<span class="pl-ent">cfif</span> (<span class="pl-c1">local</span>.<span class="pl-smi">sum</span> <span class="pl-k">lte</span> <span class="pl-c1">21</span>)&gt;
+
+		<span class="pl-c">&lt;!--- The hand is not bust, so return sum. ---&gt;</span>
+		&lt;<span class="pl-ent">cfreturn</span> <span class="pl-c1">local</span>.<span class="pl-smi">sum</span> /&gt;
+
+	&lt;/<span class="pl-ent">cfif</span>&gt;
+
+
+	<span class="pl-c">&lt;!---</span>
+<span class="pl-c">		The first pass resulted in a busted hand. This may or may</span>
+<span class="pl-c">		not have been due to the way we counted Aces. As such,</span>
+<span class="pl-c">		let's reset the sum and run through summing process again,</span>
+<span class="pl-c">		this time with the Ace counting for 2.</span>
+<span class="pl-c">	---&gt;</span>
+	&lt;<span class="pl-ent">cfset</span> <span class="pl-c1">local</span>.<span class="pl-smi">sum</span> <span class="pl-k">=</span> <span class="pl-c1">0</span> /&gt;
+
+	<span class="pl-c">&lt;!--- Loop over cards a second time. ---&gt;</span>
+	&lt;<span class="pl-ent">cfloop</span>
+		<span class="pl-e">index</span>=<span class="pl-s"><span class="pl-pds">"</span>local.card<span class="pl-pds">"</span></span>
+		<span class="pl-e">array</span>=<span class="pl-s"><span class="pl-pds">"</span>#<span class="pl-c1">arguments</span>.<span class="pl-smi">hand</span>#<span class="pl-pds">"</span></span>&gt;
+
+		<span class="pl-c">&lt;!--- Check to see what kind of card we have. ---&gt;</span>
+		&lt;<span class="pl-ent">cfif</span> <span class="pl-c1">isNumeric</span>( <span class="pl-c1">local</span>.<span class="pl-smi">card</span> )&gt;
+
+			<span class="pl-c">&lt;!--- Simply add given value. ---&gt;</span>
+			&lt;<span class="pl-ent">cfset</span> <span class="pl-c1">local</span>.<span class="pl-smi">sum</span> <span class="pl-k">+=</span> <span class="pl-c1">local</span>.<span class="pl-smi">card</span> /&gt;
+
+		&lt;<span class="pl-ent">cfelseif</span> (<span class="pl-c1">local</span>.<span class="pl-smi">card</span> <span class="pl-k">eq</span> <span class="pl-s"><span class="pl-pds">"</span>A<span class="pl-pds">"</span></span>)&gt;
+
+			<span class="pl-c">&lt;!--- On the second pass, add the Ace as an 2. ---&gt;</span>
+			&lt;<span class="pl-ent">cfset</span> <span class="pl-c1">local</span>.<span class="pl-smi">sum</span> <span class="pl-k">+=</span> <span class="pl-c1">2</span> /&gt;
+
+		&lt;<span class="pl-ent">cfelse</span>&gt;
+
+			<span class="pl-c">&lt;!---</span>
+<span class="pl-c">				All other cards will be face cards at this time,</span>
+<span class="pl-c">				which will 10.</span>
+<span class="pl-c">			---&gt;</span>
+			&lt;<span class="pl-ent">cfset</span> <span class="pl-c1">local</span>.<span class="pl-smi">sum</span> <span class="pl-k">+=</span> <span class="pl-c1">10</span> /&gt;
+
+		&lt;/<span class="pl-ent">cfif</span>&gt;
+
+	&lt;/<span class="pl-ent">cfloop</span>&gt;
+
+
+	<span class="pl-c">&lt;!--- Now, no matter what sum we have, just return it. ---&gt;</span>
+	&lt;<span class="pl-ent">cfreturn</span> <span class="pl-c1">local</span>.<span class="pl-smi">sum</span> /&gt;
+&lt;/<span class="pl-k">cffunction</span>&gt;
+
+
+&lt;<span class="pl-k">cffunction</span>
+	<span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span><span class="pl-en">isHandBust</span><span class="pl-pds">"</span></span>
+	<span class="pl-e">access</span>=<span class="pl-s"><span class="pl-pds">"</span><span class="pl-k">public</span><span class="pl-pds">"</span></span>
+	<span class="pl-e">returntype</span>=<span class="pl-s"><span class="pl-pds">"</span><span class="pl-c1">boolean</span><span class="pl-pds">"</span></span>
+	<span class="pl-e">output</span>=<span class="pl-s"><span class="pl-pds">"</span>false<span class="pl-pds">"</span></span>
+	<span class="pl-e">hint</span>=<span class="pl-s"><span class="pl-pds">"</span>I determine if the given hand is bust (over 21).<span class="pl-pds">"</span></span>&gt;
+
+	<span class="pl-c">&lt;!--- Define arguments. ---&gt;</span>
+	&lt;<span class="pl-ent">cfargument</span>
+		<span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span><span class="pl-smi">hand</span><span class="pl-pds">"</span></span>
+		<span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span><span class="pl-c1">array</span><span class="pl-pds">"</span></span>
+		<span class="pl-e">required</span>=<span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span>
+		<span class="pl-e">hint</span>=<span class="pl-s"><span class="pl-pds">"</span>I am the blackjack hand being checked for bust.<span class="pl-pds">"</span></span>
+		/&gt;
+
+	<span class="pl-c">&lt;!--- Return true if the hand sum is over 21. ---&gt;</span>
+	&lt;<span class="pl-ent">cfreturn</span> (<span class="pl-en">getHandTotal</span>( <span class="pl-c1">arguments</span>.<span class="pl-smi">hand</span> ) <span class="pl-k">gt</span> <span class="pl-c1">21</span>) /&gt;
+&lt;/<span class="pl-k">cffunction</span>&gt;

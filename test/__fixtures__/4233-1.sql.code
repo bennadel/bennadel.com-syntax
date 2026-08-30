@@ -1,0 +1,7 @@
+CREATE TABLE `contacts` (
+	`doc` json DEFAULT NULL,
+	`_id` varbinary(32) GENERATED ALWAYS AS (json_unquote(json_extract(`doc`,_utf8mb4'$._id'))) STORED NOT NULL,
+	`_json_schema` json GENERATED ALWAYS AS (_utf8mb4'{"type":"object"}') VIRTUAL,
+	PRIMARY KEY (`_id`),
+	CONSTRAINT `$val_strict_F8404629078159A287BC14709C59E6B49D332AC9` CHECK (json_schema_valid(`_json_schema`,`doc`)) /*!80016 NOT ENFORCED */
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

@@ -1,0 +1,21 @@
+<p>
+	<label for="target--email">
+		Email:
+	</label>
+	<input
+		id="target--email"
+		type="text"
+		name="email"
+		value="#encodeForHtmlAttribute( form.email )#" data-1p-ignore
+	/>
+
+	<!--- Will only render if the prefixes match. --->
+	<cfmodule
+		template="/tags/field-error.cfm"
+		errorResponse="#errorResponse#"
+		prefixes="#[
+			'App.Model.User.Email.',
+			'App.Model.User.Conflict'
+		]#"
+	/>
+</p>

@@ -1,0 +1,26 @@
+&lt;<span class="pl-ent">cfscript</span>&gt;
+
+	<span class="pl-c">// NOTE: In order to test the URL redirection, I want to make sure that our target</span>
+	<span class="pl-c">// URL contains nested encoding. This way, I can see if our URL management is being</span>
+	<span class="pl-c">// overly clinical in its sanitization practices (and not allowing what would</span>
+	<span class="pl-c">// otherwise be a totally valid target URL).</span>
+	<span class="pl-smi">banner</span> <span class="pl-k">=</span> <span class="pl-c1">encodeForUrl</span>( <span class="pl-s"><span class="pl-pds">"</span>S&amp;P<span class="pl-pds">"</span></span> );
+
+&lt;/<span class="pl-ent">cfscript</span>&gt;
+&lt;<span class="pl-ent">cfoutput</span>&gt;
+
+	&lt;<span class="pl-ent">h1</span>&gt;
+		Ways A URL Can Be Sent
+	&lt;/<span class="pl-ent">h1</span>&gt;
+
+	&lt;<span class="pl-ent">p</span>&gt;
+		Copy-Pasted From Co-Worker (using URL fragment):
+		&lt;<span class="pl-ent">a</span> <span class="pl-e">href</span>=<span class="pl-s"><span class="pl-pds">"</span>./spa.cfm?showBanner=#<span class="pl-smi">banner</span>#<span class="pl-cce">##</span>/path/to/thing<span class="pl-pds">"</span></span>&gt;Goto the Thing&lt;/<span class="pl-ent">a</span>&gt; <span class="pl-c1">&amp;</span><span class="pl-en">rarr</span><span class="pl-c1">;</span>
+	&lt;/<span class="pl-ent">p</span>&gt;
+
+	&lt;<span class="pl-ent">p</span>&gt;
+		Transactional Email (using spaRoute URL parameter):
+		&lt;<span class="pl-ent">a</span> <span class="pl-e">href</span>=<span class="pl-s"><span class="pl-pds">"</span>./spa.cfm?showBanner=#<span class="pl-smi">banner</span>#<span class="pl-ii">&amp;</span>spaRoute=/path/to/thing<span class="pl-pds">"</span></span>&gt;Goto the Thing&lt;/<span class="pl-ent">a</span>&gt; <span class="pl-c1">&amp;</span><span class="pl-en">rarr</span><span class="pl-c1">;</span>
+	&lt;/<span class="pl-ent">p</span>&gt;
+
+&lt;/<span class="pl-ent">cfoutput</span>&gt;

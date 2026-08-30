@@ -1,0 +1,48 @@
+<span class="pl-ent">version</span>: <span class="pl-s"><span class="pl-pds">"</span>3<span class="pl-pds">"</span></span>
+<span class="pl-ent">services</span>:
+<span class="pl-ent">web</span>:
+<span class="pl-ent">build</span>: <span class="pl-s">./web/.</span>
+<span class="pl-ent">container_name</span>: <span class="pl-s">web</span>
+<span class="pl-ent">command</span>: <span class="pl-s">npm run dev</span>
+<span class="pl-ent">restart</span>: <span class="pl-s">unless-stopped</span>
+<span class="pl-ent">networks</span>:
+<span class="pl-ent">dailyprime-net</span>:
+<span class="pl-c"># When running locally, the nginx proxy is expecting two upstream servers to be</span>
+<span class="pl-c"># available. However, locally, I don't need high-availability. As such, I'm going</span>
+<span class="pl-c"># to create one instance of "web" and just give it the two aliases that are being</span>
+<span class="pl-c"># used in the nginx proxy-pass definition.</span>
+<span class="pl-ent">aliases</span>:
+- <span class="pl-s">web_1</span>
+- <span class="pl-s">web_2</span>
+<span class="pl-ent">environment</span>:
+<span class="pl-ent">DOGSTATSD_HOST</span>: <span class="pl-s">dd_agent</span>
+<span class="pl-ent">DOGSTATSD_PORT</span>: <span class="pl-c1">8125</span>
+<span class="pl-ent">NODE_ENV</span>: <span class="pl-s">development</span>
+<span class="pl-ent">PORT</span>: <span class="pl-c1">8080</span>
+<span class="pl-ent">volumes</span>:
+- <span class="pl-s">./web:/var/www/dailyprime.me</span>
+- <span class="pl-s">/var/www/dailyprime.me/node_modules</span>
+<span class="pl-ent">links</span>:
+- <span class="pl-s">dd_agent</span>
+
+<span class="pl-ent">proxy</span>:
+<span class="pl-ent">build</span>: <span class="pl-s">./proxy/.</span>
+<span class="pl-ent">container_name</span>: <span class="pl-s">proxy</span>
+<span class="pl-ent">restart</span>: <span class="pl-s">unless-stopped</span>
+<span class="pl-ent">networks</span>:
+- <span class="pl-s">dailyprime-net</span>
+<span class="pl-ent">ports</span>:
+- <span class="pl-c1">80:80</span>
+<span class="pl-ent">links</span>:
+- <span class="pl-s">web</span>
+
+<span class="pl-ent">dd_agent</span>:
+<span class="pl-ent">build</span>: <span class="pl-s">./statsd-mock/.</span>
+<span class="pl-ent">container_name</span>: <span class="pl-s">dd_agent</span>
+<span class="pl-ent">restart</span>: <span class="pl-s">unless-stopped</span>
+<span class="pl-ent">networks</span>:
+- <span class="pl-s">dailyprime-net</span>
+
+<span class="pl-ent">networks</span>:
+<span class="pl-ent">dailyprime-net</span>:
+<span class="pl-ent">driver</span>: <span class="pl-s">bridge</span>

@@ -1,0 +1,71 @@
+&lt;!doctype html&gt;
+&lt;<span class="pl-ent">html</span> <span class="pl-e">lang</span>=<span class="pl-s"><span class="pl-pds">"</span>en<span class="pl-pds">"</span></span>&gt;
+&lt;<span class="pl-ent">head</span>&gt;
+	&lt;<span class="pl-ent">meta</span> <span class="pl-e">charset</span>=<span class="pl-s"><span class="pl-pds">"</span>utf-8<span class="pl-pds">"</span></span> /&gt;
+	&lt;<span class="pl-ent">title</span>&gt;
+		Using Negative Box-Shadow Spread To Communicate Depth In CSS
+	&lt;/<span class="pl-ent">title</span>&gt;
+&lt;/<span class="pl-ent">head</span>&gt;
+&lt;<span class="pl-ent">body</span>&gt;
+
+	&lt;<span class="pl-ent">h1</span>&gt;
+		Using Negative Box-Shadow Spread To Communicate Depth In CSS
+	&lt;/<span class="pl-ent">h1</span>&gt;
+
+	&lt;<span class="pl-ent">div</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>container<span class="pl-pds">"</span></span>&gt;
+		&lt;<span class="pl-ent">div</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>tile tile--a<span class="pl-pds">"</span></span>&gt;
+			No Spread
+		&lt;/<span class="pl-ent">div</span>&gt;
+		&lt;<span class="pl-ent">div</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>tile tile--b<span class="pl-pds">"</span></span>&gt;
+			-5px Spread
+		&lt;/<span class="pl-ent">div</span>&gt;
+	&lt;/<span class="pl-ent">div</span>&gt;
+
+	&lt;<span class="pl-ent">style</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/css<span class="pl-pds">"</span></span>&gt;
+
+		<span class="pl-e">.tile</span> {
+			<span class="pl-c1">box-shadow</span>: <span class="pl-c1">0</span><span class="pl-k">px</span> <span class="pl-c1">1</span><span class="pl-k">px</span> <span class="pl-c1">0</span><span class="pl-k">px</span> <span class="pl-c1">0</span><span class="pl-k">px</span> <span class="pl-c1">rgba</span>( <span class="pl-c1">0</span>, <span class="pl-c1">0</span>, <span class="pl-c1">0</span>, <span class="pl-c1">0.3</span> ) ;
+			<span class="pl-c1">transition-duration</span>: <span class="pl-c1">500</span><span class="pl-k">ms</span> ;
+			<span class="pl-c1">transition-property</span>: box-shadow, transform ;
+			<span class="pl-c1">transition-timing-function</span>: <span class="pl-c1">ease-in-out</span> ;
+		}
+
+		<span class="pl-e">.tile:hover</span> {
+			<span class="pl-c1">transform</span>: <span class="pl-c1">translateY</span>( <span class="pl-c1">-30</span><span class="pl-k">px</span> ) ;
+		}
+
+		<span class="pl-e">.tile--a:hover</span> {
+			<span class="pl-c">/* No spread. */</span>
+			<span class="pl-c1">box-shadow</span>: <span class="pl-c1">0</span><span class="pl-k">px</span> <span class="pl-c1">40</span><span class="pl-k">px</span> <span class="pl-c1">20</span><span class="pl-k">px</span> <span class="pl-c1">0</span><span class="pl-k">px</span> <span class="pl-c1">rgba</span>( <span class="pl-c1">0</span>, <span class="pl-c1">0</span>, <span class="pl-c1">0</span>, <span class="pl-c1">0.15</span> ) ;
+		}
+		<span class="pl-e">.tile--b:hover</span> {
+			<span class="pl-c">/* -5px spread pulls edges of shadow in on all sides. */</span>
+			<span class="pl-c1">box-shadow</span>: <span class="pl-c1">0</span><span class="pl-k">px</span> <span class="pl-c1">42</span><span class="pl-k">px</span> <span class="pl-c1">20</span><span class="pl-k">px</span> <span class="pl-c1">-5</span><span class="pl-k">px</span> <span class="pl-c1">rgba</span>( <span class="pl-c1">0</span>, <span class="pl-c1">0</span>, <span class="pl-c1">0</span>, <span class="pl-c1">0.15</span> ) ;
+		}
+
+		<span class="pl-c">/* -- Non-demo-related styles. -- */</span>
+
+		<span class="pl-e">.container</span> {
+			<span class="pl-c1">display</span>: <span class="pl-c1">flex</span> ;
+			<span class="pl-c1">justify-content</span>: <span class="pl-c1">space-around</span> ;
+			<span class="pl-c1">margin-top</span>: <span class="pl-c1">100</span><span class="pl-k">px</span> ;
+		}
+
+		<span class="pl-e">.tile</span> {
+			<span class="pl-c1">align-items</span>: <span class="pl-c1">center</span> ;
+			<span class="pl-c1">background-color</span>: <span class="pl-c1">#fafafa</span> ;
+			<span class="pl-c1">border</span>: <span class="pl-c1">1</span><span class="pl-k">px</span> <span class="pl-c1">solid</span> <span class="pl-c1">#ccc</span> ;
+			<span class="pl-c1">border-radius</span>: <span class="pl-c1">8</span><span class="pl-k">px</span> <span class="pl-c1">8</span><span class="pl-k">px</span> <span class="pl-c1">8</span><span class="pl-k">px</span> <span class="pl-c1">8</span><span class="pl-k">px</span> ;
+			<span class="pl-c1">color</span>: <span class="pl-c1">#777777</span> ;
+			<span class="pl-c1">display</span>: <span class="pl-c1">flex</span> ;
+			<span class="pl-c1">font-family</span>: <span class="pl-c1">monospace</span> ;
+			<span class="pl-c1">font-size</span>: <span class="pl-c1">18</span><span class="pl-k">px</span> ;
+			<span class="pl-c1">height</span>: <span class="pl-c1">150</span><span class="pl-k">px</span> ;
+			<span class="pl-c1">justify-content</span>: <span class="pl-c1">center</span> ;
+			<span class="pl-c1">width</span>: <span class="pl-c1">250</span><span class="pl-k">px</span> ;
+		}
+
+	&lt;/<span class="pl-ent">style</span>&gt;
+
+&lt;/<span class="pl-ent">body</span>&gt;
+&lt;/<span class="pl-ent">html</span>&gt;

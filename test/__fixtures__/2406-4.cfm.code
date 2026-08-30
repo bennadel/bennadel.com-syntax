@@ -1,0 +1,127 @@
+<!--- Param the form values. --->
+<cfparam name="form.submitted" type="boolean" default="false" />
+<cfparam name="form.sprite" type="string" default="" />
+
+
+<!--- ----------------------------------------------------- --->
+<!--- ----------------------------------------------------- --->
+
+
+<!--- Check to see if the form has been submitted. --->
+<cfif (
+	form.submitted &&
+	len( form.sprite )
+	)>
+
+
+	<!--- Upload the file. --->
+	<cffile
+		result="upload"
+		action="upload"
+		filefield="sprite"
+		destination="#expandPath( './uploads/' )#"
+		nameconflict="makeunique"
+		/>
+
+	<!--- Map the spirte elements within the uploading file. --->
+	<cfset spriteMapper = new SpriteMapper(
+		imageNew( "#upload.serverDirectory#/#upload.serverFile#" )
+		) />
+
+
+</cfif>
+
+
+<!--- ----------------------------------------------------- --->
+<!--- ----------------------------------------------------- --->
+
+
+<cfcontent type="text/html; charset=utf-8" />
+<cfoutput>
+
+	<!doctype html>
+	<html>
+	<head>
+		<title>CSS Sprite Coordinates</title>
+	</head>
+	<body>
+
+		<h1>
+			CSS Sprite Coordinates
+		</h1>
+
+		<form
+			method="post"
+			action="#cgi.script_name#"
+			enctype="multipart/form-data">
+
+			<input type="hidden" name="submitted" value="true" />
+
+			<p>
+				Upload your CSS sprite PNG:<br />
+				<input type="file" name="sprite" size="50" />
+			</p>
+
+			<p>
+				<input type="submit" value="Upload" />
+			</p>
+
+		</form>
+
+
+		<!---
+			Check to see if we have our sprite mapper. If so, then
+			we can access the shapes and output the coordinates.
+		--->
+		<cfif !isNull( spriteMapper )>
+
+			<h2>
+				Sprite Results:
+			</h2>
+
+			<!---
+				To make the output easier to read, we're going to
+				create classes rather than inline styles. As such,
+				we'll need an index counter to make the class
+				names unique.
+			--->
+			<cfset classIndex = 0 />
+
+			<!--- Output each shape. --->
+			<cfloop
+				index="shape"
+				array="#spriteMapper.getShapes()#">
+
+
+				<cfset classIndex++ />
+
+				<!--- Get the dimensions and offset of the sprite. --->
+				<cfset box = shape.getBoundingBox() />
+
+				<style type="text/css">
+
+					##sprite#classIndex# {
+						background-image: url( "./uploads/#upload.serverFile#" ) ;
+						background-position: -#box.minX#px -#box.minY#px ;
+						background-repeat: no-repeat ;
+						border: 5px solid ##D0D0D0 ;
+						height: #box.height#px ;
+						margin-bottom: 30px ;
+						width: #box.width#px ;
+						}
+
+				</style>
+
+				<div id="sprite#classIndex#">
+					<br />
+				</div>
+
+
+			</cfloop>
+
+		</cfif>
+
+	</body>
+	</html>
+
+</cfoutput>

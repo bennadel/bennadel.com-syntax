@@ -1,0 +1,15 @@
+EXPLAIN <span class="pl-k">SELECT</span>
+	<span class="pl-c1">m</span>.<span class="pl-c1">id</span>,
+	<span class="pl-c1">m</span>.<span class="pl-c1">slug</span>,
+	<span class="pl-c1">m</span>.<span class="pl-c1">message</span>
+<span class="pl-k">FROM</span>
+	secret_message m
+<span class="pl-k">WHERE</span>
+	<span class="pl-c">-- NOTE: We have to perform the CASE INSENSITIVE search first so that we</span>
+	<span class="pl-c">-- can leverage the INDEX on the table column, `slug`. If we try to go</span>
+	<span class="pl-c">-- directly to the COLLATE directive, the query won't use the index and</span>
+	<span class="pl-c">-- we do a full-table scan.</span>
+	<span class="pl-c1">m</span>.<span class="pl-c1">slug</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>aaaa<span class="pl-pds">'</span></span>
+<span class="pl-k">AND</span>
+	<span class="pl-c1">m</span>.<span class="pl-c1">slug</span> COLLATE utf8_bin <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>aaaa<span class="pl-pds">'</span></span>
+;

@@ -1,0 +1,21 @@
+&lt;<span class="pl-ent">p</span>&gt;
+	&lt;<span class="pl-ent">label</span> <span class="pl-e">for</span>=<span class="pl-s"><span class="pl-pds">"</span>target--email<span class="pl-pds">"</span></span>&gt;
+		Email:
+	&lt;/<span class="pl-ent">label</span>&gt;
+	&lt;<span class="pl-ent">input</span>
+		<span class="pl-e">id</span>=<span class="pl-s"><span class="pl-pds">"</span>target--email<span class="pl-pds">"</span></span>
+		<span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text<span class="pl-pds">"</span></span>
+		<span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>email<span class="pl-pds">"</span></span>
+		<span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>#encodeForHtmlAttribute( form.email )#<span class="pl-pds">"</span></span> <span class="pl-e">data-1p-ignore</span>
+	/&gt;
+
+	<span class="pl-c">&lt;!--- Will only render if the prefixes match. ---&gt;</span>
+	&lt;<span class="pl-ent">cfmodule</span>
+		<span class="pl-e">template</span>=<span class="pl-s"><span class="pl-pds">"</span>/tags/field-error.cfm<span class="pl-pds">"</span></span>
+		<span class="pl-e">errorResponse</span>=<span class="pl-s"><span class="pl-pds">"</span>#<span class="pl-smi">errorResponse</span>#<span class="pl-pds">"</span></span>
+		<span class="pl-e">prefixes</span>=<span class="pl-s"><span class="pl-pds">"</span>#[</span>
+<span class="pl-s">			<span class="pl-pds">'</span>App.Model.User.Email.<span class="pl-pds">'</span>,</span>
+<span class="pl-s">			<span class="pl-pds">'</span>App.Model.User.Conflict<span class="pl-pds">'</span></span>
+<span class="pl-s">		]#<span class="pl-pds">"</span></span>
+	/&gt;
+&lt;/<span class="pl-ent">p</span>&gt;

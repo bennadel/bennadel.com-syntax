@@ -1,0 +1,282 @@
+<span class="pl-c">// Import the core angular services.</span>
+<span class="pl-k">import</span> { <span class="pl-smi">Component</span> } <span class="pl-k">from</span> <span class="pl-s"><span class="pl-pds">"</span>@angular/core<span class="pl-pds">"</span></span>;
+<span class="pl-k">import</span> { <span class="pl-smi">formatDate</span> } <span class="pl-k">from</span> <span class="pl-s"><span class="pl-pds">"</span>@angular/common<span class="pl-pds">"</span></span>;
+<span class="pl-k">import</span> { <span class="pl-smi">Inject</span> } <span class="pl-k">from</span> <span class="pl-s"><span class="pl-pds">"</span>@angular/core<span class="pl-pds">"</span></span>;
+<span class="pl-k">import</span> { <span class="pl-smi">LOCALE_ID</span> } <span class="pl-k">from</span> <span class="pl-s"><span class="pl-pds">"</span>@angular/core<span class="pl-pds">"</span></span>;
+
+<span class="pl-c">// Import the application components and services.</span>
+<span class="pl-k">import</span> { <span class="pl-smi">membershipData</span> } <span class="pl-k">from</span> <span class="pl-s"><span class="pl-pds">"</span>./data<span class="pl-pds">"</span></span>;
+
+<span class="pl-c">// ----------------------------------------------------------------------------------- //</span>
+<span class="pl-c">// ----------------------------------------------------------------------------------- //</span>
+
+<span class="pl-k">interface</span> <span class="pl-en">User</span> {
+	<span class="pl-v">id</span><span class="pl-k">:</span> <span class="pl-c1">number</span>;
+	<span class="pl-v">name</span><span class="pl-k">:</span> <span class="pl-c1">string</span>;
+	<span class="pl-v">initials</span><span class="pl-k">:</span> <span class="pl-c1">string</span>;
+	<span class="pl-v">memberships</span><span class="pl-k">:</span> <span class="pl-en">Membership</span>[]
+}
+
+<span class="pl-k">interface</span> <span class="pl-en">Membership</span> {
+	<span class="pl-v">startedAt</span><span class="pl-k">:</span> <span class="pl-c1">number</span>;
+	<span class="pl-v">endedAt</span><span class="pl-k">:</span> <span class="pl-c1">number</span>;
+}
+
+<span class="pl-k">interface</span> <span class="pl-en">Timeline</span> {
+	<span class="pl-v">startedAt</span><span class="pl-k">:</span> <span class="pl-c1">number</span>;
+	<span class="pl-v">endedAt</span><span class="pl-k">:</span> <span class="pl-c1">number</span>;
+	<span class="pl-v">duration</span><span class="pl-k">:</span> <span class="pl-c1">number</span>;
+	<span class="pl-v">durationInPixels</span><span class="pl-k">:</span> <span class="pl-c1">number</span>;
+	<span class="pl-v">tracks</span><span class="pl-k">:</span> <span class="pl-en">Track</span>[];
+}
+
+<span class="pl-k">interface</span> <span class="pl-en">Track</span> {
+	<span class="pl-v">user</span><span class="pl-k">:</span> <span class="pl-en">User</span>;
+	<span class="pl-v">segments</span><span class="pl-k">:</span> <span class="pl-en">Segment</span>[];
+}
+
+<span class="pl-k">interface</span> <span class="pl-en">Segment</span> {
+	<span class="pl-v">membership</span><span class="pl-k">:</span> <span class="pl-en">Membership</span>;
+	<span class="pl-v">duration</span><span class="pl-k">:</span> <span class="pl-c1">number</span>;
+	<span class="pl-v">durationInPixels</span><span class="pl-k">:</span> <span class="pl-c1">number</span>;
+	<span class="pl-v">durationInPercent</span><span class="pl-k">:</span> <span class="pl-c1">number</span>;
+	<span class="pl-v">offset</span><span class="pl-k">:</span> <span class="pl-c1">number</span>;
+	<span class="pl-v">offsetInPixels</span><span class="pl-k">:</span> <span class="pl-c1">number</span>;
+	<span class="pl-v">offsetInPercent</span><span class="pl-k">:</span> <span class="pl-c1">number</span>;
+}
+
+<span class="pl-k">interface</span> <span class="pl-en">DateLabels</span> {
+	[ <span class="pl-v">key</span><span class="pl-k">:</span> <span class="pl-c1">string</span> ]<span class="pl-k">:</span> <span class="pl-c1">string</span>;
+}
+
+<span class="pl-c">// Rough constants for the number of milliseconds within a larger time-frame.</span>
+<span class="pl-k">var</span> <span class="pl-c1">DAY_MILLISECONDS</span> <span class="pl-k">=</span> ( <span class="pl-c1">1000</span> <span class="pl-k">*</span> <span class="pl-c1">60</span> <span class="pl-k">*</span> <span class="pl-c1">60</span> <span class="pl-k">*</span> <span class="pl-c1">24</span> );
+<span class="pl-k">var</span> <span class="pl-c1">MONTH_MILLISECONDS</span> <span class="pl-k">=</span> ( <span class="pl-c1">DAY_MILLISECONDS</span> <span class="pl-k">*</span> <span class="pl-c1">30</span> );
+<span class="pl-k">var</span> <span class="pl-c1">YEAR_MILLISECONDS</span> <span class="pl-k">=</span> ( <span class="pl-c1">DAY_MILLISECONDS</span> <span class="pl-k">*</span> <span class="pl-c1">365</span> );
+
+@<span class="pl-en">Component</span>({
+	selector: <span class="pl-s"><span class="pl-pds">"</span>app-root<span class="pl-pds">"</span></span>,
+	styleUrls: [ <span class="pl-s"><span class="pl-pds">"</span>./app.component.less<span class="pl-pds">"</span></span> ],
+	templateUrl: <span class="pl-s"><span class="pl-pds">"</span>./app.component.html<span class="pl-pds">"</span></span>
+})
+<span class="pl-k">export</span> <span class="pl-k">class</span> <span class="pl-en">AppComponent</span> {
+
+	<span class="pl-k">public</span> <span class="pl-v">dateLabels</span><span class="pl-k">:</span> <span class="pl-en">DateLabels</span>; 
+	<span class="pl-k">public</span> <span class="pl-v">timeline</span><span class="pl-k">:</span> <span class="pl-en">Timeline</span>;
+	<span class="pl-k">public</span> <span class="pl-v">users</span><span class="pl-k">:</span> <span class="pl-en">User</span>[];
+	<span class="pl-k">public</span> <span class="pl-v">zoomLevel</span><span class="pl-k">:</span> <span class="pl-c1">number</span>;
+
+	<span class="pl-k">private</span> <span class="pl-v">localID</span><span class="pl-k">:</span> <span class="pl-c1">string</span>;
+	<span class="pl-k">private</span> <span class="pl-v">zoomLevels</span><span class="pl-k">:</span> <span class="pl-c1">number</span>[];
+
+	<span class="pl-c">// I initialize the app component.</span>
+	<span class="pl-k">constructor</span>( @<span class="pl-en">Inject</span>( <span class="pl-c1">LOCALE_ID</span> ) <span class="pl-v">localID</span><span class="pl-k">:</span> <span class="pl-c1">string</span> ) {
+
+		<span class="pl-c1">this</span>.<span class="pl-smi">localID</span> <span class="pl-k">=</span> <span class="pl-smi">localID</span>;
+		<span class="pl-c1">this</span>.<span class="pl-smi">users</span> <span class="pl-k">=</span> <span class="pl-c1">this</span>.<span class="pl-en">compileUserData</span>();
+		<span class="pl-c1">this</span>.<span class="pl-smi">dateLabels</span> <span class="pl-k">=</span> <span class="pl-c1">Object</span>.<span class="pl-en">create</span>( <span class="pl-c1">null</span> );
+
+		<span class="pl-c">// Lower levels are "zoomed out", higher levels are "zoomed in".</span>
+		<span class="pl-c1">this</span>.<span class="pl-smi">zoomLevel</span> <span class="pl-k">=</span> <span class="pl-c1">3</span>;
+		<span class="pl-c1">this</span>.<span class="pl-smi">zoomLevels</span> <span class="pl-k">=</span> [
+			( <span class="pl-c1">1000</span> <span class="pl-k">/</span> ( <span class="pl-c1">YEAR_MILLISECONDS</span> <span class="pl-k">*</span> <span class="pl-c1">3</span> ) ),  <span class="pl-c">// 1,000 px = 3 year</span>
+			( <span class="pl-c1">1000</span> <span class="pl-k">/</span> ( <span class="pl-c1">YEAR_MILLISECONDS</span> <span class="pl-k">*</span> <span class="pl-c1">2</span> ) ),  <span class="pl-c">// 1,000 px = 2 year</span>
+			( <span class="pl-c1">1000</span> <span class="pl-k">/</span> ( <span class="pl-c1">YEAR_MILLISECONDS</span> <span class="pl-k">*</span> <span class="pl-c1">1</span> ) ),  <span class="pl-c">// 1,000 px = 1 year</span>
+			( <span class="pl-c1">1000</span> <span class="pl-k">/</span> ( <span class="pl-c1">MONTH_MILLISECONDS</span> <span class="pl-k">*</span> <span class="pl-c1">6</span> ) ), <span class="pl-c">// 1,000 px = 6 months</span>
+			( <span class="pl-c1">1000</span> <span class="pl-k">/</span> ( <span class="pl-c1">MONTH_MILLISECONDS</span> <span class="pl-k">*</span> <span class="pl-c1">3</span> ) ), <span class="pl-c">// 1,000 px = 3 months</span>
+			( <span class="pl-c1">1000</span> <span class="pl-k">/</span> ( <span class="pl-c1">MONTH_MILLISECONDS</span> <span class="pl-k">*</span> <span class="pl-c1">1</span> ) )  <span class="pl-c">// 1,000 px = 1 month</span>
+		];
+
+		<span class="pl-c1">this</span>.<span class="pl-smi">timeline</span> <span class="pl-k">=</span> {
+			startedAt: <span class="pl-c1">0</span>,
+			endedAt: <span class="pl-c1">0</span>,
+			duration: <span class="pl-c1">0</span>,
+			durationInPixels: <span class="pl-c1">0</span>,
+			tracks: []
+		};
+		
+		<span class="pl-c1">this</span>.<span class="pl-en">setDateLabels</span>();
+		<span class="pl-c1">this</span>.<span class="pl-en">setTimeline</span>();
+
+	}
+	
+	<span class="pl-c">// ---</span>
+	<span class="pl-c">// PUBLIC METHODS.</span>
+	<span class="pl-c">// ---</span>
+
+	<span class="pl-c">// I zoom-into the timeline so that time-frames appear longer.</span>
+	<span class="pl-k">public</span> <span class="pl-en">zoomIn</span>() <span class="pl-k">:</span> <span class="pl-c1">void</span> {
+
+		<span class="pl-k">if</span> ( <span class="pl-c1">this</span>.<span class="pl-smi">zoomLevel</span> <span class="pl-k">&lt;</span> ( <span class="pl-c1">this</span>.<span class="pl-smi">zoomLevels</span>.<span class="pl-c1">length</span> <span class="pl-k">-</span> <span class="pl-c1">1</span> ) ) {
+
+			<span class="pl-c1">this</span>.<span class="pl-smi">zoomLevel</span><span class="pl-k">++</span>;
+			<span class="pl-c1">this</span>.<span class="pl-en">updateTimelineZoom</span>();
+
+		}
+
+	}
+
+
+	<span class="pl-c">// I zoom-out of the timeline so that time-frames appear shorter.</span>
+	<span class="pl-k">public</span> <span class="pl-en">zoomOut</span>() <span class="pl-k">:</span> <span class="pl-c1">void</span> {
+
+		<span class="pl-k">if</span> ( <span class="pl-c1">this</span>.<span class="pl-smi">zoomLevel</span> <span class="pl-k">&gt;</span> <span class="pl-c1">0</span> ) {
+
+			<span class="pl-c1">this</span>.<span class="pl-smi">zoomLevel</span><span class="pl-k">--</span>;
+			<span class="pl-c1">this</span>.<span class="pl-en">updateTimelineZoom</span>();
+
+		}
+
+	}
+
+	<span class="pl-c">// ---</span>
+	<span class="pl-c">// PRIVATE METHODS.</span>
+	<span class="pl-c">// ---</span>
+
+	<span class="pl-c">// I compile the user date into our user view-model.</span>
+	<span class="pl-k">private</span> <span class="pl-en">compileUserData</span>() <span class="pl-k">:</span> <span class="pl-en">User</span>[] {
+
+		<span class="pl-k">var</span> <span class="pl-smi">users</span><span class="pl-k">:</span> <span class="pl-en">User</span>[] <span class="pl-k">=</span> [];
+		<span class="pl-k">var</span> <span class="pl-smi">user</span><span class="pl-k">:</span> <span class="pl-en">User</span> <span class="pl-k">|</span> <span class="pl-c1">null</span> <span class="pl-k">=</span> <span class="pl-c1">null</span>;
+
+		<span class="pl-c">// NOTE: We know that this sample user data has already been sorted first by</span>
+		<span class="pl-c">// userID and then by startedAt / endedAt dates. As such, we know that the same</span>
+		<span class="pl-c">// userID may be encountered multiples times in a row, indicating that the user</span>
+		<span class="pl-c">// has left and then re-joined the company over time.</span>
+		<span class="pl-k">for</span> ( <span class="pl-k">var</span> <span class="pl-smi">membership</span> <span class="pl-k">of</span> <span class="pl-smi">membershipData</span> ) {
+
+			<span class="pl-k">if</span> ( <span class="pl-k">!</span> <span class="pl-smi">user</span> <span class="pl-k">||</span> ( <span class="pl-smi">user</span>.<span class="pl-c1">id</span> <span class="pl-k">!==</span> <span class="pl-smi">membership</span>.<span class="pl-smi">userID</span> ) ) {
+
+				<span class="pl-smi">user</span> <span class="pl-k">=</span> {
+					id: <span class="pl-smi">membership</span>.<span class="pl-smi">userID</span>,
+					name: <span class="pl-smi">membership</span>.<span class="pl-smi">userName</span>,
+					initials: <span class="pl-smi">membership</span>.<span class="pl-smi">userInitials</span>,
+					memberships: []
+				};
+				<span class="pl-smi">users</span>.<span class="pl-c1">push</span>( <span class="pl-smi">user</span> );
+
+			}
+
+			<span class="pl-smi">user</span>.<span class="pl-smi">memberships</span>.<span class="pl-c1">push</span>({
+				startedAt: <span class="pl-smi">membership</span>.<span class="pl-smi">startedAt</span>,
+				endedAt: <span class="pl-smi">membership</span>.<span class="pl-smi">endedAt</span>
+			});
+
+		}
+
+		<span class="pl-c">// Our raw data was sorted by User (so that we could more easily group</span>
+		<span class="pl-c">// memberships next to each other). However, now that we've parsed the raw data,</span>
+		<span class="pl-c">// let's re-sorted with the oldest memberships first.</span>
+		<span class="pl-smi">users</span>.<span class="pl-c1">sort</span>(
+			( <span class="pl-v">a</span>, <span class="pl-v">b</span> ) <span class="pl-k">=&gt;</span> {
+
+				<span class="pl-c">// NOTE: We know that ever use has at least one membership. As such, we</span>
+				<span class="pl-c">// don't have to worry about checking lengths in this comparison.</span>
+				<span class="pl-k">return</span>( <span class="pl-smi">a</span>.<span class="pl-smi">memberships</span>[ <span class="pl-c1">0</span> ].<span class="pl-smi">startedAt</span> <span class="pl-k">-</span> <span class="pl-smi">b</span>.<span class="pl-smi">memberships</span>[ <span class="pl-c1">0</span> ].<span class="pl-smi">startedAt</span> );
+
+			}
+		);
+
+		<span class="pl-k">return</span>( <span class="pl-smi">users</span> );
+
+	}
+
+
+	<span class="pl-c">// I scale the given milliseconds into rendered pixels based on the current zoom.</span>
+	<span class="pl-k">private</span> <span class="pl-en">scaleMilliseconds</span>( <span class="pl-v">value</span><span class="pl-k">:</span> <span class="pl-c1">number</span> ) <span class="pl-k">:</span> <span class="pl-c1">number</span> {
+
+		<span class="pl-k">return</span>( <span class="pl-smi">value</span> <span class="pl-k">*</span> <span class="pl-c1">this</span>.<span class="pl-smi">zoomLevels</span>[ <span class="pl-c1">this</span>.<span class="pl-smi">zoomLevel</span> ] );
+
+	}
+
+
+	<span class="pl-c">// I populate the date-labels view-model based on the current users.</span>
+	<span class="pl-k">private</span> <span class="pl-en">setDateLabels</span>() <span class="pl-k">:</span> <span class="pl-c1">void</span> {
+
+		<span class="pl-k">for</span> ( <span class="pl-k">var</span> <span class="pl-smi">user</span> <span class="pl-k">of</span> <span class="pl-c1">this</span>.<span class="pl-smi">users</span> ) {
+			<span class="pl-k">for</span> ( <span class="pl-k">var</span> <span class="pl-smi">membership</span> <span class="pl-k">of</span> <span class="pl-smi">user</span>.<span class="pl-smi">memberships</span> ) {
+
+				<span class="pl-c1">this</span>.<span class="pl-smi">dateLabels</span>[ <span class="pl-smi">membership</span>.<span class="pl-smi">startedAt</span> ] <span class="pl-k">=</span> <span class="pl-en">formatDate</span>( <span class="pl-smi">membership</span>.<span class="pl-smi">startedAt</span>, <span class="pl-s"><span class="pl-pds">"</span>mediumDate<span class="pl-pds">"</span></span>, <span class="pl-c1">this</span>.<span class="pl-smi">localID</span> );
+				<span class="pl-c1">this</span>.<span class="pl-smi">dateLabels</span>[ <span class="pl-smi">membership</span>.<span class="pl-smi">endedAt</span> ] <span class="pl-k">=</span> <span class="pl-en">formatDate</span>( <span class="pl-smi">membership</span>.<span class="pl-smi">endedAt</span>, <span class="pl-s"><span class="pl-pds">"</span>mediumDate<span class="pl-pds">"</span></span>, <span class="pl-c1">this</span>.<span class="pl-smi">localID</span> );
+
+			}
+		}
+
+		<span class="pl-c">// An "endedAt" of "0" means that the given membership is still active (ie, not</span>
+		<span class="pl-c">// actually ended). In that case, we'll translate the date to a string literal.</span>
+		<span class="pl-c1">this</span>.<span class="pl-smi">dateLabels</span>[ <span class="pl-c1">0</span> ] <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>Today<span class="pl-pds">"</span></span>;
+
+	}
+
+
+	<span class="pl-c">// I populate the timeline view-model based on the current users.</span>
+	<span class="pl-k">private</span> <span class="pl-en">setTimeline</span>() <span class="pl-k">:</span> <span class="pl-c1">void</span> {
+
+		<span class="pl-k">var</span> <span class="pl-smi">minStartedAt</span> <span class="pl-k">=</span> <span class="pl-c1">0</span>;
+		<span class="pl-k">var</span> <span class="pl-smi">maxEndedAt</span> <span class="pl-k">=</span> <span class="pl-c1">0</span>;
+		<span class="pl-k">var</span> <span class="pl-smi">tickCount</span> <span class="pl-k">=</span> <span class="pl-c1">Date</span>.<span class="pl-en">now</span>();
+
+		<span class="pl-k">for</span> ( <span class="pl-k">var</span> <span class="pl-smi">user</span> <span class="pl-k">of</span> <span class="pl-c1">this</span>.<span class="pl-smi">users</span> ) {
+			<span class="pl-k">for</span> ( <span class="pl-k">var</span> <span class="pl-smi">membership</span> <span class="pl-k">of</span> <span class="pl-smi">user</span>.<span class="pl-smi">memberships</span> ) {
+
+				<span class="pl-smi">minStartedAt</span> <span class="pl-k">=</span> ( <span class="pl-smi">minStartedAt</span> <span class="pl-k">||</span> <span class="pl-smi">membership</span>.<span class="pl-smi">startedAt</span> );
+				<span class="pl-smi">minStartedAt</span> <span class="pl-k">=</span> <span class="pl-c1">Math</span>.<span class="pl-c1">min</span>( <span class="pl-smi">minStartedAt</span>, <span class="pl-smi">membership</span>.<span class="pl-smi">startedAt</span> );
+				<span class="pl-smi">maxEndedAt</span> <span class="pl-k">=</span> ( <span class="pl-smi">maxEndedAt</span> <span class="pl-k">||</span> <span class="pl-smi">membership</span>.<span class="pl-smi">endedAt</span> <span class="pl-k">||</span> <span class="pl-smi">tickCount</span> );
+				<span class="pl-smi">maxEndedAt</span> <span class="pl-k">=</span> <span class="pl-c1">Math</span>.<span class="pl-c1">max</span>( <span class="pl-smi">maxEndedAt</span>, ( <span class="pl-smi">membership</span>.<span class="pl-smi">endedAt</span> <span class="pl-k">||</span> <span class="pl-smi">tickCount</span> ) );
+
+			}
+		}
+
+		<span class="pl-c1">this</span>.<span class="pl-smi">timeline</span>.<span class="pl-smi">duration</span> <span class="pl-k">=</span> ( <span class="pl-smi">maxEndedAt</span> <span class="pl-k">-</span> <span class="pl-smi">minStartedAt</span> );
+		<span class="pl-c1">this</span>.<span class="pl-smi">timeline</span>.<span class="pl-smi">durationInPixels</span> <span class="pl-k">=</span> <span class="pl-c1">this</span>.<span class="pl-en">scaleMilliseconds</span>( <span class="pl-c1">this</span>.<span class="pl-smi">timeline</span>.<span class="pl-smi">duration</span> );
+
+		<span class="pl-c1">this</span>.<span class="pl-smi">timeline</span>.<span class="pl-smi">tracks</span> <span class="pl-k">=</span> <span class="pl-c1">this</span>.<span class="pl-smi">users</span>.<span class="pl-en">map</span>(
+			( <span class="pl-v">user</span> ) <span class="pl-k">=&gt;</span> {
+
+				<span class="pl-k">var</span> <span class="pl-smi">segments</span> <span class="pl-k">=</span> <span class="pl-smi">user</span>.<span class="pl-smi">memberships</span>.<span class="pl-en">map</span>(
+					( <span class="pl-v">membership</span> ) <span class="pl-k">=&gt;</span> {
+
+						<span class="pl-k">var</span> <span class="pl-smi">offset</span> <span class="pl-k">=</span> ( <span class="pl-smi">membership</span>.<span class="pl-smi">startedAt</span> <span class="pl-k">-</span> <span class="pl-smi">minStartedAt</span> );
+						<span class="pl-k">var</span> <span class="pl-smi">duration</span> <span class="pl-k">=</span> ( ( <span class="pl-smi">membership</span>.<span class="pl-smi">endedAt</span> <span class="pl-k">||</span> <span class="pl-smi">tickCount</span> ) <span class="pl-k">-</span> <span class="pl-smi">membership</span>.<span class="pl-smi">startedAt</span> );
+
+						<span class="pl-k">return</span>({
+							membership: <span class="pl-smi">membership</span>,
+							duration: <span class="pl-smi">duration</span>,
+							durationInPixels: <span class="pl-c1">this</span>.<span class="pl-en">scaleMilliseconds</span>( <span class="pl-smi">duration</span> ),
+							durationInPercent: ( <span class="pl-smi">duration</span> <span class="pl-k">/</span> <span class="pl-c1">this</span>.<span class="pl-smi">timeline</span>.<span class="pl-smi">duration</span> <span class="pl-k">*</span> <span class="pl-c1">100</span> ),
+							offset: <span class="pl-smi">offset</span>,
+							offsetInPixels: <span class="pl-c1">this</span>.<span class="pl-en">scaleMilliseconds</span>( <span class="pl-smi">offset</span> ),
+							offsetInPercent: ( <span class="pl-smi">offset</span> <span class="pl-k">/</span> <span class="pl-c1">this</span>.<span class="pl-smi">timeline</span>.<span class="pl-smi">duration</span> <span class="pl-k">*</span> <span class="pl-c1">100</span> )
+						});
+
+					}
+				);
+
+				<span class="pl-k">return</span>({
+					user: <span class="pl-smi">user</span>,
+					segments: <span class="pl-smi">segments</span>
+				});
+
+			}
+		);
+
+	}
+
+
+	<span class="pl-c">// I update the scaled pixel values based on the current timeline and zoom level.</span>
+	<span class="pl-k">private</span> <span class="pl-en">updateTimelineZoom</span>() <span class="pl-k">:</span> <span class="pl-c1">void</span> {
+
+		<span class="pl-c1">this</span>.<span class="pl-smi">timeline</span>.<span class="pl-smi">durationInPixels</span> <span class="pl-k">=</span> <span class="pl-c1">this</span>.<span class="pl-en">scaleMilliseconds</span>( <span class="pl-c1">this</span>.<span class="pl-smi">timeline</span>.<span class="pl-smi">duration</span> );
+
+		<span class="pl-k">for</span> ( <span class="pl-k">var</span> <span class="pl-smi">track</span> <span class="pl-k">of</span> <span class="pl-c1">this</span>.<span class="pl-smi">timeline</span>.<span class="pl-smi">tracks</span> ) {
+			<span class="pl-k">for</span> ( <span class="pl-k">var</span> <span class="pl-smi">segment</span> <span class="pl-k">of</span> <span class="pl-smi">track</span>.<span class="pl-smi">segments</span> ) {
+
+				<span class="pl-smi">segment</span>.<span class="pl-smi">durationInPixels</span> <span class="pl-k">=</span> <span class="pl-c1">this</span>.<span class="pl-en">scaleMilliseconds</span>( <span class="pl-smi">segment</span>.<span class="pl-smi">duration</span> );
+				<span class="pl-smi">segment</span>.<span class="pl-smi">offsetInPixels</span> <span class="pl-k">=</span> <span class="pl-c1">this</span>.<span class="pl-en">scaleMilliseconds</span>( <span class="pl-smi">segment</span>.<span class="pl-smi">offset</span> );
+
+			}
+		}
+
+	}
+
+}

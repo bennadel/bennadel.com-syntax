@@ -1,0 +1,7 @@
+body {
+	namespace-test: "Namespace default";
+	middle-test: "Passed up from das inner mixin";
+	outer-test: "Passed up from das inner mixin";
+	test-mixin-scope-test: "Passed up from das inner mixin";
+	body-test: "Rock the body";
+}

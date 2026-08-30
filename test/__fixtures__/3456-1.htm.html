@@ -1,0 +1,104 @@
+&lt;!doctype html&gt;
+&lt;<span class="pl-ent">html</span> <span class="pl-e">lang</span>=<span class="pl-s"><span class="pl-pds">"</span>en<span class="pl-pds">"</span></span>&gt;
+&lt;<span class="pl-ent">head</span>&gt;
+	&lt;<span class="pl-ent">meta</span> <span class="pl-e">charset</span>=<span class="pl-s"><span class="pl-pds">"</span>utf-8<span class="pl-pds">"</span></span> /&gt;
+	&lt;<span class="pl-ent">title</span>&gt;
+		Exploring Plain-Text Data URIs And The Anchor Download Attribute In JavaScript
+	&lt;/<span class="pl-ent">title</span>&gt;
+
+	&lt;<span class="pl-ent">link</span> <span class="pl-e">rel</span>=<span class="pl-s"><span class="pl-pds">"</span>stylesheet<span class="pl-pds">"</span></span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/css<span class="pl-pds">"</span></span> <span class="pl-e">href</span>=<span class="pl-s"><span class="pl-pds">"</span>./demo.css<span class="pl-pds">"</span></span> /&gt;
+&lt;/<span class="pl-ent">head</span>&gt;
+&lt;<span class="pl-ent">body</span>&gt;
+
+	&lt;<span class="pl-ent">h1</span>&gt;
+		Exploring Plain-Text Data URIs And The Anchor Download Attribute In JavaScript
+	&lt;/<span class="pl-ent">h1</span>&gt;
+
+	&lt;<span class="pl-ent">form</span>&gt;
+
+		&lt;<span class="pl-ent">textarea</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>input<span class="pl-pds">"</span></span>&gt;I like to move it, move it.&lt;/<span class="pl-ent">textarea</span>&gt;
+
+		<span class="pl-c">&lt;!-- NOTE: Download attribute not supported in IE (but is in Edge). --&gt;</span>
+		&lt;<span class="pl-ent">a</span> <span class="pl-e">href</span>=<span class="pl-s"><span class="pl-pds">"</span>javascript:void(0)<span class="pl-pds">"</span></span> <span class="pl-e">download</span>=<span class="pl-s"><span class="pl-pds">"</span>data.txt<span class="pl-pds">"</span></span>&gt;
+			Download Text
+		&lt;/<span class="pl-ent">a</span>&gt;
+
+		&lt;<span class="pl-ent">label</span> <span class="pl-e">for</span>=<span class="pl-s"><span class="pl-pds">"</span>useBase64<span class="pl-pds">"</span></span>&gt;
+			&lt;<span class="pl-ent">input</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>checkbox<span class="pl-pds">"</span></span> <span class="pl-e">id</span>=<span class="pl-s"><span class="pl-pds">"</span>useBase64<span class="pl-pds">"</span></span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>useBase64<span class="pl-pds">"</span></span> /&gt;
+			Use Base64 encoding?
+		&lt;/<span class="pl-ent">label</span>&gt;
+
+	&lt;/<span class="pl-ent">form</span>&gt;
+
+	&lt;<span class="pl-ent">script</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/javascript<span class="pl-pds">"</span></span>&gt;
+
+		<span class="pl-c">// Gather our DOM references.</span>
+		<span class="pl-k">var</span> input <span class="pl-k">=</span> <span class="pl-c1">document</span>.<span class="pl-c1">querySelector</span>( <span class="pl-s"><span class="pl-pds">"</span>textarea[ name = 'input' ]<span class="pl-pds">"</span></span> );
+		<span class="pl-k">var</span> download <span class="pl-k">=</span> <span class="pl-c1">document</span>.<span class="pl-c1">querySelector</span>( <span class="pl-s"><span class="pl-pds">"</span>a[ download ]<span class="pl-pds">"</span></span> );
+		<span class="pl-k">var</span> useBase64 <span class="pl-k">=</span> <span class="pl-c1">document</span>.<span class="pl-c1">querySelector</span>( <span class="pl-s"><span class="pl-pds">"</span>input[ name = 'useBase64' ]<span class="pl-pds">"</span></span> );
+
+		<span class="pl-c">// Listen for relevant form changes so that we can dynamically update the HREF</span>
+		<span class="pl-c">// attribute of our download link to contain the proper Data URI.</span>
+		<span class="pl-smi">input</span>.<span class="pl-c1">addEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>input<span class="pl-pds">"</span></span>, updateDownloadHref, <span class="pl-c1">false</span> );
+		<span class="pl-smi">useBase64</span>.<span class="pl-c1">addEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>change<span class="pl-pds">"</span></span>, updateDownloadHref, <span class="pl-c1">false</span> );
+
+		<span class="pl-c">// Initialize the download link.</span>
+		<span class="pl-en">updateDownloadHref</span>();
+
+		<span class="pl-c">// --------------------------------------------------------------------------- //</span>
+		<span class="pl-c">// --------------------------------------------------------------------------- //</span>
+
+		<span class="pl-c">// I update the HREF of the download link to point to the textarea payload.</span>
+		<span class="pl-k">function</span> <span class="pl-en">updateDownloadHref</span>() {
+
+			<span class="pl-k">var</span> text <span class="pl-k">=</span> <span class="pl-smi">input</span>.<span class="pl-c1">value</span>;
+
+			<span class="pl-c">// When we create a DATA URI for our download link, we don't have to encode</span>
+			<span class="pl-c">// the value as Base64. Base64 is only _required_ when we are representing a</span>
+			<span class="pl-c">// non-textual payload, like an Image. And, if we're not using Base64, we</span>
+			<span class="pl-c">// only have to worry about standard entity encoding for the URL.</span>
+			<span class="pl-k">if</span> ( <span class="pl-smi">useBase64</span>.<span class="pl-c1">checked</span> ) {
+
+				<span class="pl-smi">download</span>.<span class="pl-c1">setAttribute</span>(
+					<span class="pl-s"><span class="pl-pds">"</span>href<span class="pl-pds">"</span></span>,
+					( <span class="pl-s"><span class="pl-pds">"</span>data:text/plain;charset=utf-8;base64,<span class="pl-pds">"</span></span> <span class="pl-k">+</span> <span class="pl-en">base64Encode</span>( text ) )
+				);
+
+			} <span class="pl-k">else</span> {
+
+				<span class="pl-smi">download</span>.<span class="pl-c1">setAttribute</span>(
+					<span class="pl-s"><span class="pl-pds">"</span>href<span class="pl-pds">"</span></span>,
+					( <span class="pl-s"><span class="pl-pds">"</span>data:text/plain;charset=utf-8,<span class="pl-pds">"</span></span> <span class="pl-k">+</span> <span class="pl-c1">encodeURIComponent</span>( text ) )
+				);
+
+			}
+
+		}
+
+
+		<span class="pl-c">// I encode the given string as a Base64 value.</span>
+		<span class="pl-k">function</span> <span class="pl-en">base64Encode</span>( <span class="pl-smi">stringInput</span> ) {
+
+			<span class="pl-c">// NOTE: This normalization technique for handling characters that require</span>
+			<span class="pl-c">// more than an 8-bit representation was provided on the Mozilla Developer</span>
+			<span class="pl-c">// Network website for Base64 encoding. They also provided a companion DECODE</span>
+			<span class="pl-c">// method. But, we don't need to decode in this demo.</span>
+			<span class="pl-c">// --</span>
+			<span class="pl-c">// READ MORE: https://developer.mozilla.org/en-US/docs/Web/API/WindowBase64/Base64_encoding_and_decoding#The_Unicode_Problem</span>
+			<span class="pl-k">var</span> normalizedInput <span class="pl-k">=</span> <span class="pl-c1">encodeURIComponent</span>( stringInput ).<span class="pl-c1">replace</span>(
+				<span class="pl-k">/%</span>([<span class="pl-c1">0</span><span class="pl-k">-</span><span class="pl-ii">9A</span><span class="pl-k">-</span><span class="pl-c1">F</span>]{<span class="pl-c1">2</span>})<span class="pl-k">/</span>g,
+				<span class="pl-k">function</span> <span class="pl-en">toSolidBytes</span>( <span class="pl-smi">$0</span>, <span class="pl-smi">hex</span> ) {
+
+					<span class="pl-k">return</span>( <span class="pl-c1">String</span>.<span class="pl-c1">fromCharCode</span>( <span class="pl-s"><span class="pl-pds">"</span>0x<span class="pl-pds">"</span></span> <span class="pl-k">+</span> hex ) );
+
+				}
+			);
+
+			<span class="pl-k">return</span>( <span class="pl-en">btoa</span>( normalizedInput ) );
+
+		}
+
+	&lt;/<span class="pl-ent">script</span>&gt;
+
+&lt;/<span class="pl-ent">body</span>&gt;
+&lt;/<span class="pl-ent">html</span>&gt;

@@ -1,0 +1,10 @@
+CREATE TABLE `todo_item` (
+	`id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+	`listID` int(10) unsigned NOT NULL, -- The "foreign key" reference.
+	`description` varchar(300) NOT NULL,
+	`createdAt` datetime NOT NULL,
+	`dueAt` datetime DEFAULT NULL,
+	`sort` int(11) NOT NULL,
+	PRIMARY KEY (`id`),
+	KEY `byList` (`listID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;

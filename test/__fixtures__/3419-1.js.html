@@ -1,0 +1,71 @@
+<span class="pl-c">// Require core modules.</span>
+<span class="pl-k">var</span> express <span class="pl-k">=</span> <span class="pl-c1">require</span>( <span class="pl-s"><span class="pl-pds">"</span>express<span class="pl-pds">"</span></span> );
+<span class="pl-k">var</span> DogStatsD <span class="pl-k">=</span> <span class="pl-c1">require</span>( <span class="pl-s"><span class="pl-pds">"</span>hot-shots<span class="pl-pds">"</span></span> );
+<span class="pl-k">var</span> os <span class="pl-k">=</span> <span class="pl-c1">require</span>( <span class="pl-s"><span class="pl-pds">"</span>os<span class="pl-pds">"</span></span> );
+<span class="pl-k">var</span> path <span class="pl-k">=</span> <span class="pl-c1">require</span>( <span class="pl-s"><span class="pl-pds">"</span>path<span class="pl-pds">"</span></span> );
+
+<span class="pl-c">// ----------------------------------------------------------------------------------- //</span>
+<span class="pl-c">// ----------------------------------------------------------------------------------- //</span>
+
+<span class="pl-c">// Create our DogStatsD client.</span>
+<span class="pl-k">var</span> statsd <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">DogStatsD</span>({
+	host<span class="pl-k">:</span> <span class="pl-c1">process</span>.<span class="pl-smi">env</span>.<span class="pl-c1">DOGSTATSD_HOST</span>,
+	port<span class="pl-k">:</span> <span class="pl-c1">process</span>.<span class="pl-smi">env</span>.<span class="pl-c1">DOGSTATSD_PORT</span>,
+	<span class="pl-en">errorHandler</span><span class="pl-k">:</span> <span class="pl-k">function</span> ( <span class="pl-smi">error</span> ) {
+
+		<span class="pl-en">console</span>.<span class="pl-c1">log</span>(
+			<span class="pl-c1">JSON</span>.<span class="pl-c1">stringify</span>({
+				log_level<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>error<span class="pl-pds">"</span></span>,
+				error<span class="pl-k">:</span> error
+			})
+		);
+
+	}
+});
+
+<span class="pl-k">var</span> app <span class="pl-k">=</span> <span class="pl-en">express</span>();
+
+<span class="pl-c">// Route all calls to "/assets" to the in-built static-file module.</span>
+<span class="pl-smi">app</span>.<span class="pl-en">use</span>(
+	<span class="pl-s"><span class="pl-pds">"</span>/assets<span class="pl-pds">"</span></span>,
+	<span class="pl-smi">express</span>.<span class="pl-en">static</span>( <span class="pl-smi">path</span>.<span class="pl-c1">join</span>( <span class="pl-c1">__dirname</span>, <span class="pl-s"><span class="pl-pds">"</span>assets<span class="pl-pds">"</span></span> ) )
+);
+
+<span class="pl-c">// Define our hello-world route.</span>
+<span class="pl-smi">app</span>.<span class="pl-c1">all</span>(
+	<span class="pl-s"><span class="pl-pds">"</span>/<span class="pl-pds">"</span></span>,
+	<span class="pl-k">function</span> ( <span class="pl-smi">request</span>, <span class="pl-smi">response</span>, <span class="pl-smi">next</span> ) {
+
+		<span class="pl-smi">statsd</span>.<span class="pl-en">increment</span>( <span class="pl-s"><span class="pl-pds">"</span>page_request<span class="pl-pds">"</span></span> );
+
+		<span class="pl-en">console</span>.<span class="pl-c1">log</span>(
+			<span class="pl-c1">JSON</span>.<span class="pl-c1">stringify</span>({
+				log_level<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>trace<span class="pl-pds">"</span></span>,
+				message<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">`</span>Handling request on web host <span class="pl-pse"><span class="pl-s1">${</span></span><span class="pl-s1"> </span><span class="pl-smi">os</span><span class="pl-s1">.</span><span class="pl-c1">hostname</span><span class="pl-s1">() </span><span class="pl-pse"><span class="pl-s1">}</span></span>.<span class="pl-pds">`</span></span>
+			})
+		);
+
+		<span class="pl-smi">response</span>.<span class="pl-en">sendFile</span>(
+			( <span class="pl-c1">__dirname</span> <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span>/index.htm<span class="pl-pds">"</span></span> ),
+			{
+				headers<span class="pl-k">:</span> {
+					<span class="pl-s"><span class="pl-pds">"</span>X-Host-Name<span class="pl-pds">"</span></span><span class="pl-k">:</span> <span class="pl-smi">os</span>.<span class="pl-c1">hostname</span>()
+				}
+			}
+		);
+
+	}
+);
+
+<span class="pl-k">var</span> port <span class="pl-k">=</span> ( <span class="pl-c1">process</span>.<span class="pl-smi">env</span>.<span class="pl-c1">PORT</span> <span class="pl-k">||</span> <span class="pl-c1">8080</span> );
+
+<span class="pl-c">// Wire the Expression application to an exposed port so that it can start</span>
+<span class="pl-c">// receiving traffic.</span>
+<span class="pl-smi">app</span>.<span class="pl-en">listen</span>(
+	port,
+	<span class="pl-k">function</span> () {
+
+		<span class="pl-en">console</span>.<span class="pl-c1">log</span>( <span class="pl-s"><span class="pl-pds">"</span>Express server has bootstrapped on port:<span class="pl-pds">"</span></span>, port );
+
+	}
+);

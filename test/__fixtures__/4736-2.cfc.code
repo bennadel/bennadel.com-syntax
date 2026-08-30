@@ -1,0 +1,78 @@
+component
+	output = false
+	hint = "I help translate application errors into appropriate response codes and user-facing messages."
+	{
+
+	/**
+	* I return a normalized, user-safe error response for the given server-side error.
+	*/
+	public struct function getResponse( required any error ) {
+
+		switch ( error.type ) {
+			case "App.Model.User.Conflict":
+				return as422({
+					type: error.type,
+					message: "That email address is already in use. Please use a different email address."
+				});
+			break;
+			case "App.Model.User.Email.Invalid":
+				return as422({
+					type: error.type,
+					message: "Please enter a valid email address."
+				});
+			break;
+			case "App.Model.User.Email.TooLong":
+				return as422({
+					type: error.type,
+					message: "Your email address is too long. It must be less than 75 characters."
+				});
+			break;
+			case "App.Model.User.Name.Empty":
+				return as422({
+					type: error.type,
+					message: "Please provide your full name."
+				});
+			break;
+			case "App.Model.User.Name.TooLong":
+				return as422({
+					type: error.type,
+					message: "Your name is too long. It must be less than 20 characters."
+				});
+			break;
+			case "App.Model.User.Password.TooShort":
+				return as422({
+					type: error.type,
+					message: "For security purposes, your password must be longer than 10 characters."
+				});
+			break;
+			default:
+				// Demo should never get here.
+				writeDump( error );
+				abort;
+			break;
+		}
+
+	}
+
+	// ---
+	// PRIVATE METHODS.
+	// ---
+
+	/**
+	* I generate a 422 response with the given overrides.
+	*/
+	private struct function as422( required struct overrides ) {
+
+		var response = {
+			statusCode: 422,
+			statusText: "Unprocessable Entity",
+			type: "App.UnprocessableEntity",
+			title: "Unprocessable Entity",
+			message: "Your request cannot be processed in its current state. Please validate the information in your request and try submitting it again."
+		};
+
+		return response.append( overrides );
+
+	}
+
+}

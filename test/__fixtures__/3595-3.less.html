@@ -1,0 +1,30 @@
+<span class="pl-e">:host</span> {
+	<span class="pl-c1">display</span>: <span class="pl-c1">block</span> ;
+	<span class="pl-c1">position</span>: <span class="pl-c1">relative</span> ;
+
+	<span class="pl-c">// Only apply sticky override if supported by the browser.</span>
+	<span class="pl-smi">@supports</span> ( <span class="pl-c1">position</span>: <span class="pl-c1">sticky</span> ) or ( <span class="pl-c1">position</span>: <span class="pl-c1">-webkit-sticky</span> ) {
+		<span class="pl-c1">position</span>: <span class="pl-c1">sticky</span> ;
+			<span class="pl-c1">position</span>: <span class="pl-c1">-webkit-sticky</span> ;
+		<span class="pl-c1">top</span>: <span class="pl-c1">0</span><span class="pl-k">px</span> ;
+	}
+}
+
+<span class="pl-e">.top-marker</span>,
+<span class="pl-e">.bottom-marker</span> {
+	<span class="pl-c1">height</span>: <span class="pl-c1">0</span><span class="pl-k">px</span> ;
+	<span class="pl-c1">left</span>: <span class="pl-c1">0</span><span class="pl-k">px</span> ;
+	<span class="pl-c1">position</span>: <span class="pl-c1">absolute</span> ;
+	<span class="pl-c1">width</span>: <span class="pl-c1">0</span><span class="pl-k">px</span> ;
+}
+
+<span class="pl-c">// The "markers" are positioned just outside of the sticky-header. This allows the</span>
+<span class="pl-c">// intersection of these markers with the Viewport to help us determine when the header</span>
+<span class="pl-c">// element is stuck to the top of the Viewport.</span>
+<span class="pl-e">.top-marker</span> {
+	<span class="pl-c1">top</span>: <span class="pl-c1">-1</span><span class="pl-k">px</span> ;
+}
+
+<span class="pl-e">.bottom-marker</span> {
+	<span class="pl-c1">bottom</span>: <span class="pl-c1">-1</span><span class="pl-k">px</span> ;
+}

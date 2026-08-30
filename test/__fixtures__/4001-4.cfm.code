@@ -1,0 +1,61 @@
+<cfscript>
+
+	public query function getScreens(
+		required numeric userID,
+		required numeric companyID
+		) output = true {
+
+		```
+		<cfquery name="local.results">
+			SELECT
+				/* columns */
+			FROM
+				-- NOTE: This common SQL creates aliases for three tables:
+				-- * cmp - company
+				-- * p - project
+				-- * pm - project_membership
+				#includeAccessibleProjectsSQL( userID, companyID )#
+			INNER JOIN
+				screen s
+			ON
+				s.projectID = p.id
+		</cfquery>
+		```
+
+		return( results );
+
+	}
+
+	/* ... truncated ... */
+
+	private void function includeAccessibleProjectsSQL(
+		required numeric userID,
+		required numeric companyID
+		) output = true {
+
+		```
+		<!--- FROM --->
+			company cmp
+		INNER JOIN
+			project p
+		ON
+			(
+					cmp.id = <cfqueryparam value="#companyID#" sqltype="integer" />
+				AND
+					p.companyID = cmp.id
+			)
+		INNER JOIN
+			project_membership pm
+		ON
+			(
+					pm.projectID = p.id
+				AND
+					pm.userID = <cfqueryparam value="#userID#" sqltype="integer" />
+				AND
+					pm.endedAt IS NULL
+			)
+		```
+
+	}
+
+</cfscript>

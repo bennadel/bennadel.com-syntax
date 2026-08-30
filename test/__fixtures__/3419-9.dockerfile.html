@@ -1,0 +1,22 @@
+<span class="pl-k">FROM</span> nginx:1.13.9-alpine
+
+<span class="pl-c">#</span>
+<span class="pl-c"># This label becomes available as meta-data on the running container. We can</span>
+<span class="pl-c"># then use this label in the DataDogHQ log aggregation configuration to define</span>
+<span class="pl-c"># which Docker services the DataDog agent should watch for logs.</span>
+<span class="pl-c">#</span>
+<span class="pl-k">LABEL</span> me.dailyprime.service=<span class="pl-s">"proxy"</span>
+
+<span class="pl-c">#</span>
+<span class="pl-c"># The dhparams.pem file defines how OpenSSL performs the Diffie-Hellman (DH)</span>
+<span class="pl-c"># key-exchange. I generated this file locally using:</span>
+<span class="pl-c"># ---</span>
+<span class="pl-c"># openssl dhparam -out dhparam.pem 4096</span>
+<span class="pl-c"># ---</span>
+<span class="pl-c">#</span>
+<span class="pl-k">COPY</span> ./dhparams.pem /etc/ssl/private/
+
+<span class="pl-c">#</span>
+<span class="pl-c"># This defines the site configuration for the production nginx.</span>
+<span class="pl-c">#</span>
+<span class="pl-k">COPY</span> ./default.conf /etc/nginx/conf.d/

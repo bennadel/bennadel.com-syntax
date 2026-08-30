@@ -1,0 +1,26 @@
+version: "2.4"
+
+services:
+  # ... truncated for demo ...
+
+  # MySQL server.
+  mysql:
+    image: "mysql:8.0.28"
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: "bennadel"
+      MYSQL_ROOT_PASSWORD: "password" # LOCAL DEVELOPMENT ONLY!!!!!!!!
+    volumes:
+      # Configuration scripts - the SQL files in this directory will be run when the
+      # container is first created. Files will be executed in alphabetical order.
+      - "./build/mysql/initdb:/docker-entrypoint-initdb.d"
+      # Data persistence directory - the underlying database data will be stored on the
+      # host machine in this directory. But, this directory is managed transparently
+      # by Docker Desktop for Mac - I have no idea where it actually is.
+      - "bennadel_mysql_data:/var/lib/mysql"
+    healthcheck:
+      test: "echo hello"
+
+volumes:
+  bennadel_mysql_data:

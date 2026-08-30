@@ -1,0 +1,42 @@
+.modal {
+	/* Four-sided positioning, plays nicely with scale() transformations. */
+	bottom: 0px ;
+	left: 0px ;
+	position: fixed ;
+	right: 0px ;
+	top: 0px ;
+
+	/* Animating the modal element into view. */
+	animation-duration: 1s ; /* NOTE: Absurdly SLOW for demo purposes. */
+	animation-fill-mode: both ;
+	animation-iteration-count: 1 ;
+	animation-name: modal-enter ;
+	animation-timing-function: ease-out ;
+}
+
+/* By default, we'll use the REDUCED MOTION version of the animation. */
+@keyframes modal-enter {
+	from {
+		opacity: 0 ;
+	}
+	to {
+		opacity: 1 ;
+	}
+}
+
+/*
+	Then, if the user has NO PREFERENCE for motion, we can OVERRIDE the
+	animation definition to include both the motion and non-motion properties.
+*/
+@media ( prefers-reduced-motion: no-preference ) {
+	@keyframes modal-enter {
+		from {
+			opacity: 0 ;
+			transform: scale( 0.7 ) ;
+		}
+		to {
+			opacity: 1 ;
+			transform: scale( 1.0 ) ;
+		}
+	}
+}

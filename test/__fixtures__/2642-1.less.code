@@ -1,0 +1,82 @@
+// When a variable is defined in a mixin, it is made available in the calling context.
+// This includes nested mixin definitions as well as nested mixin invocations.
+.test-mixin-scope() {
+
+	#nested.outer() ;
+
+	test-mixin-scope-test: @inner ;
+
+}
+
+
+// Here, we have several locally-scoped mixins. Each mixin is only available to the
+// scope in which it was defined. Each mixin is invoked after it is defined.
+#nested {
+
+	// This variable is visible only to the #nested namespace. That said, it will not
+	// interfear with the ability for the nested mixins to bubble-up their variables
+	// into the calling context.
+	@inner: "Namespace default" ;
+
+	.outer() {
+
+		.middle() {
+
+			// Here, we are defining a default value based on the @inner variable that
+			// is scoped ot the namespace. Note that this does not intefear with the
+			// mixins @inner variable that is locally-defined and injected into the
+			// various calling contexts.
+			.inner( @input: @inner ) {
+
+				// This value will be made available to all of the calling contexts.
+				@inner: "Passed up from das inner mixin" ;
+
+				// Test the translation of the #nested namespace inner to input.
+				namespace-test: @input ;
+
+			}
+
+			.inner() ;
+
+			middle-test: @inner ;
+
+		}
+
+		.middle() ;
+
+		outer-test: @inner ;
+
+	}
+
+}
+
+
+// When we invoke the .test-mixin-scope() mixin, well be triggering the invocation
+// of several nested mixin calls; ultimately, this will call the .inner() mixin which
+// will create a variable which will become available in the stack up to the body{}.
+body {
+
+	// Were going to give the body context its own @inner variable. Since variables
+	// act somewhat like "constants", this will prevent the .inner() mixin from
+	// overriding the @inner value in parent scopes.
+	@inner: "Start the demo" ;
+
+	// Of course, variables arent "exactly" constants. So, you can override the
+	// current value inside the context of a single block and/or mixin.
+	@inner: "Rock the body" ;
+
+	// Unlike a mixin, a CSS guard (and any other ruleset) creates its own private
+	// scope. As such, the @inner value set here will not override the current value
+	// of the @inner variable.
+	& when ( true ) {
+
+		@inner: "In CSS guard" ;
+
+	}
+
+	.test-mixin-scope() ;
+
+	// Check to see which @inner value is visible.
+	body-test: @inner ;
+
+}

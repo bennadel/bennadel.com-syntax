@@ -1,0 +1,61 @@
+&lt;<span class="pl-ent">cfscript</span>&gt;
+
+	<span class="pl-k">public</span> <span class="pl-c1">query</span> <span class="pl-k">function</span> <span class="pl-en">getScreens</span>(
+		<span class="pl-k">required</span> <span class="pl-c1">numeric</span> <span class="pl-smi">userID</span>,
+		<span class="pl-k">required</span> <span class="pl-c1">numeric</span> <span class="pl-smi">companyID</span>
+		) <span class="pl-e">output</span> = <span class="pl-s">true</span> {
+
+		```
+		&lt;<span class="pl-ent">cfquery</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>local.results<span class="pl-pds">"</span></span>&gt;
+			<span class="pl-k">SELECT</span>
+				<span class="pl-c">/* columns */</span>
+			<span class="pl-k">FROM</span>
+				<span class="pl-c">-- NOTE: This common SQL creates aliases for three tables:</span>
+				<span class="pl-c">-- * cmp - company</span>
+				<span class="pl-c">-- * p - project</span>
+				<span class="pl-c">-- * pm - project_membership</span>
+				#<span class="pl-en">includeAccessibleProjectsSQL</span>( <span class="pl-smi">userID</span>, <span class="pl-smi">companyID</span> )#
+			<span class="pl-k">INNER JOIN</span>
+				screen s
+			<span class="pl-k">ON</span>
+				<span class="pl-c1">s</span>.<span class="pl-c1">projectID</span> <span class="pl-k">=</span> <span class="pl-c1">p</span>.<span class="pl-c1">id</span>
+		&lt;/<span class="pl-ent">cfquery</span>&gt;
+		```
+
+		<span class="pl-k">return</span>( <span class="pl-smi">results</span> );
+
+	}
+
+	<span class="pl-c">/* ... truncated ... */</span>
+
+	<span class="pl-k">private</span> <span class="pl-c1">void</span> <span class="pl-k">function</span> <span class="pl-en">includeAccessibleProjectsSQL</span>(
+		<span class="pl-k">required</span> <span class="pl-c1">numeric</span> <span class="pl-smi">userID</span>,
+		<span class="pl-k">required</span> <span class="pl-c1">numeric</span> <span class="pl-smi">companyID</span>
+		) <span class="pl-e">output</span> = <span class="pl-s">true</span> {
+
+		```
+		<span class="pl-c">&lt;!--- FROM ---&gt;</span>
+			company cmp
+		INNER JOIN
+			project p
+		ON
+			(
+					cmp.id = &lt;<span class="pl-ent">cfqueryparam</span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>#<span class="pl-smi">companyID</span>#<span class="pl-pds">"</span></span> <span class="pl-e">sqltype</span>=<span class="pl-s"><span class="pl-pds">"</span>integer<span class="pl-pds">"</span></span> /&gt;
+				AND
+					p.companyID = cmp.id
+			)
+		INNER JOIN
+			project_membership pm
+		ON
+			(
+					pm.projectID = p.id
+				AND
+					pm.userID = &lt;<span class="pl-ent">cfqueryparam</span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>#<span class="pl-smi">userID</span>#<span class="pl-pds">"</span></span> <span class="pl-e">sqltype</span>=<span class="pl-s"><span class="pl-pds">"</span>integer<span class="pl-pds">"</span></span> /&gt;
+				AND
+					pm.endedAt IS NULL
+			)
+		```
+
+	}
+
+&lt;/<span class="pl-ent">cfscript</span>&gt;

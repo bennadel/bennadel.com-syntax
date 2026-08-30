@@ -1,0 +1,132 @@
+&lt;<span class="pl-ent">cfoutput</span>&gt;
+&lt;<span class="pl-ent">style</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/css<span class="pl-pds">"</span></span>&gt;
+
+	<span class="pl-c">&lt;!---</span>
+<span class="pl-c">		Note: styles don't seem to cascade properly in the PDF implementation; as such,</span>
+<span class="pl-c">		I'm brute-force applying a base style to all elements with zero specificity.</span>
+<span class="pl-c">	---&gt;</span>
+	<span class="pl-ent">*</span> {
+		<span class="pl-c1">box-sizing</span>: <span class="pl-c1">border-box</span> ;
+		<span class="pl-c1">color</span>: <span class="pl-c1">black</span> ;
+		<span class="pl-c1">font-family</span>: <span class="pl-c1">arial</span>, <span class="pl-c1">verdana</span>, <span class="pl-c1">sans-serif</span> ;
+		<span class="pl-c1">font-size</span>: <span class="pl-c1">14</span><span class="pl-k">px</span> ;
+		<span class="pl-c1">font-weight</span>: <span class="pl-c1">400</span> ;
+		<span class="pl-c1">line-height</span>: <span class="pl-c1">1.4</span> ;
+		<span class="pl-c1">margin-bottom</span>: <span class="pl-c1">0</span> ;
+		<span class="pl-c1">margin-top</span>: <span class="pl-c1">0</span> ;
+	}
+
+	<span class="pl-ent">body</span> {
+		<span class="pl-c1">margin</span>: <span class="pl-c1">0</span> ;
+		<span class="pl-c1">padding</span>: <span class="pl-c1">0</span> ;
+	}
+
+	<span class="pl-ent">h1</span>, <span class="pl-ent">h2</span>, <span class="pl-ent">h3</span>, <span class="pl-ent">h4</span>, <span class="pl-ent">h5</span>, <span class="pl-ent">th</span>, <span class="pl-ent">dt</span>, <span class="pl-ent">strong</span>, {
+		<span class="pl-c1">font-weight</span>: <span class="pl-c1">700</span> ;
+	}
+	<span class="pl-e">.fw-normal</span> {
+		<span class="pl-c1">font-weight</span>: <span class="pl-c1">400</span> ;
+	}
+	<span class="pl-e">.fw-bold</span> {
+		<span class="pl-c1">font-weight</span>: <span class="pl-c1">700</span> ;
+	}
+
+	<span class="pl-ent">table</span> {
+		<span class="pl-c1">border-collapse</span>: <span class="pl-c1">collapse</span> ;
+		<span class="pl-c1">border-spacing</span>: <span class="pl-c1">0</span> ;
+		<span class="pl-c1">width</span>: <span class="pl-c1">100</span><span class="pl-k">%</span> ;
+	}
+	<span class="pl-ent">th</span>, <span class="pl-ent">td</span> {
+		<span class="pl-c1">padding</span>: <span class="pl-c1">0</span> ;
+		<span class="pl-c1">text-align</span>: <span class="pl-c1">left</span> ;
+		<span class="pl-c1">vertical-align</span>: <span class="pl-c1">top</span> ;
+	}
+	[<span class="pl-e">align</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span>right<span class="pl-pds">"</span></span>] {
+		<span class="pl-c1">text-align</span>: <span class="pl-c1">right</span> <span class="pl-k">!important</span> ;
+	}
+	[<span class="pl-e">align</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span>center<span class="pl-pds">"</span></span>] {
+		<span class="pl-c1">text-align</span>: <span class="pl-c1">center</span> <span class="pl-k">!important</span> ;;
+	}
+	[<span class="pl-e">valign</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span>bottom<span class="pl-pds">"</span></span>] {
+		<span class="pl-c1">vertical-align</span>: <span class="pl-c1">bottom</span> <span class="pl-k">!important</span> ;
+	}
+	[<span class="pl-e">valign</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span>middle<span class="pl-pds">"</span></span>] {
+		<span class="pl-c1">vertical-align</span>: <span class="pl-c1">middle</span> <span class="pl-k">!important</span> ;
+	}
+
+	<span class="pl-ent">img</span> {
+		<span class="pl-c1">border</span>: <span class="pl-c1">0</span> ;
+		<span class="pl-c1">display</span>: <span class="pl-c1">block</span> ;
+	}
+
+	<span class="pl-c">&lt;!--- Bootstrap inspired utility classes. ----&gt;</span>
+
+	<span class="pl-e">.d-block</span> { <span class="pl-c1">display</span>: <span class="pl-c1">block</span> ; }
+
+	<span class="pl-e">.text-start</span>  { <span class="pl-c1">text-align</span>: <span class="pl-c1">left</span> ; }
+	<span class="pl-e">.text-center</span> { <span class="pl-c1">text-align</span>: <span class="pl-c1">center</span> ; }
+	<span class="pl-e">.text-end</span>    { <span class="pl-c1">text-align</span>: <span class="pl-c1">right</span> ; }
+
+	<span class="pl-e">.no-wrap</span> { <span class="pl-c1">white-space</span>: <span class="pl-c1">nowrap</span> ; }
+
+	<span class="pl-c">&lt;!--- Padding utilities. ---&gt;</span>
+	&lt;<span class="pl-ent">cfloop</span> <span class="pl-e">index</span>=<span class="pl-s"><span class="pl-pds">"</span>i<span class="pl-pds">"</span></span> <span class="pl-e">from</span>=<span class="pl-s"><span class="pl-pds">"</span>0<span class="pl-pds">"</span></span> <span class="pl-e">to</span>=<span class="pl-s"><span class="pl-pds">"</span>50<span class="pl-pds">"</span></span>&gt;
+		<span class="pl-e">.p-</span>#<span class="pl-smi">i</span>#  { <span class="pl-c1">padding</span>: #<span class="pl-smi">i</span>#px ; }
+		<span class="pl-e">.pt-</span>#<span class="pl-smi">i</span># { <span class="pl-c1">padding-top</span>: #<span class="pl-smi">i</span>#px <span class="pl-k">!important</span> ; }
+		<span class="pl-e">.pb-</span>#<span class="pl-smi">i</span># { <span class="pl-c1">padding-bottom</span>: #<span class="pl-smi">i</span>#px <span class="pl-k">!important</span> ; }
+		<span class="pl-e">.ps-</span>#<span class="pl-smi">i</span># { <span class="pl-c1">padding-left</span>: #<span class="pl-smi">i</span>#px <span class="pl-k">!important</span> ; }
+		<span class="pl-e">.pe-</span>#<span class="pl-smi">i</span># { <span class="pl-c1">padding-right</span>: #<span class="pl-smi">i</span>#px <span class="pl-k">!important</span> ; }
+	&lt;/<span class="pl-ent">cfloop</span>&gt;
+
+	<span class="pl-c">&lt;!--- Margin utilities. ---&gt;</span>
+	&lt;<span class="pl-ent">cfloop</span> <span class="pl-e">index</span>=<span class="pl-s"><span class="pl-pds">"</span>i<span class="pl-pds">"</span></span> <span class="pl-e">from</span>=<span class="pl-s"><span class="pl-pds">"</span>0<span class="pl-pds">"</span></span> <span class="pl-e">to</span>=<span class="pl-s"><span class="pl-pds">"</span>50<span class="pl-pds">"</span></span>&gt;
+		<span class="pl-e">.m-</span>#<span class="pl-smi">i</span>#  { <span class="pl-c1">margin</span>: #<span class="pl-smi">i</span>#px ; }
+		<span class="pl-e">.mt-</span>#<span class="pl-smi">i</span># { <span class="pl-c1">margin-top</span>: #<span class="pl-smi">i</span>#px <span class="pl-k">!important</span> ; }
+		<span class="pl-e">.mb-</span>#<span class="pl-smi">i</span># { <span class="pl-c1">margin-bottom</span>: #<span class="pl-smi">i</span>#px <span class="pl-k">!important</span> ; }
+		<span class="pl-e">.ms-</span>#<span class="pl-smi">i</span># { <span class="pl-c1">margin-left</span>: #<span class="pl-smi">i</span>#px <span class="pl-k">!important</span> ; }
+		<span class="pl-e">.me-</span>#<span class="pl-smi">i</span># { <span class="pl-c1">margin-right</span>: #<span class="pl-smi">i</span>#px <span class="pl-k">!important</span> ; }
+	&lt;/<span class="pl-ent">cfloop</span>&gt;
+
+	<span class="pl-c">&lt;!--- Font-size utilities. ---&gt;</span>
+	&lt;<span class="pl-ent">cfloop</span> <span class="pl-e">index</span>=<span class="pl-s"><span class="pl-pds">"</span>i<span class="pl-pds">"</span></span> <span class="pl-e">from</span>=<span class="pl-s"><span class="pl-pds">"</span>1<span class="pl-pds">"</span></span> <span class="pl-e">to</span>=<span class="pl-s"><span class="pl-pds">"</span>50<span class="pl-pds">"</span></span>&gt;
+		<span class="pl-e">.fs-</span>#<span class="pl-smi">i</span># { <span class="pl-c1">font-size</span>: #<span class="pl-smi">i</span>#px ; }
+	&lt;/<span class="pl-ent">cfloop</span>&gt;
+
+	<span class="pl-c">&lt;!--- Line-height utilities (1...3 increments of 0.1). ---&gt;</span>
+	&lt;<span class="pl-ent">cfloop</span> <span class="pl-e">index</span>=<span class="pl-s"><span class="pl-pds">"</span>i<span class="pl-pds">"</span></span> <span class="pl-e">from</span>=<span class="pl-s"><span class="pl-pds">"</span>0<span class="pl-pds">"</span></span> <span class="pl-e">to</span>=<span class="pl-s"><span class="pl-pds">"</span>20<span class="pl-pds">"</span></span>&gt;
+		<span class="pl-e">.lh-</span>#<span class="pl-smi">i</span># { <span class="pl-c1">line-height</span>: #<span class="pl-c1">numberFormat</span>( <span class="pl-c1">1</span> <span class="pl-k">+</span> ( <span class="pl-smi">i</span> <span class="pl-k">*</span> <span class="pl-c1">0.1</span> ), <span class="pl-s"><span class="pl-pds">"</span>0.00<span class="pl-pds">"</span></span> )# ; }
+	&lt;/<span class="pl-ent">cfloop</span>&gt;
+
+	<span class="pl-c">&lt;!--- Border utilities. ---&gt;</span>
+	&lt;<span class="pl-ent">cfloop</span> <span class="pl-e">index</span>=<span class="pl-s"><span class="pl-pds">"</span>i<span class="pl-pds">"</span></span> <span class="pl-e">from</span>=<span class="pl-s"><span class="pl-pds">"</span>0<span class="pl-pds">"</span></span> <span class="pl-e">to</span>=<span class="pl-s"><span class="pl-pds">"</span>10<span class="pl-pds">"</span></span>&gt;
+		<span class="pl-e">.b-</span>#<span class="pl-smi">i</span>#  { <span class="pl-c1">border</span>: #<span class="pl-smi">i</span>#px <span class="pl-c1">solid</span> <span class="pl-c1">black</span> ; }
+		<span class="pl-e">.bt-</span>#<span class="pl-smi">i</span># { <span class="pl-c1">border-top</span>: #<span class="pl-smi">i</span>#px <span class="pl-c1">solid</span> <span class="pl-c1">black</span> <span class="pl-k">!important</span> ; }
+		<span class="pl-e">.bb-</span>#<span class="pl-smi">i</span># { <span class="pl-c1">border-bottom</span>: #<span class="pl-smi">i</span>#px <span class="pl-c1">solid</span> <span class="pl-c1">black</span> <span class="pl-k">!important</span> ; }
+		<span class="pl-e">.bs-</span>#<span class="pl-smi">i</span># { <span class="pl-c1">border-left</span>: #<span class="pl-smi">i</span>#px <span class="pl-c1">solid</span> <span class="pl-c1">black</span> <span class="pl-k">!important</span> ; }
+		<span class="pl-e">.be-</span>#<span class="pl-smi">i</span># { <span class="pl-c1">border-right</span>: #<span class="pl-smi">i</span>#px <span class="pl-c1">solid</span> <span class="pl-c1">black</span> <span class="pl-k">!important</span> ; }
+	&lt;/<span class="pl-ent">cfloop</span>&gt;
+
+	<span class="pl-c">&lt;!--- Width utilities. ---&gt;</span>
+	&lt;<span class="pl-ent">cfloop</span> <span class="pl-e">index</span>=<span class="pl-s"><span class="pl-pds">"</span>i<span class="pl-pds">"</span></span> <span class="pl-e">from</span>=<span class="pl-s"><span class="pl-pds">"</span>1<span class="pl-pds">"</span></span> <span class="pl-e">to</span>=<span class="pl-s"><span class="pl-pds">"</span>100<span class="pl-pds">"</span></span>&gt;
+		<span class="pl-e">.w-</span>#<span class="pl-smi">i</span># { <span class="pl-c1">width</span>: #<span class="pl-smi">i</span>#% ; }
+	&lt;/<span class="pl-ent">cfloop</span>&gt;
+
+	<span class="pl-c">&lt;!--- Rule utilities. ---&gt;</span>
+	<span class="pl-ent">hr</span> {
+		<span class="pl-c1">border</span>: <span class="pl-c1">1</span><span class="pl-k">px</span> <span class="pl-c1">solid</span> <span class="pl-c1">black</span> ;	
+		<span class="pl-c1">border-width</span>: <span class="pl-c1">1</span><span class="pl-k">px</span> <span class="pl-c1">0</span> <span class="pl-c1">0</span> <span class="pl-c1">0</span> ;
+		<span class="pl-c1">margin</span>: <span class="pl-c1">26</span><span class="pl-k">px</span> <span class="pl-c1">0</span> ;
+	}
+	&lt;<span class="pl-ent">cfloop</span> <span class="pl-e">index</span>=<span class="pl-s"><span class="pl-pds">"</span>i<span class="pl-pds">"</span></span> <span class="pl-e">from</span>=<span class="pl-s"><span class="pl-pds">"</span>1<span class="pl-pds">"</span></span> <span class="pl-e">to</span>=<span class="pl-s"><span class="pl-pds">"</span>10<span class="pl-pds">"</span></span>&gt;
+		<span class="pl-e">.hr-</span>#<span class="pl-smi">i</span># { <span class="pl-c1">border-top-width</span>: #<span class="pl-smi">i</span>#px ; }
+	&lt;/<span class="pl-ent">cfloop</span>&gt;
+
+	<span class="pl-c">&lt;!--- Color utilities. ---&gt;</span>
+	&lt;<span class="pl-ent">cfloop</span> <span class="pl-e">index</span>=<span class="pl-s"><span class="pl-pds">"</span>i<span class="pl-pds">"</span></span> <span class="pl-e">item</span>=<span class="pl-s"><span class="pl-pds">"</span>h<span class="pl-pds">"</span></span> <span class="pl-e">array</span>=<span class="pl-s"><span class="pl-pds">"</span>#<span class="pl-c1">reMatch</span>( <span class="pl-pds">'</span>.<span class="pl-pds">'</span>, <span class="pl-pds">'</span>0123456789ABCDEF<span class="pl-pds">'</span> )#<span class="pl-pds">"</span></span>&gt;
+		<span class="pl-e">.black-</span>#<span class="pl-smi">i</span># { <span class="pl-c1">color</span>: <span class="pl-cce">##</span>#<span class="pl-smi">h</span>##<span class="pl-smi">h</span>##<span class="pl-smi">h</span># ; }
+		<span class="pl-e">.red-</span>#<span class="pl-smi">i</span># { <span class="pl-c1">color</span>: <span class="pl-cce">##</span>f#<span class="pl-smi">h</span>##<span class="pl-smi">h</span># ; }
+		<span class="pl-e">.blue-</span>#<span class="pl-smi">i</span># { <span class="pl-c1">color</span>: <span class="pl-cce">##</span>#<span class="pl-smi">h</span>##<span class="pl-smi">h</span>#f ; }
+	&lt;/<span class="pl-ent">cfloop</span>&gt;
+
+&lt;/<span class="pl-ent">style</span>&gt;
+&lt;/<span class="pl-ent">cfoutput</span>&gt;

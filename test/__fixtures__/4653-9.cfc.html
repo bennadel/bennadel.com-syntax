@@ -1,0 +1,164 @@
+<span class="pl-k">component</span>
+	<span class="pl-k">extends</span> = <span class="pl-s"><span class="pl-pds">"</span><span class="pl-e">SQLiteDAO</span><span class="pl-pds">"</span></span>
+	<span class="pl-e">hint</span> = <span class="pl-s"><span class="pl-pds">"</span>I provide data access methods for a specific user database.<span class="pl-pds">"</span></span>
+	{
+
+	<span class="pl-c">/**</span>
+<span class="pl-c">	* I initialize the data access object (DAO) for the given user.</span>
+<span class="pl-c">	*/</span>
+	<span class="pl-k">public</span> <span class="pl-c1">void</span> <span class="pl-k">function</span> <span class="pl-en">init</span>( <span class="pl-k">required</span> <span class="pl-c1">numeric</span> <span class="pl-smi">userID</span> ) {
+
+		<span class="pl-c">// Each user gets their own, unique SQLite database.</span>
+		<span class="pl-c1">super</span>.<span class="pl-en">init</span>( <span class="pl-s"><span class="pl-pds">"</span>user_#<span class="pl-smi">userID</span>#.db<span class="pl-pds">"</span></span> );
+
+	}
+
+	<span class="pl-c">// ---</span>
+	<span class="pl-c">// PUBLIC METHODS.</span>
+	<span class="pl-c">// ---</span>
+
+	<span class="pl-c">/**</span>
+<span class="pl-c">	* I add a new task with the given name. The auto-generated ID is returned.</span>
+<span class="pl-c">	*/</span>
+	<span class="pl-k">public</span> <span class="pl-c1">numeric</span> <span class="pl-k">function</span> <span class="pl-en">addTask</span>( <span class="pl-k">required</span> <span class="pl-c1">string</span> <span class="pl-smi">name</span> ) {
+
+		```
+		&lt;<span class="pl-ent">cfquery</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>local.results<span class="pl-pds">"</span></span> <span class="pl-e">result</span>=<span class="pl-s"><span class="pl-pds">"</span>local.metaResults<span class="pl-pds">"</span></span> <span class="pl-e">datasource</span>=<span class="pl-s"><span class="pl-pds">"</span>#<span class="pl-smi">datasource</span>#<span class="pl-pds">"</span></span>&gt;
+			<span class="pl-c">/* DEBUG: userDAO.addTask(). */</span>
+			<span class="pl-k">INSERT</span> <span class="pl-k">INTO</span> task
+			(
+				<span class="pl-k">name</span>,
+				isComplete,
+				createdAt
+			) <span class="pl-k">VALUES</span> (
+				&lt;<span class="pl-ent">cfqueryparam</span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>#<span class="pl-smi">name</span>#<span class="pl-pds">"</span></span> <span class="pl-e">sqltype</span>=<span class="pl-s"><span class="pl-pds">"</span>varchar<span class="pl-pds">"</span></span> /&gt;,
+				FALSE,
+				<span class="pl-k">datetime</span>( <span class="pl-s"><span class="pl-pds">"</span>now<span class="pl-pds">"</span></span> )
+			)
+			RETURNING
+				ROWID
+			;
+		&lt;/<span class="pl-ent">cfquery</span>&gt;
+		```
+
+		<span class="pl-c">// NOTE: SQLite doesn't return a "generatedKey". However, when a query ends with</span>
+		<span class="pl-c">// "RETURNING ROWID", it will return a query with a single column, id, which</span>
+		<span class="pl-c">// contains the generated value.</span>
+		<span class="pl-k">return</span> <span class="pl-c1">val</span>( <span class="pl-smi">results</span>.<span class="pl-smi">id</span> );
+
+	}
+
+	<span class="pl-c">/**</span>
+<span class="pl-c">	* I delete the tasks that match the given filters.</span>
+<span class="pl-c">	*/</span>
+	<span class="pl-k">public</span> <span class="pl-c1">void</span> <span class="pl-k">function</span> <span class="pl-en">deleteTasksByFilter</span>(
+		<span class="pl-c1">numeric</span> <span class="pl-smi">id</span>,
+		<span class="pl-c1">boolean</span> <span class="pl-smi">isComplete</span>
+		) {
+
+		```
+		&lt;<span class="pl-ent">cfquery</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>local.results<span class="pl-pds">"</span></span> <span class="pl-e">result</span>=<span class="pl-s"><span class="pl-pds">"</span>local.metaResults<span class="pl-pds">"</span></span> <span class="pl-e">datasource</span>=<span class="pl-s"><span class="pl-pds">"</span>#<span class="pl-smi">datasource</span>#<span class="pl-pds">"</span></span>&gt;
+			<span class="pl-c">/* DEBUG: userDAO.deleteTasksByFilter(). */</span>
+			<span class="pl-k">DELETE</span> <span class="pl-k">FROM</span>
+				task
+			<span class="pl-k">WHERE</span>
+				TRUE
+
+			&lt;<span class="pl-ent">cfif</span> <span class="pl-c1">arguments</span>.<span class="pl-c1">keyExists</span>( <span class="pl-s"><span class="pl-pds">"</span>id<span class="pl-pds">"</span></span> )&gt;
+				<span class="pl-k">AND</span>
+					id <span class="pl-k">=</span> &lt;<span class="pl-ent">cfqueryparam</span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>#<span class="pl-smi">id</span>#<span class="pl-pds">"</span></span> <span class="pl-e">sqltype</span>=<span class="pl-s"><span class="pl-pds">"</span>integer<span class="pl-pds">"</span></span> /&gt;
+			&lt;/<span class="pl-ent">cfif</span>&gt;
+			;
+		&lt;/<span class="pl-ent">cfquery</span>&gt;
+		```
+
+	}
+
+	<span class="pl-c">/**</span>
+<span class="pl-c">	* I ensure that the database tables exist.</span>
+<span class="pl-c">	*/</span>
+	<span class="pl-k">public</span> <span class="pl-c1">void</span> <span class="pl-k">function</span> <span class="pl-en">ensureDatabase</span>() {
+
+		```
+		&lt;<span class="pl-ent">cfquery</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>local.results<span class="pl-pds">"</span></span> <span class="pl-e">result</span>=<span class="pl-s"><span class="pl-pds">"</span>local.metaResults<span class="pl-pds">"</span></span> <span class="pl-e">datasource</span>=<span class="pl-s"><span class="pl-pds">"</span>#<span class="pl-smi">datasource</span>#<span class="pl-pds">"</span></span>&gt;
+			<span class="pl-c">/* DEBUG: userDAO.ensureDatabase(). */</span>
+			<span class="pl-k">CREATE</span> <span class="pl-k">TABLE</span> <span class="pl-en">IF</span> <span class="pl-k">NOT</span> <span class="pl-k">EXISTS</span> <span class="pl-s"><span class="pl-pds">`</span>task<span class="pl-pds">`</span></span> (
+				<span class="pl-s"><span class="pl-pds">`</span>id<span class="pl-pds">`</span></span> <span class="pl-k">INTEGER</span> <span class="pl-k">PRIMARY</span> <span class="pl-k">KEY</span>,
+				<span class="pl-s"><span class="pl-pds">`</span>name<span class="pl-pds">`</span></span> <span class="pl-k">TEXT</span> <span class="pl-k">NOT</span> <span class="pl-k">NULL</span>,
+				<span class="pl-s"><span class="pl-pds">`</span>isComplete<span class="pl-pds">`</span></span> <span class="pl-k">INTEGER</span> <span class="pl-k">NOT</span> <span class="pl-k">NULL</span> <span class="pl-k">CHECK</span> ( isComplete <span class="pl-k">IN</span> ( <span class="pl-c1">0</span>, <span class="pl-c1">1</span> ) ),
+				<span class="pl-s"><span class="pl-pds">`</span>createdAt<span class="pl-pds">`</span></span> <span class="pl-k">TEXT</span> <span class="pl-k">NOT</span> <span class="pl-k">NULL</span>
+			);
+		&lt;/<span class="pl-ent">cfquery</span>&gt;
+		```
+
+	}
+
+	<span class="pl-c">/**</span>
+<span class="pl-c">	* I get the tasks that match the given filters.</span>
+<span class="pl-c">	*/</span>
+	<span class="pl-k">public</span> <span class="pl-c1">array</span> <span class="pl-k">function</span> <span class="pl-en">getTasksByFilter</span>(
+		<span class="pl-c1">numeric</span> <span class="pl-smi">id</span>,
+		<span class="pl-c1">boolean</span> <span class="pl-smi">isComplete</span>
+		) {
+
+		```
+		&lt;<span class="pl-ent">cfquery</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>local.results<span class="pl-pds">"</span></span> <span class="pl-e">result</span>=<span class="pl-s"><span class="pl-pds">"</span>local.metaResults<span class="pl-pds">"</span></span> <span class="pl-e">datasource</span>=<span class="pl-s"><span class="pl-pds">"</span>#<span class="pl-smi">datasource</span>#<span class="pl-pds">"</span></span> <span class="pl-e">returnType</span>=<span class="pl-s"><span class="pl-pds">"</span>array<span class="pl-pds">"</span></span>&gt;
+			<span class="pl-c">/* DEBUG: userDAO.getTasksByFilter(). */</span>
+			<span class="pl-k">SELECT</span>
+				<span class="pl-c1">t</span>.<span class="pl-c1">id</span>,
+				<span class="pl-c1">t</span>.<span class="pl-c1">name</span>,
+				<span class="pl-c1">t</span>.<span class="pl-c1">isComplete</span>,
+				<span class="pl-c1">t</span>.<span class="pl-c1">createdAt</span>
+			<span class="pl-k">FROM</span>
+				task t
+			<span class="pl-k">WHERE</span>
+				TRUE
+
+			&lt;<span class="pl-ent">cfif</span> <span class="pl-c1">arguments</span>.<span class="pl-c1">keyExists</span>( <span class="pl-s"><span class="pl-pds">"</span>id<span class="pl-pds">"</span></span> )&gt;
+				<span class="pl-k">AND</span>
+					<span class="pl-c1">t</span>.<span class="pl-c1">id</span> <span class="pl-k">=</span> &lt;<span class="pl-ent">cfqueryparam</span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>#<span class="pl-smi">id</span>#<span class="pl-pds">"</span></span> <span class="pl-e">sqltype</span>=<span class="pl-s"><span class="pl-pds">"</span>integer<span class="pl-pds">"</span></span> /&gt;
+			&lt;/<span class="pl-ent">cfif</span>&gt;
+
+			&lt;<span class="pl-ent">cfif</span> <span class="pl-c1">arguments</span>.<span class="pl-c1">keyExists</span>( <span class="pl-s"><span class="pl-pds">"</span>isComplete<span class="pl-pds">"</span></span> )&gt;
+				<span class="pl-k">AND</span>
+					<span class="pl-c1">t</span>.<span class="pl-c1">isComplete</span> <span class="pl-k">=</span> &lt;<span class="pl-ent">cfqueryparam</span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>#<span class="pl-smi">isComplete</span>#<span class="pl-pds">"</span></span> <span class="pl-e">sqltype</span>=<span class="pl-s"><span class="pl-pds">"</span>integer<span class="pl-pds">"</span></span> /&gt;
+			&lt;/<span class="pl-ent">cfif</span>&gt;
+
+			<span class="pl-k">ORDER BY</span>
+				<span class="pl-c1">t</span>.<span class="pl-c1">id</span> <span class="pl-k">ASC</span>
+			;
+		&lt;/<span class="pl-ent">cfquery</span>&gt;
+		```
+
+		<span class="pl-k">return</span> <span class="pl-smi">results</span>;
+
+	}
+
+	<span class="pl-c">/**</span>
+<span class="pl-c">	* I update the task with the given ID.</span>
+<span class="pl-c">	*/</span>
+	<span class="pl-k">public</span> <span class="pl-c1">void</span> <span class="pl-k">function</span> <span class="pl-en">updateTask</span>(
+		<span class="pl-k">required</span> <span class="pl-c1">numeric</span> <span class="pl-smi">id</span>,
+		<span class="pl-c1">boolean</span> <span class="pl-smi">isComplete</span>
+		) {
+
+		```
+		&lt;<span class="pl-ent">cfquery</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>local.results<span class="pl-pds">"</span></span> <span class="pl-e">result</span>=<span class="pl-s"><span class="pl-pds">"</span>local.metaResults<span class="pl-pds">"</span></span> <span class="pl-e">datasource</span>=<span class="pl-s"><span class="pl-pds">"</span>#<span class="pl-smi">datasource</span>#<span class="pl-pds">"</span></span>&gt;
+			<span class="pl-c">/* DEBUG: userDAO.updateTask(). */</span>
+			<span class="pl-k">UPDATE</span>
+				task
+			<span class="pl-k">SET</span>
+				&lt;<span class="pl-ent">cfif</span> <span class="pl-c1">arguments</span>.<span class="pl-c1">keyExists</span>( <span class="pl-s"><span class="pl-pds">"</span>isComplete<span class="pl-pds">"</span></span> )&gt;
+					isComplete <span class="pl-k">=</span> &lt;<span class="pl-ent">cfqueryparam</span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>#<span class="pl-smi">isComplete</span>#<span class="pl-pds">"</span></span> <span class="pl-e">sqltype</span>=<span class="pl-s"><span class="pl-pds">"</span>integer<span class="pl-pds">"</span></span> /&gt;,
+				&lt;/<span class="pl-ent">cfif</span>&gt;
+
+				id <span class="pl-k">=</span> id
+			<span class="pl-k">WHERE</span>
+				id <span class="pl-k">=</span> &lt;<span class="pl-ent">cfqueryparam</span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>#<span class="pl-smi">id</span>#<span class="pl-pds">"</span></span> <span class="pl-e">sqltype</span>=<span class="pl-s"><span class="pl-pds">"</span>integer<span class="pl-pds">"</span></span> /&gt;
+			;
+		&lt;/<span class="pl-ent">cfquery</span>&gt;
+		```
+
+	}
+
+}

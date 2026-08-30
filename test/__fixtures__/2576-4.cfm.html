@@ -1,0 +1,99 @@
+&lt;!doctype html&gt;
+&lt;<span class="pl-ent">html</span>&gt;
+&lt;<span class="pl-ent">head</span>&gt;
+	&lt;<span class="pl-ent">meta</span> <span class="pl-e">charset</span>=<span class="pl-s"><span class="pl-pds">"</span>utf-8<span class="pl-pds">"</span></span> /&gt;
+
+	&lt;<span class="pl-ent">title</span>&gt;
+		Invalid Inline JSON (JavaScript Object Notation) Characters
+	&lt;/<span class="pl-ent">title</span>&gt;
+&lt;/<span class="pl-ent">head</span>&gt;
+&lt;<span class="pl-ent">body</span>&gt;
+
+	&lt;<span class="pl-ent">h1</span>&gt;
+		Invalid Inline JSON (JavaScript Object Notation) Characters
+	&lt;/<span class="pl-ent">h1</span>&gt;
+
+	<span class="pl-c">&lt;!-- To log the failed characters. --&gt;</span>
+	&lt;<span class="pl-ent">textarea</span> <span class="pl-e">rows</span>=<span class="pl-s"><span class="pl-pds">"</span>20<span class="pl-pds">"</span></span> <span class="pl-e">cols</span>=<span class="pl-s"><span class="pl-pds">"</span>10<span class="pl-pds">"</span></span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>errorLog<span class="pl-pds">"</span></span>&gt;&lt;/<span class="pl-ent">textarea</span>&gt;
+
+	&lt;<span class="pl-ent">script</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/javascript<span class="pl-pds">"</span></span> <span class="pl-e">src</span>=<span class="pl-s"><span class="pl-pds">"</span>//cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.js<span class="pl-pds">"</span></span>&gt;&lt;/<span class="pl-ent">script</span>&gt;
+	&lt;<span class="pl-ent">script</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/javascript<span class="pl-pds">"</span></span>&gt;
+
+		<span class="pl-k">var</span> <span class="pl-smi">errorLog</span> <span class="pl-k">=</span> <span class="pl-en">$</span>( <span class="pl-s"><span class="pl-pds">"</span>textarea.errorLog<span class="pl-pds">"</span></span> ).<span class="pl-en">val</span>( <span class="pl-s"><span class="pl-pds">""</span></span> );
+		<span class="pl-k">var</span> <span class="pl-smi">body</span> <span class="pl-k">=</span> <span class="pl-en">$</span>( <span class="pl-s"><span class="pl-pds">"</span>body<span class="pl-pds">"</span></span> );
+
+
+		<span class="pl-c">// Populate the ASCII values that we want to test. When it</span>
+		<span class="pl-c">// comes to INLINE JSON, the rules about which characters are</span>
+		<span class="pl-c">// bad are less clear (to me). So, we'll test a huge range.</span>
+		<span class="pl-k">var</span> <span class="pl-smi">asciiValues</span> <span class="pl-k">=</span> [];
+
+		<span class="pl-k">for</span> ( <span class="pl-k">var</span> <span class="pl-smi">i</span> <span class="pl-k">=</span> <span class="pl-c1">0</span> ; <span class="pl-smi">i</span> <span class="pl-k">&lt;</span> <span class="pl-c1">10000</span> ; <span class="pl-smi">i</span><span class="pl-k">++</span> ) {
+
+			<span class="pl-smi">asciiValues</span>.<span class="pl-c1">push</span>( <span class="pl-smi">i</span> );
+
+		}
+
+
+		<span class="pl-c">// As the IFrames load, their last call is to log the success</span>
+		<span class="pl-c">// of the given charCode. This will only get called if the</span>
+		<span class="pl-c">// inline JSON does not cause a parsing error.</span>
+		<span class="pl-k">function</span> <span class="pl-en">logSuccess</span>( <span class="pl-v">charCode</span> ) {
+
+			<span class="pl-c">// Remove the charCode from the error log.</span>
+			<span class="pl-smi">errorLog</span>.<span class="pl-en">val</span>(
+				<span class="pl-smi">errorLog</span>.<span class="pl-en">val</span>()
+					.<span class="pl-c1">replace</span>( <span class="pl-k">new</span> <span class="pl-en">RegExp</span>( <span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\\</span>b<span class="pl-pds">"</span></span> <span class="pl-k">+</span> <span class="pl-smi">charCode</span> <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\\</span>b<span class="pl-cce">\\</span>s*<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">""</span></span> ), <span class="pl-s"><span class="pl-pds">""</span></span> )
+			);
+
+		}
+
+
+		<span class="pl-c">// This function will recurslively test each value, one at a</span>
+		<span class="pl-c">// time so we don't overwhelm the browser with thousands of</span>
+		<span class="pl-c">// HTTP requests. Notice that it doesn't call itself until the</span>
+		<span class="pl-c">// iframe has been loaded.</span>
+		(<span class="pl-k">function</span> <span class="pl-en">testNextValue</span>() {
+
+			<span class="pl-k">if</span> ( <span class="pl-k">!</span> <span class="pl-smi">asciiValues</span>.<span class="pl-c1">length</span> ) {
+
+				<span class="pl-k">return</span>;
+
+			}
+
+			<span class="pl-c">// Get the next value off the array (pop from front).</span>
+			<span class="pl-k">var</span> <span class="pl-smi">charCode</span> <span class="pl-k">=</span> <span class="pl-smi">asciiValues</span>.<span class="pl-c1">shift</span>();
+
+			<span class="pl-c">// Assume that this charCode will fail and append it to</span>
+			<span class="pl-c">// the error log. This way, the charCode will only be</span>
+			<span class="pl-c">// flagged as OK if the inline JSON doesn't cause a</span>
+			<span class="pl-c">// parsing error.</span>
+			<span class="pl-smi">errorLog</span>[ <span class="pl-c1">0</span> ].<span class="pl-c1">value</span> <span class="pl-k">+=</span> ( <span class="pl-smi">charCode</span> <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\n</span><span class="pl-pds">"</span></span> );
+
+			<span class="pl-k">var</span> <span class="pl-smi">frame</span> <span class="pl-k">=</span> <span class="pl-en">$</span>( <span class="pl-s"><span class="pl-pds">"</span>&lt;iframe&gt;&lt;/iframe&gt;<span class="pl-pds">"</span></span> )
+				.<span class="pl-en">prop</span>( <span class="pl-s"><span class="pl-pds">"</span>src<span class="pl-pds">"</span></span>, ( <span class="pl-s"><span class="pl-pds">"</span>./inline.cfm?charCode=<span class="pl-pds">"</span></span> <span class="pl-k">+</span> <span class="pl-smi">charCode</span> ) )
+				.<span class="pl-en">height</span>( <span class="pl-c1">1</span> )
+				.<span class="pl-en">width</span>( <span class="pl-c1">1</span> )
+			;
+
+			<span class="pl-c">// When the IFrame has loaded, we can assume this single</span>
+			<span class="pl-c">// test is complete.</span>
+			<span class="pl-smi">frame</span>.<span class="pl-c1">load</span>(
+				<span class="pl-k">function</span>( <span class="pl-v">event</span> ) {
+
+					<span class="pl-smi">frame</span>.<span class="pl-c1">remove</span>();
+
+					<span class="pl-en">testNextValue</span>();
+
+				}
+			);
+
+			<span class="pl-c">// Append to the body so the IFrame loads.</span>
+			<span class="pl-smi">body</span>.<span class="pl-c1">append</span>( <span class="pl-smi">frame</span> );
+
+		})(); <span class="pl-c">// NOTE: Self-invokcation to kick-it-off!</span>
+
+	&lt;/<span class="pl-ent">script</span>&gt;
+
+&lt;/<span class="pl-ent">body</span>&gt;
+&lt;/<span class="pl-ent">html</span>&gt;

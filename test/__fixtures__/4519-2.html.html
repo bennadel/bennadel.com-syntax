@@ -1,0 +1,142 @@
+&lt;!doctype html&gt;
+&lt;<span class="pl-ent">html</span> <span class="pl-e">lang</span>=<span class="pl-s"><span class="pl-pds">"</span>en<span class="pl-pds">"</span></span>&gt;
+&lt;<span class="pl-ent">body</span>&gt;
+
+	&lt;<span class="pl-ent">h1</span>&gt;
+		Replacing RxJS With A State Machine In JavaScript
+	&lt;/<span class="pl-ent">h1</span>&gt;
+
+	&lt;<span class="pl-ent">p</span>&gt;
+		If you mouse-down and then start dragging (vertically), you get console logging.
+	&lt;/<span class="pl-ent">p</span>&gt;
+
+	&lt;<span class="pl-ent">script</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/javascript<span class="pl-pds">"</span></span>&gt;
+
+		<span class="pl-en">default_setup</span>();
+
+		<span class="pl-c">// ---</span>
+		<span class="pl-c">// DEFAULT STATE: At this point, the user is just viewing the page, but has not</span>
+		<span class="pl-c">// yet interacted with it. Once they mousedown, we'll move into the pending state.</span>
+		<span class="pl-c">// ---</span>
+
+		<span class="pl-k">function</span> <span class="pl-en">default_setup</span>() {
+
+			<span class="pl-en">console</span>.<span class="pl-c1">info</span>( <span class="pl-s"><span class="pl-pds">"</span>Default: Setup<span class="pl-pds">"</span></span> );
+			<span class="pl-c1">document</span>.<span class="pl-c1">addEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>mousedown<span class="pl-pds">"</span></span>, default_handleMousedown );
+
+		}
+
+		<span class="pl-k">function</span> <span class="pl-en">default_teardown</span>() {
+
+			<span class="pl-en">console</span>.<span class="pl-c1">info</span>( <span class="pl-s"><span class="pl-pds">"</span>Default: Teardown<span class="pl-pds">"</span></span> );
+			<span class="pl-c1">document</span>.<span class="pl-c1">removeEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>mousedown<span class="pl-pds">"</span></span>, default_handleMousedown );
+
+		}
+
+		<span class="pl-k">function</span> <span class="pl-en">default_handleMousedown</span>( <span class="pl-c1">event</span> ) {
+
+			<span class="pl-c1">event</span>.<span class="pl-c1">preventDefault</span>();
+
+			<span class="pl-en">default_teardown</span>();
+			<span class="pl-en">pending_setup</span>( <span class="pl-c1">event</span>.<span class="pl-smi">clientY</span> );
+
+		}
+
+		<span class="pl-c">// ---</span>
+		<span class="pl-c">// PENDING STATE: The user has moused-down on the page, but we don't yet know if</span>
+		<span class="pl-c">// they intend to drag or just click. If they do start to drag (and pass a minimum</span>
+		<span class="pl-c">// threshold), we'll move into the dragging state.</span>
+		<span class="pl-c">// ---</span>
+
+		<span class="pl-k">function</span> <span class="pl-en">pending_setup</span>( <span class="pl-smi">clientY</span> ) {
+
+			<span class="pl-en">console</span>.<span class="pl-c1">info</span>( <span class="pl-s"><span class="pl-pds">"</span>Pending: Setup<span class="pl-pds">"</span></span> );
+			<span class="pl-c1">document</span>.<span class="pl-c1">addEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>mouseup<span class="pl-pds">"</span></span>, pending_handleMouseup );
+			<span class="pl-c1">document</span>.<span class="pl-c1">addEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>mousemove<span class="pl-pds">"</span></span>, pending_handleMousemove );
+
+			<span class="pl-smi">pending_setup</span>.<span class="pl-smi">initialClientY</span> <span class="pl-k">=</span> clientY;
+
+		}
+
+		<span class="pl-k">function</span> <span class="pl-en">pending_teardown</span>() {
+
+			<span class="pl-en">console</span>.<span class="pl-c1">info</span>( <span class="pl-s"><span class="pl-pds">"</span>Pending: Teardown<span class="pl-pds">"</span></span> );
+			<span class="pl-c1">document</span>.<span class="pl-c1">removeEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>mouseup<span class="pl-pds">"</span></span>, pending_handleMouseup );
+			<span class="pl-c1">document</span>.<span class="pl-c1">removeEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>mousemove<span class="pl-pds">"</span></span>, pending_handleMousemove );
+
+		}
+
+		<span class="pl-k">function</span> <span class="pl-en">pending_handleMouseup</span>( <span class="pl-c1">event</span> ) {
+
+			<span class="pl-en">pending_teardown</span>();
+			<span class="pl-en">default_setup</span>();
+
+		}
+
+		<span class="pl-k">function</span> <span class="pl-en">pending_handleMousemove</span>( <span class="pl-c1">event</span> ) {
+
+			<span class="pl-c">// Only move onto next state if dragging threshold is passed.</span>
+			<span class="pl-c">// --</span>
+			<span class="pl-c">// CAUTION: This concept was not present in the RxJS version; but, I think it</span>
+			<span class="pl-c">// should have been. And, in the state-based approach (for me) it is easier to</span>
+			<span class="pl-c">// reason about this update using states vs. streams.</span>
+			<span class="pl-k">if</span> ( <span class="pl-c1">Math</span>.<span class="pl-c1">abs</span>( <span class="pl-smi">pending_setup</span>.<span class="pl-smi">initialClientY</span> <span class="pl-k">-</span> <span class="pl-c1">event</span>.<span class="pl-smi">clientY</span> ) <span class="pl-k">&gt;</span> <span class="pl-c1">10</span> ) {
+
+				<span class="pl-en">pending_teardown</span>();
+				<span class="pl-en">dragging_setup</span>( <span class="pl-smi">pending_setup</span>.<span class="pl-smi">initialClientY</span> );
+
+			}
+
+		}
+
+		<span class="pl-c">// ---</span>
+		<span class="pl-c">// DRAGGING STATE.</span>
+		<span class="pl-c">// ---</span>
+
+		<span class="pl-k">function</span> <span class="pl-en">dragging_setup</span>( <span class="pl-smi">clientY</span> ) {
+
+			<span class="pl-en">console</span>.<span class="pl-c1">info</span>( <span class="pl-s"><span class="pl-pds">"</span>Dragging: Setup<span class="pl-pds">"</span></span> );
+			<span class="pl-c1">document</span>.<span class="pl-c1">addEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>mousemove<span class="pl-pds">"</span></span>, dragging_handleMousemove );
+			<span class="pl-c1">document</span>.<span class="pl-c1">addEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>mouseup<span class="pl-pds">"</span></span>, dragging_handleMouseup );
+
+			<span class="pl-smi">dragging_setup</span>.<span class="pl-smi">initialClientY</span> <span class="pl-k">=</span> clientY;
+			<span class="pl-smi">dragging_setup</span>.<span class="pl-smi">currentClientY</span> <span class="pl-k">=</span> <span class="pl-c1">null</span>;
+			<span class="pl-smi">dragging_setup</span>.<span class="pl-smi">timer</span> <span class="pl-k">=</span> <span class="pl-c1">setInterval</span>( dragging_handleInterval, <span class="pl-c1">60</span> );
+
+		}
+
+		<span class="pl-k">function</span> <span class="pl-en">dragging_teardown</span>() {
+
+			<span class="pl-en">console</span>.<span class="pl-c1">info</span>( <span class="pl-s"><span class="pl-pds">"</span>Dragging: Teardown<span class="pl-pds">"</span></span> );
+			<span class="pl-c1">document</span>.<span class="pl-c1">removeEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>mousemove<span class="pl-pds">"</span></span>, dragging_handleMousemove );
+			<span class="pl-c1">document</span>.<span class="pl-c1">removeEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>mouseup<span class="pl-pds">"</span></span>, dragging_handleMouseup );
+			<span class="pl-c1">clearInterval</span>( <span class="pl-smi">dragging_setup</span>.<span class="pl-smi">timer</span> );
+
+		}
+
+		<span class="pl-k">function</span> <span class="pl-en">dragging_handleMousemove</span>( <span class="pl-c1">event</span> ) {
+
+			<span class="pl-smi">dragging_setup</span>.<span class="pl-smi">currentClientY</span> <span class="pl-k">=</span> <span class="pl-c1">event</span>.<span class="pl-smi">clientY</span>;
+
+		}
+
+		<span class="pl-k">function</span> <span class="pl-en">dragging_handleMouseup</span>( <span class="pl-c1">event</span> ) {
+
+			<span class="pl-en">dragging_teardown</span>();
+			<span class="pl-en">default_setup</span>();
+
+		}
+
+		<span class="pl-k">function</span> <span class="pl-en">dragging_handleInterval</span>() {
+
+			<span class="pl-en">console</span>.<span class="pl-c1">log</span>(
+				<span class="pl-s"><span class="pl-pds">"</span>Drag delta from origin:<span class="pl-pds">"</span></span>,
+				( <span class="pl-smi">dragging_setup</span>.<span class="pl-smi">currentClientY</span> <span class="pl-k">-</span> <span class="pl-smi">dragging_setup</span>.<span class="pl-smi">initialClientY</span> )
+			);
+
+		}
+
+	&lt;/<span class="pl-ent">script</span>&gt;
+
+&lt;/<span class="pl-ent">body</span>&gt;
+&lt;/<span class="pl-ent">html</span>&gt;

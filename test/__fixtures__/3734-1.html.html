@@ -1,0 +1,61 @@
+&lt;!doctype html&gt;
+&lt;<span class="pl-ent">html</span> <span class="pl-e">lang</span>=<span class="pl-s"><span class="pl-pds">"</span>en<span class="pl-pds">"</span></span>&gt;
+&lt;<span class="pl-ent">head</span>&gt;
+	&lt;<span class="pl-ent">meta</span> <span class="pl-e">charset</span>=<span class="pl-s"><span class="pl-pds">"</span>utf-8<span class="pl-pds">"</span></span> /&gt;
+
+	&lt;<span class="pl-ent">title</span>&gt;
+		Capturing Pointer Events Using Bookmarklets
+	&lt;/<span class="pl-ent">title</span>&gt;
+
+	&lt;<span class="pl-ent">style</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/css<span class="pl-pds">"</span></span>&gt;
+
+		<span class="pl-e">.popup</span> {
+			<span class="pl-c">/*</span>
+<span class="pl-c">				CAUTION: Because this class turns OFF pointer-events, the user won't be</span>
+<span class="pl-c">				able to right-click and Inspect the element. This can make debugging much</span>
+<span class="pl-c">				more difficult.</span>
+<span class="pl-c">			*/</span>
+			<span class="pl-c1">pointer-events</span>: <span class="pl-c1">none</span> ;
+			<span class="pl-c">/* --- */</span>
+			<span class="pl-c1">background-color</span>: <span class="pl-c1">#f0f0f0</span> ;
+			<span class="pl-c1">border</span>: <span class="pl-c1">1</span><span class="pl-k">px</span> <span class="pl-c1">solid</span> <span class="pl-c1">#cccccc</span> ;
+			<span class="pl-c1">border-radius</span>: <span class="pl-c1">5</span><span class="pl-k">px</span> <span class="pl-c1">5</span><span class="pl-k">px</span> <span class="pl-c1">5</span><span class="pl-k">px</span> <span class="pl-c1">5</span><span class="pl-k">px</span> ;
+			<span class="pl-c1">left</span>: <span class="pl-c1">50</span><span class="pl-k">%</span> ;
+			<span class="pl-c1">padding</span>: <span class="pl-c1">10</span><span class="pl-k">px</span> <span class="pl-c1">15</span><span class="pl-k">px</span> <span class="pl-c1">10</span><span class="pl-k">px</span> <span class="pl-c1">15</span><span class="pl-k">px</span> ;
+			<span class="pl-c1">position</span>: <span class="pl-c1">fixed</span> ;
+			<span class="pl-c1">top</span>: <span class="pl-c1">50</span><span class="pl-k">%</span> ;
+			<span class="pl-c1">transform</span>: <span class="pl-c1">translateX</span>( <span class="pl-c1">-50</span><span class="pl-k">%</span> ) <span class="pl-c1">translateY</span>( <span class="pl-c1">-50</span><span class="pl-k">%</span> ) ;
+		}
+
+	&lt;/<span class="pl-ent">style</span>&gt;
+&lt;/<span class="pl-ent">head</span>&gt;
+&lt;<span class="pl-ent">body</span>&gt;
+
+	&lt;<span class="pl-ent">h1</span>&gt;
+		Capturing Pointer Events Using Bookmarklets
+	&lt;/<span class="pl-ent">h1</span>&gt;
+
+	&lt;<span class="pl-ent">p</span>&gt;
+		<span class="pl-c">&lt;!-- Copied from: https://github.com/bennadel/Bookmarklets --&gt;</span>
+		&lt;<span class="pl-ent">a</span> <span class="pl-e">href</span>=<span class="pl-s"><span class="pl-pds">'</span>javascript:(function(d,b,f,u,s){f="capture-pointer-events.js";u=(b+f+"?="+Date.now());s=d.createElement("script");s.setAttribute("src",u);d.body.appendChild(s);})(document,"https://bennadel.github.io/Bookmarklets/");void(0);<span class="pl-pds">'</span></span>&gt;
+			&lt;<span class="pl-ent">strong</span>&gt;Bookmarklet&lt;/<span class="pl-ent">strong</span>&gt;: Capture Pointer Events
+		&lt;/<span class="pl-ent">a</span>&gt;
+	&lt;/<span class="pl-ent">p</span>&gt;
+
+	<span class="pl-c">&lt;!-- Lots of nested element to represent a complex DOM tree structure. --&gt;</span>
+	&lt;<span class="pl-ent">div</span>&gt;
+		&lt;<span class="pl-ent">div</span>&gt;
+			&lt;<span class="pl-ent">div</span>&gt;
+				&lt;<span class="pl-ent">div</span>&gt;
+					&lt;<span class="pl-ent">div</span>&gt;
+						&lt;<span class="pl-ent">span</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>popup<span class="pl-pds">"</span></span>&gt;
+							Try to &lt;<span class="pl-ent">strong</span>&gt;Inspect&lt;/<span class="pl-ent">strong</span>&gt; me!
+						&lt;/<span class="pl-ent">span</span>&gt;
+					&lt;/<span class="pl-ent">div</span>&gt;
+				&lt;/<span class="pl-ent">div</span>&gt;
+			&lt;/<span class="pl-ent">div</span>&gt;
+		&lt;/<span class="pl-ent">div</span>&gt;
+	&lt;/<span class="pl-ent">div</span>&gt;
+
+&lt;/<span class="pl-ent">body</span>&gt;
+&lt;/<span class="pl-ent">html</span>&gt;

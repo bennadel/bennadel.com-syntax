@@ -1,0 +1,33 @@
+<span class="pl-c">#!/bin/bash</span>
+/usr/bin/docker run -it --rm --name letsencrypt \
+	-v <span class="pl-s"><span class="pl-pds">"</span>/etc/letsencrypt:/etc/letsencrypt<span class="pl-pds">"</span></span> \
+	quay.io/letsencrypt/letsencrypt:latest \
+		renew <span class="pl-k">&amp;&amp;</span>
+
+<span class="pl-c">#</span>
+<span class="pl-c"># When a certificate is renewed, the nginx proxy container needs to be restarted in order</span>
+<span class="pl-c"># to pick up the new certificates. However, according to the documentation:</span>
+<span class="pl-c">#</span>
+<span class="pl-c"># &gt; certbot renew exit status will only be 1 if a renewal attempt failed. This means</span>
+<span class="pl-c"># &gt; certbot renew exit status will be 0 if no cert needs to be updated. If you write a</span>
+<span class="pl-c"># &gt; custom script and expect to run a command only after a cert was actually renewed you</span>
+<span class="pl-c"># &gt; will need to use the --post-hook since the exit status will be 0 both on successful</span>
+<span class="pl-c"># &gt; renewal and when renewal is not necessary.</span>
+<span class="pl-c">#</span>
+<span class="pl-c"># However, since the certbot is running inside a container, it doesn't have access to</span>
+<span class="pl-c"># the nginx process, at least as far as I know - I'm a Docker noob. As such, I'm going to</span>
+<span class="pl-c"># have this script restart nginx no matter what the outcome. And, since this will only</span>
+<span class="pl-c"># happen occasionally, and nginx restarts really fast, this will only lead to a tiny bit</span>
+<span class="pl-c"># of down time.</span>
+<span class="pl-c">#</span>
+<span class="pl-c"># NOTE: We are using absolute paths to the docker-compose command and to the config file</span>
+<span class="pl-c"># because we can't depend on the PATH or the context of the crontab execution. As such,</span>
+<span class="pl-c"># this makes it very clear exactly what will be executed.</span>
+<span class="pl-c">#</span>
+/usr/local/bin/docker-compose -f /root/docker-compose.yml restart proxy <span class="pl-k">&amp;&amp;</span>
+
+<span class="pl-c">#</span>
+<span class="pl-c"># I sent a DogStatsD metric to DataDog, recording the successful completion of the</span>
+<span class="pl-c"># certificate renewal.</span>
+<span class="pl-c">#</span>
+/usr/local/bin/docker-compose -f /root/docker-compose.yml <span class="pl-c1">exec</span> dd_agent bash -c <span class="pl-s"><span class="pl-pds">"</span>echo 'script.renew_certificate:1|c' &gt; /dev/udp/127.0.0.1/8125<span class="pl-pds">"</span></span>

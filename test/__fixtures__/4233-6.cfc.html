@@ -1,0 +1,334 @@
+<span class="pl-k">component</span>
+	<span class="pl-e">output</span> = <span class="pl-s">false</span>
+	<span class="pl-e">hint</span> = <span class="pl-s"><span class="pl-pds">"</span>I provide methods that facilitate interacting with the X-DevAPI aspect of the MySQL 8 driver.<span class="pl-pds">"</span></span>
+	{
+
+	<span class="pl-c">/**</span>
+<span class="pl-c">	* I initialize the MySQL 8 X-DevAPI helper.</span>
+<span class="pl-c">	*/</span>
+	<span class="pl-k">public</span> <span class="pl-c1">void</span> <span class="pl-k">function</span> <span class="pl-en">init</span>(
+		<span class="pl-k">required</span> <span class="pl-c1">string</span> <span class="pl-smi">username</span>,
+		<span class="pl-k">required</span> <span class="pl-c1">string</span> <span class="pl-smi">password</span>,
+		<span class="pl-k">required</span> <span class="pl-c1">string</span> <span class="pl-smi">databaseServer</span>,
+		<span class="pl-k">required</span> <span class="pl-c1">string</span> <span class="pl-smi">defaultSchema</span>,
+		<span class="pl-k">required</span> <span class="pl-c1">array</span> <span class="pl-smi">jarPaths</span>
+		) {
+
+		<span class="pl-c1">variables</span>.<span class="pl-smi">defaultSchema</span> <span class="pl-k">=</span> <span class="pl-c1">arguments</span>.<span class="pl-smi">defaultSchema</span>;
+		<span class="pl-c1">variables</span>.<span class="pl-smi">jarPaths</span> <span class="pl-k">=</span> <span class="pl-c1">arguments</span>.<span class="pl-smi">jarPaths</span>;
+
+		<span class="pl-c">// Unlike with the CFQuery tag, we have to manage our own connection pool when</span>
+		<span class="pl-c">// using the X-DevAPI. Or, at least, we have to instantiate it and let the client</span>
+		<span class="pl-c">// take care of it.</span>
+		<span class="pl-c">// --</span>
+		<span class="pl-c">// https://dev.mysql.com/doc/x-devapi-userguide/en/connecting-connection-pool.html</span>
+		<span class="pl-k">var</span> <span class="pl-smi">pooling</span> <span class="pl-k">=</span> {
+			<span class="pl-c">// Connection pooling enabled. When the option is set to false, a regular,</span>
+			<span class="pl-c">// non-pooled connection is returned, and the other connection pool options</span>
+			<span class="pl-c">// listed below are ignored. Default true.</span>
+			<span class="pl-v">enabled</span>: <span class="pl-c1">true</span>,
+			<span class="pl-c">// The maximum number of connections allowed in the pool. Default 25.</span>
+			<span class="pl-v">maxSize</span>: <span class="pl-c1">25</span>,
+			<span class="pl-c">// The maximum number of milliseconds a connection is allowed to idle in the</span>
+			<span class="pl-c">// queue before being closed. A zero value means infinite. Default 0.</span>
+			<span class="pl-v">maxIdleTime</span>: <span class="pl-c1">30000</span>,
+			<span class="pl-c">// The maximum number of milliseconds a request is allowed to wait for a</span>
+			<span class="pl-c">// connection to become available. A zero value means infinite. Default 0.</span>
+			<span class="pl-v">queueTimeout</span>: <span class="pl-c1">10000</span>
+		};
+
+		<span class="pl-c">// NOTE: The X-DevAPI uses a different PROTOCOL and PORT.</span>
+		<span class="pl-c1">variables</span>.<span class="pl-smi">dbClient</span> <span class="pl-k">=</span> <span class="pl-en">javaNew</span>( <span class="pl-s"><span class="pl-pds">"</span>com.mysql.cj.xdevapi.ClientFactory<span class="pl-pds">"</span></span> )
+			.<span class="pl-en">init</span>()
+			.<span class="pl-en">getClient</span>(
+				<span class="pl-s"><span class="pl-pds">"</span>mysqlx://#<span class="pl-smi">username</span>#:#<span class="pl-smi">password</span>#@#<span class="pl-smi">databaseServer</span>#:33060<span class="pl-pds">"</span></span>,
+				<span class="pl-c1">serializeJson</span>({ <span class="pl-v">pooling</span>: <span class="pl-smi">pooling</span> })
+			)
+		;
+
+	}
+
+	<span class="pl-c">// ---</span>
+	<span class="pl-c">// PUBLIC METHODS.</span>
+	<span class="pl-c">// ---</span>
+
+	<span class="pl-c">/**</span>
+<span class="pl-c">	* I load the given class from the MySQL JAR files.</span>
+<span class="pl-c">	* </span>
+<span class="pl-c">	* CAUTION: While the ColdFusion application already has the Connector/J JAR files, it</span>
+<span class="pl-c">	* didn't have the ProtoBuf JAR files. I had to download those from Maven.</span>
+<span class="pl-c">	*/</span>
+	<span class="pl-k">public</span> <span class="pl-c1">any</span> <span class="pl-k">function</span> <span class="pl-en">javaNew</span>( <span class="pl-k">required</span> <span class="pl-c1">string</span> <span class="pl-smi">className</span> ) {
+
+		<span class="pl-k">return</span>( <span class="pl-c1">createObject</span>( <span class="pl-s"><span class="pl-pds">"</span>java<span class="pl-pds">"</span></span>, <span class="pl-smi">className</span>, <span class="pl-smi">jarPaths</span> ) );
+
+	}
+
+
+	<span class="pl-c">/**</span>
+<span class="pl-c">	* Many values that comes out of the X-DevAPI results seems to be a "JsonValue" class</span>
+<span class="pl-c">	* instance. We need to convert those to native ColdFusion data structures. This</span>
+<span class="pl-c">	* recurses through the given value and maps it onto native Structs, Strings, Numbers,</span>
+<span class="pl-c">	* etc.</span>
+<span class="pl-c">	*/</span>
+	<span class="pl-k">public</span> <span class="pl-c1">any</span> <span class="pl-k">function</span> <span class="pl-en">jsonResultToCFML</span>( <span class="pl-k">required</span> <span class="pl-c1">any</span> <span class="pl-smi">input</span> ) {
+
+		<span class="pl-k">if</span> ( <span class="pl-c1">isStruct</span>( <span class="pl-smi">input</span> ) ) {
+
+			<span class="pl-k">return</span> <span class="pl-smi">input</span>.<span class="pl-c1">map</span>(
+				( <span class="pl-smi">key</span>, <span class="pl-smi">value</span> ) <span class="pl-k">=&gt;</span> {
+
+					<span class="pl-k">return</span>( <span class="pl-en">jsonResultToCFML</span>( <span class="pl-smi">value</span> ) );
+
+				}
+			);
+
+		} <span class="pl-k">else if</span> ( <span class="pl-c1">isArray</span>( <span class="pl-smi">input</span> ) ) {
+
+			<span class="pl-k">return</span> <span class="pl-smi">input</span>.<span class="pl-c1">map</span>(
+				( <span class="pl-smi">value</span>, <span class="pl-smi">index</span> ) <span class="pl-k">=&gt;</span> {
+
+					<span class="pl-k">return</span>( <span class="pl-en">jsonResultToCFML</span>( <span class="pl-smi">value</span> ) );
+
+				}
+			);
+
+		} <span class="pl-k">else if</span> ( <span class="pl-c1">isInstanceOf</span>( <span class="pl-smi">input</span>, <span class="pl-s"><span class="pl-pds">"</span>com.mysql.cj.xdevapi.JsonValue<span class="pl-pds">"</span></span> ) ) {
+
+			<span class="pl-k">return</span>( <span class="pl-c1">deserializeJson</span>( <span class="pl-smi">input</span>.<span class="pl-c1">toString</span>() ) );
+
+		} <span class="pl-k">else</span> {
+
+			<span class="pl-k">return</span>( <span class="pl-smi">input</span> );
+
+		}
+
+	}
+
+
+	<span class="pl-c">/**</span>
+<span class="pl-c">	* I parse the given _id value into its individual parts.</span>
+<span class="pl-c">	* </span>
+<span class="pl-c">	* CAUTION: The date in the _id is NOT the date that the document was created - it's</span>
+<span class="pl-c">	* the date that the SERVER was STARTED. If you want to know when a document was</span>
+<span class="pl-c">	* created, you have to store that as a property on the document (it seems).</span>
+<span class="pl-c">	*/</span>
+	<span class="pl-k">public</span> <span class="pl-c1">struct</span> <span class="pl-k">function</span> <span class="pl-en">parseID</span>( <span class="pl-k">required</span> <span class="pl-c1">string</span> <span class="pl-smi">id</span> ) {
+
+		<span class="pl-c">// All aspects of the "_id" object are HEX-encoded numbers.</span>
+		<span class="pl-c">// --</span>
+		<span class="pl-c">// https://dev.mysql.com/doc/x-devapi-userguide/en/understanding-automatic-document-ids.html</span>
+		<span class="pl-k">var</span> <span class="pl-smi">prefix</span> <span class="pl-k">=</span> <span class="pl-c1">inputBaseN</span>( <span class="pl-smi">id</span>.<span class="pl-c1">left</span>( <span class="pl-c1">4</span> ), <span class="pl-c1">16</span> );
+		<span class="pl-k">var</span> <span class="pl-smi">epochSeconds</span> <span class="pl-k">=</span> <span class="pl-c1">inputBaseN</span>( <span class="pl-smi">id</span>.<span class="pl-c1">mid</span>( <span class="pl-c1">5</span>, <span class="pl-c1">8</span> ), <span class="pl-c1">16</span> );
+		<span class="pl-k">var</span> <span class="pl-smi">serial</span> <span class="pl-k">=</span> <span class="pl-c1">inputBaseN</span>( <span class="pl-smi">id</span>.<span class="pl-c1">right</span>( <span class="pl-c1">16</span> ), <span class="pl-c1">16</span> );
+
+		<span class="pl-c">// The "server startup" value is the Epoch Seconds. Let's convert that to a date</span>
+		<span class="pl-c">// using Epoch milliseconds.</span>
+		<span class="pl-k">var</span> <span class="pl-smi">serverStartedAt</span> <span class="pl-k">=</span> <span class="pl-c1">createObject</span>( <span class="pl-s"><span class="pl-pds">"</span>java<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>java.util.Date<span class="pl-pds">"</span></span> )
+			.<span class="pl-en">init</span>( <span class="pl-smi">epochSeconds</span> <span class="pl-k">*</span> <span class="pl-c1">1000</span> )
+		;
+
+		<span class="pl-k">return</span>({
+			<span class="pl-v">prefix</span>: <span class="pl-smi">prefix</span>,
+			<span class="pl-v">startedAt</span>: <span class="pl-smi">serverStartedAt</span>,
+			<span class="pl-v">serial</span>: <span class="pl-smi">serial</span>
+		});
+
+	}
+
+
+	<span class="pl-c">/**</span>
+<span class="pl-c">	* I shutdown the database client, closing all session and disconnecting from the</span>
+<span class="pl-c">	* MySQL database.</span>
+<span class="pl-c">	*/</span>
+	<span class="pl-k">public</span> <span class="pl-c1">void</span> <span class="pl-k">function</span> <span class="pl-en">teardown</span>() {
+
+		<span class="pl-smi">dbClient</span><span class="pl-k">?.</span><span class="pl-en">close</span>();
+
+	}
+
+
+	<span class="pl-c">/**</span>
+<span class="pl-c">	* I get a new Session from the Client's connection pool and pass it to the given</span>
+<span class="pl-c">	* callback operator (along with the correct schema and a reference to this component).</span>
+<span class="pl-c">	* The session is automatically returned to the pool once the operator has completed.</span>
+<span class="pl-c">	* Any result returned from the operator is passed-back up to the calling context.</span>
+<span class="pl-c">	*/</span>
+	<span class="pl-k">public</span> <span class="pl-c1">any</span> <span class="pl-k">function</span> <span class="pl-en">withSession</span>(
+		<span class="pl-k">required</span> <span class="pl-c1">function</span> <span class="pl-smi">operator</span>,
+		<span class="pl-c1">string</span> <span class="pl-smi">databaseSchema</span> <span class="pl-k">=</span> <span class="pl-smi">defaultSchema</span>
+		) {
+
+		<span class="pl-k">try</span> {
+
+			<span class="pl-k">var</span> <span class="pl-smi">dbSession</span> <span class="pl-k">=</span> <span class="pl-smi">dbClient</span>.<span class="pl-en">getSession</span>();
+			<span class="pl-k">var</span> <span class="pl-smi">dbSchema</span> <span class="pl-k">=</span> <span class="pl-smi">dbSession</span>.<span class="pl-en">getSchema</span>( <span class="pl-smi">databaseSchema</span> );
+
+			<span class="pl-k">return</span>( <span class="pl-en">operator</span>( <span class="pl-smi">dbSession</span>, <span class="pl-smi">dbSchema</span>, <span class="pl-c1">this</span> ) );
+
+		} <span class="pl-k">finally</span> {
+
+			<span class="pl-smi">dbSession</span><span class="pl-k">?.</span><span class="pl-en">close</span>();
+
+		}
+
+	}
+
+
+	<span class="pl-c">/**</span>
+<span class="pl-c">	* I add the given document to the collection. Returns the generated ID.</span>
+<span class="pl-c">	*/</span>
+	<span class="pl-k">public</span> <span class="pl-c1">string</span> <span class="pl-k">function</span> <span class="pl-en">xAdd</span>(
+		<span class="pl-k">required</span> <span class="pl-c1">string</span> <span class="pl-smi">into</span>,
+		<span class="pl-k">required</span> <span class="pl-c1">struct</span> <span class="pl-smi">value</span>
+		) {
+
+		<span class="pl-k">var</span> <span class="pl-smi">results</span> <span class="pl-k">=</span> <span class="pl-en">withSession</span>(
+			( <span class="pl-smi">dbSession</span>, <span class="pl-smi">dbSchema</span> ) <span class="pl-k">=&gt;</span> {
+
+				<span class="pl-k">var</span> <span class="pl-smi">addStatement</span> <span class="pl-k">=</span> <span class="pl-smi">dbSchema</span>
+					.<span class="pl-en">createCollection</span>( <span class="pl-smi">into</span>, <span class="pl-c1">true</span> )
+					.<span class="pl-c1">add</span>([ <span class="pl-c1">serializeJson</span>( <span class="pl-smi">value</span> ) ])
+				;
+
+				<span class="pl-k">return</span>( <span class="pl-smi">addStatement</span>.<span class="pl-en">execute</span>() );
+
+			}
+		);
+
+		<span class="pl-k">return</span>( <span class="pl-smi">results</span>.<span class="pl-en">getGeneratedIds</span>().<span class="pl-c1">first</span>() );
+
+	}
+
+
+	<span class="pl-c">/**</span>
+<span class="pl-c">	* I return the documents that match the given where clause.</span>
+<span class="pl-c">	*/</span>
+	<span class="pl-k">public</span> <span class="pl-c1">array</span> <span class="pl-k">function</span> <span class="pl-en">xFind</span>(
+		<span class="pl-k">required</span> <span class="pl-c1">string</span> <span class="pl-smi">from</span>,
+		<span class="pl-c1">string</span> <span class="pl-smi">where</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">""</span></span>,
+		<span class="pl-c1">struct</span> <span class="pl-smi">params</span> <span class="pl-k">=</span> {},
+		<span class="pl-c1">numeric</span> <span class="pl-smi">limit</span> <span class="pl-k">=</span> <span class="pl-c1">0</span>
+		) {
+
+		<span class="pl-k">var</span> <span class="pl-smi">results</span> <span class="pl-k">=</span> <span class="pl-en">withSession</span>(
+			( <span class="pl-smi">dbSession</span>, <span class="pl-smi">dbSchema</span> ) <span class="pl-k">=&gt;</span> {
+
+				<span class="pl-k">var</span> <span class="pl-smi">findStatement</span> <span class="pl-k">=</span> <span class="pl-smi">dbSchema</span>
+					.<span class="pl-en">createCollection</span>( <span class="pl-smi">from</span>, <span class="pl-c1">true</span> )
+					.<span class="pl-c1">find</span>( <span class="pl-smi">where</span> )
+					.<span class="pl-en">bind</span>( <span class="pl-smi">params</span> )
+				;
+
+				<span class="pl-k">if</span> ( <span class="pl-smi">limit</span> ) {
+
+					<span class="pl-smi">findStatement</span>.<span class="pl-en">limit</span>( <span class="pl-smi">limit</span> );
+
+				}
+
+				<span class="pl-k">return</span>( <span class="pl-en">jsonResultToCFML</span>( <span class="pl-smi">findStatement</span>.<span class="pl-en">execute</span>().<span class="pl-en">fetchAll</span>() ) );
+
+			}
+		);
+
+		<span class="pl-k">return</span>( <span class="pl-smi">results</span> );
+
+	}
+
+
+	<span class="pl-c">/**</span>
+<span class="pl-c">	* I get the document with the given ID. If the document doesn't exist, an error is</span>
+<span class="pl-c">	* thrown.</span>
+<span class="pl-c">	*/</span>
+	<span class="pl-k">public</span> <span class="pl-c1">struct</span> <span class="pl-k">function</span> <span class="pl-en">xGetOne</span>(
+		<span class="pl-k">required</span> <span class="pl-c1">string</span> <span class="pl-smi">from</span>,
+		<span class="pl-k">required</span> <span class="pl-c1">string</span> <span class="pl-smi">id</span>
+		) {
+
+		<span class="pl-k">var</span> <span class="pl-smi">results</span> <span class="pl-k">=</span> <span class="pl-en">withSession</span>(
+			( <span class="pl-smi">dbSession</span>, <span class="pl-smi">dbSchema</span> ) <span class="pl-k">=&gt;</span> {
+
+				<span class="pl-k">var</span> <span class="pl-smi">dbDoc</span> <span class="pl-k">=</span> <span class="pl-smi">dbSchema</span>
+					.<span class="pl-en">createCollection</span>( <span class="pl-smi">from</span>, <span class="pl-c1">true</span> )
+					.<span class="pl-en">getOne</span>( <span class="pl-smi">id</span> )
+				;
+
+				<span class="pl-k">if</span> ( <span class="pl-c1">isNull</span>( <span class="pl-smi">dbDoc</span> ) ) {
+
+					<span class="pl-c1">throw</span>(
+						<span class="pl-e">type</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>Database.DocumentNotFound<span class="pl-pds">"</span></span>,
+						<span class="pl-e">message</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>The document could not be found.<span class="pl-pds">"</span></span>
+					);
+
+				}
+
+				<span class="pl-k">return</span>( <span class="pl-en">jsonResultToCFML</span>( <span class="pl-smi">dbDoc</span> ) );
+
+			}
+		);
+
+		<span class="pl-k">return</span>( <span class="pl-smi">results</span> );
+
+	}
+
+
+	<span class="pl-c">/**</span>
+<span class="pl-c">	* I remove the document with the given ID. Returns the number of documents affected by</span>
+<span class="pl-c">	* the operation.</span>
+<span class="pl-c">	*/</span>
+	<span class="pl-k">public</span> <span class="pl-c1">numeric</span> <span class="pl-k">function</span> <span class="pl-en">xRemoveOne</span>(
+		<span class="pl-k">required</span> <span class="pl-c1">string</span> <span class="pl-smi">from</span>,
+		<span class="pl-k">required</span> <span class="pl-c1">string</span> <span class="pl-smi">id</span>
+		) {
+
+		<span class="pl-k">var</span> <span class="pl-smi">itemCount</span> <span class="pl-k">=</span> <span class="pl-en">withSession</span>(
+			( <span class="pl-smi">dbSession</span>, <span class="pl-smi">dbSchema</span> ) <span class="pl-k">=&gt;</span> {
+
+				<span class="pl-k">var</span> <span class="pl-smi">result</span> <span class="pl-k">=</span> <span class="pl-smi">dbSchema</span>
+					.<span class="pl-en">createCollection</span>( <span class="pl-smi">from</span>, <span class="pl-c1">true</span> )
+					.<span class="pl-en">removeOne</span>( <span class="pl-smi">id</span> )
+				;
+
+				<span class="pl-k">return</span>( <span class="pl-smi">result</span>.<span class="pl-en">getAffectedItemsCount</span>() );
+
+			}
+		);
+
+		<span class="pl-k">return</span>( <span class="pl-smi">itemCount</span> );
+
+	}
+
+
+	<span class="pl-c">/**</span>
+<span class="pl-c">	* I update documents that match the given where clause. Returns the number of</span>
+<span class="pl-c">	* documents affected by the operation.</span>
+<span class="pl-c">	*/</span>
+	<span class="pl-k">public</span> <span class="pl-c1">numeric</span> <span class="pl-k">function</span> <span class="pl-en">xUpdate</span>(
+		<span class="pl-k">required</span> <span class="pl-c1">string</span> <span class="pl-smi">from</span>,
+		<span class="pl-k">required</span> <span class="pl-c1">string</span> <span class="pl-smi">where</span>,
+		<span class="pl-k">required</span> <span class="pl-c1">struct</span> <span class="pl-smi">set</span>,
+		<span class="pl-c1">struct</span> <span class="pl-smi">params</span> <span class="pl-k">=</span> {}
+		) {
+
+		<span class="pl-k">var</span> <span class="pl-smi">itemCount</span> <span class="pl-k">=</span> <span class="pl-en">withSession</span>(
+			( <span class="pl-smi">dbSession</span>, <span class="pl-smi">dbSchema</span> ) <span class="pl-k">=&gt;</span> {
+
+				<span class="pl-k">var</span> <span class="pl-smi">modifyStatement</span> <span class="pl-k">=</span> <span class="pl-smi">dbSchema</span>
+					.<span class="pl-en">createCollection</span>( <span class="pl-smi">from</span>, <span class="pl-c1">true</span> )
+					.<span class="pl-en">modify</span>( <span class="pl-smi">where</span> )
+					.<span class="pl-en">patch</span>( <span class="pl-c1">serializeJson</span>( <span class="pl-smi">set</span> ) )
+					.<span class="pl-en">bind</span>( <span class="pl-smi">params</span> )
+				;
+
+				<span class="pl-k">return</span>( <span class="pl-smi">modifyStatement</span>.<span class="pl-en">execute</span>().<span class="pl-en">getAffectedItemsCount</span>() );
+
+			}
+		);
+
+		<span class="pl-c">// NOTE: If the targeted object exists but the operation didn't actually change</span>
+		<span class="pl-c">// any of the properties, this count will be zero.</span>
+		<span class="pl-k">return</span>( <span class="pl-smi">itemCount</span> );
+
+	}
+
+}

@@ -1,0 +1,21 @@
+var CircuitBreakerFactory = require( "@bennadel/circuit-breaker" ).CircuitBreakerFactory;
+var Monitor = require( "@bennadel/circuit-breaker" ).Monitor;
+
+class MyMonitor extends Monitor {
+
+	logClosed( stateSnapshot ) {
+		/* ... */
+	}
+
+	logOpened( stateSnapshot ) {
+		/* ... */
+	}
+
+}
+
+// ....
+
+var circuitBreaker = CircuitBreakerFactory.create({
+	id: "Remote API",
+	monitor: new MyMonitor()
+});

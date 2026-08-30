@@ -1,0 +1,190 @@
+<span class="pl-c">// Create a Javascript class to handle the contact list.</span>
+<span class="pl-k">function</span> <span class="pl-en">ContactList</span>(){
+	<span class="pl-k">var</span> objSelf <span class="pl-k">=</span> <span class="pl-c1">this</span>;
+
+	<span class="pl-c">// Get a jQuery reference to the list.</span>
+	<span class="pl-c1">this</span>.<span class="pl-smi">List</span> <span class="pl-k">=</span> <span class="pl-en">$</span>( <span class="pl-s"><span class="pl-pds">"</span>#contact-list<span class="pl-pds">"</span></span> );
+
+	<span class="pl-c">// Get jQuery references to the key parts of our table.</span>
+	<span class="pl-c">// This way, we don't have to keep looking them up.</span>
+	<span class="pl-c">// This will make it faster.</span>
+	<span class="pl-c1">this</span>.<span class="pl-smi">DOMReferences</span> <span class="pl-k">=</span> {
+		Template<span class="pl-k">:</span> <span class="pl-c1">this</span>.<span class="pl-smi">List</span>.<span class="pl-c1">find</span>( <span class="pl-s"><span class="pl-pds">"</span>tbody.dom-template<span class="pl-pds">"</span></span> ),
+		Content<span class="pl-k">:</span> <span class="pl-c1">this</span>.<span class="pl-smi">List</span>.<span class="pl-c1">find</span>( <span class="pl-s"><span class="pl-pds">"</span>tbody.table-content<span class="pl-pds">"</span></span> )
+		};
+
+	<span class="pl-c">// Bind the listener for the contacts updated event.</span>
+	<span class="pl-en">$</span>( <span class="pl-c1">document</span> ).<span class="pl-en">bind</span>(
+		<span class="pl-s"><span class="pl-pds">"</span>contactsUpdated<span class="pl-pds">"</span></span>,
+		<span class="pl-k">function</span>(){
+			<span class="pl-c">// Get the contacts for the contact list.</span>
+			<span class="pl-smi">objSelf</span>.<span class="pl-en">GetContacts</span>();
+		}
+		);
+
+	<span class="pl-c">// Get the initial contact list.</span>
+	<span class="pl-c1">this</span>.<span class="pl-en">GetContacts</span>();
+}
+
+
+<span class="pl-c">// Define a method to delete the given contact.</span>
+<span class="pl-smi">ContactList</span>.<span class="pl-c1">prototype</span>.<span class="pl-en">DeleteContact</span> <span class="pl-k">=</span> <span class="pl-k">function</span>( <span class="pl-c1">ID</span> ){
+	<span class="pl-k">var</span> objSelf <span class="pl-k">=</span> <span class="pl-c1">this</span>;
+
+	<span class="pl-c">// Get contacts via AJAX.</span>
+	<span class="pl-smi">$</span>.<span class="pl-en">ajax</span>(
+		{
+			type<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>get<span class="pl-pds">"</span></span>,
+			url<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>./api/Contacts.cfc<span class="pl-pds">"</span></span>,
+			data<span class="pl-k">:</span> {
+				method<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>DeleteContact<span class="pl-pds">"</span></span>,
+				id<span class="pl-k">:</span> <span class="pl-c1">ID</span>
+				},
+			dataType<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>json<span class="pl-pds">"</span></span>,
+
+			<span class="pl-c">// Define request handlers.</span>
+			<span class="pl-en">success</span><span class="pl-k">:</span> <span class="pl-k">function</span>( <span class="pl-smi">objResponse</span> ){
+				<span class="pl-c">// Check to see if request was successful.</span>
+				<span class="pl-k">if</span> (<span class="pl-smi">objResponse</span>.<span class="pl-c1">SUCCESS</span>){
+
+					<span class="pl-c">// The request was successful. Trigger the</span>
+					<span class="pl-c">// contacts updated event on the document.</span>
+					<span class="pl-c">// That will trigger our own update as well</span>
+					<span class="pl-c">// as anyone else listening.</span>
+					<span class="pl-en">$</span>( <span class="pl-c1">document</span> ).<span class="pl-en">trigger</span>( <span class="pl-s"><span class="pl-pds">"</span>contactsUpdated<span class="pl-pds">"</span></span> );
+
+				} <span class="pl-k">else</span> {
+
+					<span class="pl-c">// The response was not successful. Show</span>
+					<span class="pl-c">// an errors to the user.</span>
+					<span class="pl-smi">objSelf</span>.<span class="pl-en">ShowErrors</span>( <span class="pl-smi">objResponse</span>.<span class="pl-c1">ERRORS</span> );
+
+				}
+			},
+
+			<span class="pl-en">error</span><span class="pl-k">:</span> <span class="pl-k">function</span>( <span class="pl-smi">objRequest</span>, <span class="pl-smi">strError</span> ){
+				<span class="pl-smi">objSelf</span>.<span class="pl-en">ShowErrors</span>( [ <span class="pl-s"><span class="pl-pds">"</span>An unknown connection error occurred.<span class="pl-pds">"</span></span> ] );
+			}
+		}
+		);
+}
+
+
+<span class="pl-c">// Define a method to get the contacts.</span>
+<span class="pl-smi">ContactList</span>.<span class="pl-c1">prototype</span>.<span class="pl-en">GetContacts</span> <span class="pl-k">=</span> <span class="pl-k">function</span>(){
+	<span class="pl-k">var</span> objSelf <span class="pl-k">=</span> <span class="pl-c1">this</span>;
+
+	<span class="pl-c">// Get contacts via AJAX.</span>
+	<span class="pl-smi">$</span>.<span class="pl-en">ajax</span>(
+		{
+			type<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>get<span class="pl-pds">"</span></span>,
+			url<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>./api/Contacts.cfc<span class="pl-pds">"</span></span>,
+			data<span class="pl-k">:</span> {
+				method<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>GetContacts<span class="pl-pds">"</span></span>
+				},
+			dataType<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>json<span class="pl-pds">"</span></span>,
+
+			<span class="pl-c">// Define request handlers.</span>
+			<span class="pl-en">success</span><span class="pl-k">:</span> <span class="pl-k">function</span>( <span class="pl-smi">objResponse</span> ){
+				<span class="pl-c">// Check to see if request was successful.</span>
+				<span class="pl-k">if</span> (<span class="pl-smi">objResponse</span>.<span class="pl-c1">SUCCESS</span>){
+
+					<span class="pl-c">// The request was successful. Show the</span>
+					<span class="pl-c">// contacts in our table.</span>
+					<span class="pl-smi">objSelf</span>.<span class="pl-en">ShowContacts</span>( <span class="pl-smi">objResponse</span>.<span class="pl-c1">DATA</span> );
+
+				} <span class="pl-k">else</span> {
+
+					<span class="pl-c">// The response was not successful. Show</span>
+					<span class="pl-c">// an errors to the user.</span>
+					<span class="pl-smi">objSelf</span>.<span class="pl-en">ShowErrors</span>( <span class="pl-smi">objResponse</span>.<span class="pl-c1">ERRORS</span> );
+
+				}
+			},
+
+			<span class="pl-en">error</span><span class="pl-k">:</span> <span class="pl-k">function</span>( <span class="pl-smi">objRequest</span>, <span class="pl-smi">strError</span> ){
+				<span class="pl-smi">objSelf</span>.<span class="pl-en">ShowErrors</span>( [ <span class="pl-s"><span class="pl-pds">"</span>An unknown connection error occurred.<span class="pl-pds">"</span></span> ] );
+			}
+		}
+		);
+}
+
+
+<span class="pl-c">// Define a method to show the given contacts in the table. This</span>
+<span class="pl-c">// will clear and repopulate the table.</span>
+<span class="pl-smi">ContactList</span>.<span class="pl-c1">prototype</span>.<span class="pl-en">ShowContacts</span> <span class="pl-k">=</span> <span class="pl-k">function</span>( <span class="pl-smi">arrContacts</span> ){
+	<span class="pl-k">var</span> objSelf <span class="pl-k">=</span> <span class="pl-c1">this</span>;
+
+	<span class="pl-c">// Map the new contacts to an array of jQuery table rows.</span>
+	<span class="pl-k">var</span> arrRows <span class="pl-k">=</span> <span class="pl-smi">$</span>.<span class="pl-en">map</span>(
+		arrContacts,
+		<span class="pl-k">function</span>( <span class="pl-smi">objContact</span>, <span class="pl-smi">intIndex</span> ){
+			<span class="pl-c">// Create a duplicate of our template row.</span>
+			<span class="pl-k">var</span> jRow <span class="pl-k">=</span> <span class="pl-smi">objSelf</span>.<span class="pl-smi">DOMReferences</span>.<span class="pl-smi">Template</span>.<span class="pl-en">children</span>( <span class="pl-s"><span class="pl-pds">"</span>tr<span class="pl-pds">"</span></span> ).<span class="pl-en">clone</span>();
+
+			<span class="pl-c">// Set the ID of the row.</span>
+			<span class="pl-smi">jRow</span>.<span class="pl-en">attr</span>( <span class="pl-s"><span class="pl-pds">"</span>id<span class="pl-pds">"</span></span>, <span class="pl-smi">objContact</span>.<span class="pl-c1">ID</span> );
+
+			<span class="pl-c">// Store column values.</span>
+			<span class="pl-smi">jRow</span>.<span class="pl-c1">find</span>( <span class="pl-s"><span class="pl-pds">"</span>td.name-column<span class="pl-pds">"</span></span> ).<span class="pl-c1">text</span>( <span class="pl-smi">objContact</span>.<span class="pl-c1">NAME</span> );
+			<span class="pl-smi">jRow</span>.<span class="pl-c1">find</span>( <span class="pl-s"><span class="pl-pds">"</span>td.hair-column<span class="pl-pds">"</span></span> ).<span class="pl-c1">text</span>( <span class="pl-smi">objContact</span>.<span class="pl-c1">HAIR</span> );
+
+			<span class="pl-c">// Bind the delete link.</span>
+			<span class="pl-smi">jRow</span>.<span class="pl-c1">find</span>( <span class="pl-s"><span class="pl-pds">"</span>td.actions-column a<span class="pl-pds">"</span></span> )
+				.<span class="pl-en">attr</span>( <span class="pl-s"><span class="pl-pds">"</span>href<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>javascript:void( 0 )<span class="pl-pds">"</span></span> )
+				.<span class="pl-c1">click</span>(
+					<span class="pl-k">function</span>( <span class="pl-smi">objEvent</span> ){
+						<span class="pl-c">// Delete the contact.</span>
+						<span class="pl-smi">objSelf</span>.<span class="pl-en">DeleteContact</span>( <span class="pl-smi">objContact</span>.<span class="pl-c1">ID</span> );
+
+						<span class="pl-c">// Stop default event.</span>
+						<span class="pl-k">return</span>( <span class="pl-c1">false</span> );
+					}
+					)
+			;
+
+			<span class="pl-c">// Return the raw DOM row.</span>
+			<span class="pl-k">return</span>( <span class="pl-smi">jRow</span>.<span class="pl-c1">get</span>( <span class="pl-c1">0</span> ) );
+		}
+		);
+
+	<span class="pl-c">// Append the initalized rows to the table.</span>
+	<span class="pl-c1">this</span>.<span class="pl-smi">DOMReferences</span>.<span class="pl-smi">Content</span>
+		.<span class="pl-en">empty</span>()
+		.<span class="pl-c1">append</span>( arrRows )
+	;
+}
+
+
+<span class="pl-c">// Define a method to help display any errors.</span>
+<span class="pl-smi">ContactList</span>.<span class="pl-c1">prototype</span>.<span class="pl-en">ShowErrors</span> <span class="pl-k">=</span> <span class="pl-k">function</span>( <span class="pl-smi">arrErrors</span> ){
+	<span class="pl-k">var</span> strError <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>Please review the following:<span class="pl-cce">\n</span><span class="pl-pds">"</span></span>;
+
+	<span class="pl-c">// Loop over each error to build up the error string.</span>
+	<span class="pl-smi">$</span>.<span class="pl-en">each</span>(
+		arrErrors,
+		<span class="pl-k">function</span>( <span class="pl-smi">intI</span>, <span class="pl-smi">strValue</span> ){
+			strError <span class="pl-k">+=</span> (<span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\n</span>- <span class="pl-pds">"</span></span> <span class="pl-k">+</span> strValue);
+		}
+		);
+
+	<span class="pl-c">// Alert the error.</span>
+	<span class="pl-en">alert</span>( strError );
+}
+
+
+<span class="pl-c">// ----------------------------------------------------- //</span>
+<span class="pl-c">// ----------------------------------------------------- //</span>
+
+
+<span class="pl-c">// When the document is ready, init contact list. It is important</span>
+<span class="pl-c">// that we wait for the DOM loaded event to that we have access to</span>
+<span class="pl-c">// the DOM elements.</span>
+<span class="pl-en">$</span>(
+	<span class="pl-k">function</span>(){
+
+		<span class="pl-c">// Create an instance of the contact list.</span>
+		<span class="pl-k">var</span> objContactList <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">ContactList</span>();
+
+	}
+	);

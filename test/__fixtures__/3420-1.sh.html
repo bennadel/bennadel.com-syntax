@@ -1,0 +1,45 @@
+<span class="pl-c">#!/bin/bash</span>
+
+<span class="pl-c">#</span>
+<span class="pl-c"># /etc/letsencrypt</span>
+<span class="pl-c"># WHAT: This is the default configuration directory. This is where certbot will store all</span>
+<span class="pl-c"># generated keys and issues certificates.</span>
+<span class="pl-c">#</span>
+<span class="pl-c"># /var/lib/letsencrypt</span>
+<span class="pl-c"># WHAT: This is default working directory.</span>
+<span class="pl-c">#</span>
+<span class="pl-c"># certonly</span>
+<span class="pl-c"># WHAT: This certbot subcommand tells certbot to obtain the certificate but not not</span>
+<span class="pl-c"># install it. We don't need to install it because we will be linking directly to the</span>
+<span class="pl-c"># generated certificate files from within our subsequent nginx configuration.</span>
+<span class="pl-c">#</span>
+<span class="pl-c"># -d</span>
+<span class="pl-c"># WHAT: Defines one of the domains to be used in the certificate. We can have up to 100</span>
+<span class="pl-c"># domains in a single certificate. In this case, we're obtaining a wildcard-subdomain</span>
+<span class="pl-c"># certificate (which was just made possible!) in addition to the base domain.</span>
+<span class="pl-c">#</span>
+<span class="pl-c"># --manual</span>
+<span class="pl-c"># WHAT: Tells certbot that we are going to use the "manual" plug-in, which means we will</span>
+<span class="pl-c"># require interactive instructions for passing the authentication challenge. In this case</span>
+<span class="pl-c"># (using DNS), we're going to need to know which DNS TXT entires to create in our domain</span>
+<span class="pl-c"># name servers.</span>
+<span class="pl-c">#</span>
+<span class="pl-c"># --preferred-challenges dns</span>
+<span class="pl-c"># WHAT: Defines which of the authentication challenges we want to implement with our</span>
+<span class="pl-c"># manual configuration steps.</span>
+<span class="pl-c">#</span>
+<span class="pl-c"># --server https://acme-v02.api.letsencrypt.org/directory</span>
+<span class="pl-c"># WHAT: The client end-point / resource that provides the actual certificates. The "v02"</span>
+<span class="pl-c"># end-point is the only one capable of providing wildcard SSL certificates at this time,</span>
+<span class="pl-c"># (ex, *.example.com).</span>
+<span class="pl-c">#</span>
+docker run -it --rm --name letsencrypt \
+	-v <span class="pl-s"><span class="pl-pds">"</span>/etc/letsencrypt:/etc/letsencrypt<span class="pl-pds">"</span></span> \
+	-v <span class="pl-s"><span class="pl-pds">"</span>/var/lib/letsencrypt:/var/lib/letsencrypt<span class="pl-pds">"</span></span> \
+	quay.io/letsencrypt/letsencrypt:latest \
+		certonly \
+		-d dailyprime.me \
+		-d <span class="pl-k">*</span>.dailyprime.me \
+		--manual \
+		--preferred-challenges dns \
+		--server https://acme-v02.api.letsencrypt.org/directory

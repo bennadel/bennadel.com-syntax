@@ -1,0 +1,78 @@
+<span class="pl-k">component</span>
+	<span class="pl-e">output</span> = <span class="pl-s">false</span>
+	<span class="pl-e">hint</span> = <span class="pl-s"><span class="pl-pds">"</span>I help translate application errors into appropriate response codes and user-facing messages.<span class="pl-pds">"</span></span>
+	{
+
+	<span class="pl-c">/**</span>
+<span class="pl-c">	* I return a normalized, user-safe error response for the given server-side error.</span>
+<span class="pl-c">	*/</span>
+	<span class="pl-k">public</span> <span class="pl-c1">struct</span> <span class="pl-k">function</span> <span class="pl-en">getResponse</span>( <span class="pl-k">required</span> <span class="pl-c1">any</span> <span class="pl-smi">error</span> ) {
+
+		<span class="pl-k">switch</span> ( <span class="pl-smi">error</span>.<span class="pl-smi">type</span> ) {
+			<span class="pl-k">case</span> <span class="pl-s"><span class="pl-pds">"</span>App.Model.User.Conflict<span class="pl-pds">"</span></span>:
+				<span class="pl-k">return</span> <span class="pl-en">as422</span>({
+					<span class="pl-v">type</span>: <span class="pl-smi">error</span>.<span class="pl-smi">type</span>,
+					<span class="pl-v">message</span>: <span class="pl-s"><span class="pl-pds">"</span>That email address is already in use. Please use a different email address.<span class="pl-pds">"</span></span>
+				});
+			<span class="pl-k">break</span>;
+			<span class="pl-k">case</span> <span class="pl-s"><span class="pl-pds">"</span>App.Model.User.Email.Invalid<span class="pl-pds">"</span></span>:
+				<span class="pl-k">return</span> <span class="pl-en">as422</span>({
+					<span class="pl-v">type</span>: <span class="pl-smi">error</span>.<span class="pl-smi">type</span>,
+					<span class="pl-v">message</span>: <span class="pl-s"><span class="pl-pds">"</span>Please enter a valid email address.<span class="pl-pds">"</span></span>
+				});
+			<span class="pl-k">break</span>;
+			<span class="pl-k">case</span> <span class="pl-s"><span class="pl-pds">"</span>App.Model.User.Email.TooLong<span class="pl-pds">"</span></span>:
+				<span class="pl-k">return</span> <span class="pl-en">as422</span>({
+					<span class="pl-v">type</span>: <span class="pl-smi">error</span>.<span class="pl-smi">type</span>,
+					<span class="pl-v">message</span>: <span class="pl-s"><span class="pl-pds">"</span>Your email address is too long. It must be less than 75 characters.<span class="pl-pds">"</span></span>
+				});
+			<span class="pl-k">break</span>;
+			<span class="pl-k">case</span> <span class="pl-s"><span class="pl-pds">"</span>App.Model.User.Name.Empty<span class="pl-pds">"</span></span>:
+				<span class="pl-k">return</span> <span class="pl-en">as422</span>({
+					<span class="pl-v">type</span>: <span class="pl-smi">error</span>.<span class="pl-smi">type</span>,
+					<span class="pl-v">message</span>: <span class="pl-s"><span class="pl-pds">"</span>Please provide your full name.<span class="pl-pds">"</span></span>
+				});
+			<span class="pl-k">break</span>;
+			<span class="pl-k">case</span> <span class="pl-s"><span class="pl-pds">"</span>App.Model.User.Name.TooLong<span class="pl-pds">"</span></span>:
+				<span class="pl-k">return</span> <span class="pl-en">as422</span>({
+					<span class="pl-v">type</span>: <span class="pl-smi">error</span>.<span class="pl-smi">type</span>,
+					<span class="pl-v">message</span>: <span class="pl-s"><span class="pl-pds">"</span>Your name is too long. It must be less than 20 characters.<span class="pl-pds">"</span></span>
+				});
+			<span class="pl-k">break</span>;
+			<span class="pl-k">case</span> <span class="pl-s"><span class="pl-pds">"</span>App.Model.User.Password.TooShort<span class="pl-pds">"</span></span>:
+				<span class="pl-k">return</span> <span class="pl-en">as422</span>({
+					<span class="pl-v">type</span>: <span class="pl-smi">error</span>.<span class="pl-smi">type</span>,
+					<span class="pl-v">message</span>: <span class="pl-s"><span class="pl-pds">"</span>For security purposes, your password must be longer than 10 characters.<span class="pl-pds">"</span></span>
+				});
+			<span class="pl-k">break</span>;
+			<span class="pl-k">default</span>:
+				<span class="pl-c">// Demo should never get here.</span>
+				<span class="pl-c1">writeDump</span>( <span class="pl-smi">error</span> );
+				<span class="pl-k">abort</span>;
+			<span class="pl-k">break</span>;
+		}
+
+	}
+
+	<span class="pl-c">// ---</span>
+	<span class="pl-c">// PRIVATE METHODS.</span>
+	<span class="pl-c">// ---</span>
+
+	<span class="pl-c">/**</span>
+<span class="pl-c">	* I generate a 422 response with the given overrides.</span>
+<span class="pl-c">	*/</span>
+	<span class="pl-k">private</span> <span class="pl-c1">struct</span> <span class="pl-k">function</span> <span class="pl-en">as422</span>( <span class="pl-k">required</span> <span class="pl-c1">struct</span> <span class="pl-smi">overrides</span> ) {
+
+		<span class="pl-k">var</span> <span class="pl-smi">response</span> <span class="pl-k">=</span> {
+			<span class="pl-v">statusCode</span>: <span class="pl-c1">422</span>,
+			<span class="pl-v">statusText</span>: <span class="pl-s"><span class="pl-pds">"</span>Unprocessable Entity<span class="pl-pds">"</span></span>,
+			<span class="pl-v">type</span>: <span class="pl-s"><span class="pl-pds">"</span>App.UnprocessableEntity<span class="pl-pds">"</span></span>,
+			<span class="pl-v">title</span>: <span class="pl-s"><span class="pl-pds">"</span>Unprocessable Entity<span class="pl-pds">"</span></span>,
+			<span class="pl-v">message</span>: <span class="pl-s"><span class="pl-pds">"</span>Your request cannot be processed in its current state. Please validate the information in your request and try submitting it again.<span class="pl-pds">"</span></span>
+		};
+
+		<span class="pl-k">return</span> <span class="pl-smi">response</span>.<span class="pl-c1">append</span>( <span class="pl-smi">overrides</span> );
+
+	}
+
+}

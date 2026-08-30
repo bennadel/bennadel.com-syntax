@@ -1,0 +1,106 @@
+&lt;!doctype html&gt;
+&lt;<span class="pl-ent">html</span>&gt;
+&lt;<span class="pl-ent">head</span>&gt;
+	&lt;<span class="pl-ent">meta</span> <span class="pl-e">charset</span>=<span class="pl-s"><span class="pl-pds">"</span>utf-8<span class="pl-pds">"</span></span> /&gt;
+
+	&lt;<span class="pl-ent">title</span>&gt;
+		CSS Flexbox: Creating The InVision Avatar Row Widget (Row-Reverse)
+	&lt;/<span class="pl-ent">title</span>&gt;
+
+	&lt;<span class="pl-ent">style</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/css<span class="pl-pds">"</span></span>&gt;
+
+		<span class="pl-ent">body</span> {
+			<span class="pl-c1">background-color</span>: <span class="pl-c1">#1F2532</span> ;
+			<span class="pl-c1">display</span>: <span class="pl-c1">flex</span> ; <span class="pl-c">/* Flex container for UL. */</span>
+			<span class="pl-c1">height</span>: <span class="pl-c1">100</span><span class="pl-k">vh</span> ;
+			<span class="pl-c1">margin</span>: <span class="pl-c1">0</span><span class="pl-k">px</span> <span class="pl-c1">0</span><span class="pl-k">px</span> <span class="pl-c1">0</span><span class="pl-k">px</span> <span class="pl-c1">0</span><span class="pl-k">px</span> ;
+		}
+
+		<span class="pl-ent">h1</span> {
+			<span class="pl-c1">color</span>: <span class="pl-c1">#FFFFFF</span> ;
+			<span class="pl-c1">left</span>: <span class="pl-c1">20</span><span class="pl-k">px</span> ;
+			<span class="pl-c1">position</span>: <span class="pl-c1">absolute</span> ;
+			<span class="pl-c1">top</span>: <span class="pl-c1">0</span><span class="pl-k">px</span> ;
+		}
+
+		<span class="pl-ent">ul</span><span class="pl-e">.avatars</span> {
+			<span class="pl-c1">display</span>: <span class="pl-c1">flex</span> ; <span class="pl-c">/* Causes LI items to display in row. */</span>
+			<span class="pl-c1">list-style-type</span>: <span class="pl-c1">none</span> ;
+			<span class="pl-c1">margin</span>: <span class="pl-c1">auto</span> ; <span class="pl-c">/* Centers vertically / horizontally in flex container. */</span>
+			<span class="pl-c1">padding</span>: <span class="pl-c1">0</span><span class="pl-k">px</span> <span class="pl-c1">7</span><span class="pl-k">px</span> <span class="pl-c1">0</span><span class="pl-k">px</span> <span class="pl-c1">0</span><span class="pl-k">px</span> ;
+
+			<span class="pl-c">/*</span>
+<span class="pl-c">				By using the row-reverse layout, the visual ordering will be opposite of</span>
+<span class="pl-c">				the DOM ordering. This will allows us to stack the items in the opposite</span>
+<span class="pl-c">				direction of the natural stacking order without having to mess with the</span>
+<span class="pl-c">				zIndex value. The MAJOR DOWNSIDE is that the HTML itself now reads</span>
+<span class="pl-c">				backwards, which super janky.</span>
+<span class="pl-c">			*/</span>
+			<span class="pl-c1">flex-direction</span>: <span class="pl-c1">row-reverse</span> ;
+		}
+
+		<span class="pl-ent">li</span><span class="pl-e">.avatars__item</span> {
+			<span class="pl-c1">height</span>: <span class="pl-c1">49</span><span class="pl-k">px</span> ;
+			<span class="pl-c1">margin</span>: <span class="pl-c1">0</span><span class="pl-k">px</span> <span class="pl-c1">0</span><span class="pl-k">px</span> <span class="pl-c1">0</span><span class="pl-k">px</span> <span class="pl-c1">0</span><span class="pl-k">px</span> ;
+			<span class="pl-c1">padding</span>: <span class="pl-c1">0</span><span class="pl-k">px</span> <span class="pl-c1">0</span><span class="pl-k">px</span> <span class="pl-c1">0</span><span class="pl-k">px</span> <span class="pl-c1">0</span><span class="pl-k">px</span> ;
+			<span class="pl-c1">position</span>: <span class="pl-c1">relative</span> ;
+			<span class="pl-c1">width</span>: <span class="pl-c1">42</span><span class="pl-k">px</span> ; <span class="pl-c">/* Forces flex items to be smaller than their contents. */</span>
+		}
+
+		<span class="pl-c">/*</span>
+<span class="pl-c">			These items are all 49px wide while the flex-item (in which they live) is</span>
+<span class="pl-c">			only 42px wide. As such, there will be several pixels of overflow content,</span>
+<span class="pl-c">			which will be stacked using the natural DOM-based stacking order.</span>
+<span class="pl-c">		*/</span>
+		<span class="pl-ent">img</span><span class="pl-e">.avatars__img</span>,
+		<span class="pl-ent">span</span><span class="pl-e">.avatars__initials</span>,
+		<span class="pl-ent">span</span><span class="pl-e">.avatars__others</span> {
+			<span class="pl-c1">background-color</span>: <span class="pl-c1">#596376</span> ;
+			<span class="pl-c1">border</span>: <span class="pl-c1">2</span><span class="pl-k">px</span> <span class="pl-c1">solid</span> <span class="pl-c1">#1F2532</span> ;
+			<span class="pl-c1">border-radius</span>: <span class="pl-c1">100</span><span class="pl-k">px</span> <span class="pl-c1">100</span><span class="pl-k">px</span> <span class="pl-c1">100</span><span class="pl-k">px</span> <span class="pl-c1">100</span><span class="pl-k">px</span> ;
+			<span class="pl-c1">color</span>: <span class="pl-c1">#FFFFFF</span> ;
+			<span class="pl-c1">display</span>: <span class="pl-c1">block</span> ;
+			<span class="pl-c1">font-family</span>: <span class="pl-c1">sans-serif</span> ;
+			<span class="pl-c1">font-size</span>: <span class="pl-c1">12</span><span class="pl-k">px</span> ;
+			<span class="pl-c1">font-weight</span>: <span class="pl-c1">100</span> ;
+			<span class="pl-c1">height</span>: <span class="pl-c1">45</span><span class="pl-k">px</span> ;
+			<span class="pl-c1">line-height</span>: <span class="pl-c1">45</span><span class="pl-k">px</span> ;
+			<span class="pl-c1">text-align</span>: <span class="pl-c1">center</span> ;
+			<span class="pl-c1">width</span>: <span class="pl-c1">45</span><span class="pl-k">px</span> ;
+		}
+
+		<span class="pl-ent">span</span><span class="pl-e">.avatars__others</span> {
+			<span class="pl-c1">background-color</span>: <span class="pl-c1">#1E8FE1</span> ;
+		}
+
+	&lt;/<span class="pl-ent">style</span>&gt;
+&lt;/<span class="pl-ent">head</span>&gt;
+&lt;<span class="pl-ent">body</span>&gt;
+
+	&lt;<span class="pl-ent">h1</span>&gt;
+		CSS Flexbox: Creating The InVision Avatar Row Widget (Row-Reverse)
+	&lt;/<span class="pl-ent">h1</span>&gt;
+
+	&lt;<span class="pl-ent">ul</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>avatars<span class="pl-pds">"</span></span>&gt;
+		&lt;<span class="pl-ent">li</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>avatars__item<span class="pl-pds">"</span></span>&gt;
+			&lt;<span class="pl-ent">span</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>avatars__others<span class="pl-pds">"</span></span>&gt;+3&lt;/<span class="pl-ent">span</span>&gt;
+		&lt;/<span class="pl-ent">li</span>&gt;
+		&lt;<span class="pl-ent">li</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>avatars__item<span class="pl-pds">"</span></span>&gt;
+			&lt;<span class="pl-ent">span</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>avatars__initials<span class="pl-pds">"</span></span>&gt;BS&lt;/<span class="pl-ent">span</span>&gt;
+		&lt;/<span class="pl-ent">li</span>&gt;
+		&lt;<span class="pl-ent">li</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>avatars__item<span class="pl-pds">"</span></span>&gt;
+			&lt;<span class="pl-ent">span</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>avatars__initials<span class="pl-pds">"</span></span>&gt;KD&lt;/<span class="pl-ent">span</span>&gt;
+		&lt;/<span class="pl-ent">li</span>&gt;
+		&lt;<span class="pl-ent">li</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>avatars__item<span class="pl-pds">"</span></span>&gt;
+			&lt;<span class="pl-ent">img</span> <span class="pl-e">src</span>=<span class="pl-s"><span class="pl-pds">"</span>./jill.png<span class="pl-pds">"</span></span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>avatars__img<span class="pl-pds">"</span></span> /&gt;
+		&lt;/<span class="pl-ent">li</span>&gt;
+		&lt;<span class="pl-ent">li</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>avatars__item<span class="pl-pds">"</span></span>&gt;
+			&lt;<span class="pl-ent">img</span> <span class="pl-e">src</span>=<span class="pl-s"><span class="pl-pds">"</span>./lucy.png<span class="pl-pds">"</span></span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>avatars__img<span class="pl-pds">"</span></span> /&gt;
+		&lt;/<span class="pl-ent">li</span>&gt;
+		&lt;<span class="pl-ent">li</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>avatars__item<span class="pl-pds">"</span></span>&gt;
+			&lt;<span class="pl-ent">img</span> <span class="pl-e">src</span>=<span class="pl-s"><span class="pl-pds">"</span>./ben.png<span class="pl-pds">"</span></span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>avatars__img<span class="pl-pds">"</span></span> /&gt;
+		&lt;/<span class="pl-ent">li</span>&gt;
+	&lt;/<span class="pl-ent">ul</span>&gt;
+
+&lt;/<span class="pl-ent">body</span>&gt;
+&lt;/<span class="pl-ent">html</span>&gt;

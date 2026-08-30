@@ -1,0 +1,103 @@
+&lt;<span class="pl-ent">cfscript</span>&gt;
+
+	<span class="pl-smi">readings</span> <span class="pl-k">=</span> [
+		{ <span class="pl-v">label</span>: <span class="pl-s"><span class="pl-pds">"</span>2022-01<span class="pl-pds">"</span></span>, <span class="pl-v">value</span>: <span class="pl-c1">randRange</span>( <span class="pl-c1">1</span>, <span class="pl-c1">200</span> ) },
+		{ <span class="pl-v">label</span>: <span class="pl-s"><span class="pl-pds">"</span>2022-02<span class="pl-pds">"</span></span>, <span class="pl-v">value</span>: <span class="pl-c1">randRange</span>( <span class="pl-c1">1</span>, <span class="pl-c1">200</span> ) },
+		{ <span class="pl-v">label</span>: <span class="pl-s"><span class="pl-pds">"</span>2022-03<span class="pl-pds">"</span></span>, <span class="pl-v">value</span>: <span class="pl-c1">randRange</span>( <span class="pl-c1">1</span>, <span class="pl-c1">200</span> ) },
+		{ <span class="pl-v">label</span>: <span class="pl-s"><span class="pl-pds">"</span>2022-04<span class="pl-pds">"</span></span>, <span class="pl-v">value</span>: <span class="pl-c1">randRange</span>( <span class="pl-c1">1</span>, <span class="pl-c1">200</span> ) },
+		{ <span class="pl-v">label</span>: <span class="pl-s"><span class="pl-pds">"</span>2022-05<span class="pl-pds">"</span></span>, <span class="pl-v">value</span>: <span class="pl-c1">randRange</span>( <span class="pl-c1">1</span>, <span class="pl-c1">200</span> ) },
+		{ <span class="pl-v">label</span>: <span class="pl-s"><span class="pl-pds">"</span>2022-06<span class="pl-pds">"</span></span>, <span class="pl-v">value</span>: <span class="pl-c1">randRange</span>( <span class="pl-c1">1</span>, <span class="pl-c1">200</span> ) },
+		{ <span class="pl-v">label</span>: <span class="pl-s"><span class="pl-pds">"</span>2022-07<span class="pl-pds">"</span></span>, <span class="pl-v">value</span>: <span class="pl-c1">randRange</span>( <span class="pl-c1">1</span>, <span class="pl-c1">200</span> ) },
+		{ <span class="pl-v">label</span>: <span class="pl-s"><span class="pl-pds">"</span>2022-08<span class="pl-pds">"</span></span>, <span class="pl-v">value</span>: <span class="pl-c1">randRange</span>( <span class="pl-c1">1</span>, <span class="pl-c1">200</span> ) },
+		{ <span class="pl-v">label</span>: <span class="pl-s"><span class="pl-pds">"</span>2022-09<span class="pl-pds">"</span></span>, <span class="pl-v">value</span>: <span class="pl-c1">randRange</span>( <span class="pl-c1">1</span>, <span class="pl-c1">200</span> ) },
+		{ <span class="pl-v">label</span>: <span class="pl-s"><span class="pl-pds">"</span>2022-10<span class="pl-pds">"</span></span>, <span class="pl-v">value</span>: <span class="pl-c1">randRange</span>( <span class="pl-c1">1</span>, <span class="pl-c1">200</span> ) },
+		{ <span class="pl-v">label</span>: <span class="pl-s"><span class="pl-pds">"</span>2022-11<span class="pl-pds">"</span></span>, <span class="pl-v">value</span>: <span class="pl-c1">randRange</span>( <span class="pl-c1">1</span>, <span class="pl-c1">200</span> ) },
+		{ <span class="pl-v">label</span>: <span class="pl-s"><span class="pl-pds">"</span>2022-12<span class="pl-pds">"</span></span>, <span class="pl-v">value</span>: <span class="pl-c1">randRange</span>( <span class="pl-c1">1</span>, <span class="pl-c1">200</span> ) }
+	];
+
+&lt;/<span class="pl-ent">cfscript</span>&gt;
+&lt;!doctype html&gt;
+&lt;<span class="pl-ent">html</span> <span class="pl-e">lang</span>=<span class="pl-s"><span class="pl-pds">"</span>en<span class="pl-pds">"</span></span>&gt;
+&lt;<span class="pl-ent">head</span>&gt;
+	&lt;<span class="pl-ent">meta</span> <span class="pl-e">charset</span>=<span class="pl-s"><span class="pl-pds">"</span>utf-8<span class="pl-pds">"</span></span> /&gt;
+	&lt;<span class="pl-ent">style</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/css<span class="pl-pds">"</span></span>&gt;
+
+		<span class="pl-c">/* The chart is a row-oriented flexbox container. */</span>
+		<span class="pl-e">.chart</span> {
+			<span class="pl-c1">border</span>: <span class="pl-c1">3</span><span class="pl-k">px</span> <span class="pl-c1">solid</span> <span class="pl-c1">#666666</span> ;
+			<span class="pl-c1">display</span>: <span class="pl-c1">flex</span> ;
+			<span class="pl-c1">font-family</span>: <span class="pl-c1">monospace</span> ;
+			<span class="pl-c1">gap</span>: <span class="pl-c1">10</span><span class="pl-k">px</span> ;
+			<span class="pl-c1">margin</span>: <span class="pl-c1">0</span><span class="pl-k">px</span> <span class="pl-c1">0</span><span class="pl-k">px</span> <span class="pl-c1">0</span><span class="pl-k">px</span> <span class="pl-c1">0</span><span class="pl-k">px</span> ;
+			<span class="pl-c1">padding</span>: <span class="pl-c1">10</span><span class="pl-k">px</span> <span class="pl-c1">13</span><span class="pl-k">px</span> <span class="pl-c1">8</span><span class="pl-k">px</span> <span class="pl-c1">13</span><span class="pl-k">px</span> ;
+		}
+		<span class="pl-c">/*</span>
+<span class="pl-c">			Each reading in the chart is a column-oriented flexbox container. The items in</span>
+<span class="pl-c">			this flexbox container are REVERSED so that the label renders at the bottom,</span>
+<span class="pl-c">			visually, but is still the first element, semantically.</span>
+<span class="pl-c">		*/</span>
+		<span class="pl-e">.chart__reading</span> {
+			<span class="pl-c1">display</span>: <span class="pl-c1">flex</span> ;
+			<span class="pl-c1">flex</span>: <span class="pl-c1">1</span> <span class="pl-c1">1</span> <span class="pl-c1">auto</span> ;
+			<span class="pl-c1">flex-direction</span>: <span class="pl-c1">column-reverse</span> ;
+			<span class="pl-c1">gap</span>: <span class="pl-c1">5</span><span class="pl-k">px</span> ;
+			<span class="pl-c1">height</span>: <span class="pl-c1">250</span><span class="pl-k">px</span> ;
+			<span class="pl-c1">margin</span>: <span class="pl-c1">0</span><span class="pl-k">px</span> <span class="pl-c1">0</span><span class="pl-k">px</span> <span class="pl-c1">0</span><span class="pl-k">px</span> <span class="pl-c1">0</span><span class="pl-k">px</span> ;
+		}
+		<span class="pl-e">.chart__label</span> {
+			<span class="pl-c1">flex</span>: <span class="pl-c1">0</span> <span class="pl-c1">0</span> <span class="pl-c1">auto</span> ;
+			<span class="pl-c1">margin</span>: <span class="pl-c1">0</span><span class="pl-k">px</span> <span class="pl-c1">0</span><span class="pl-k">px</span> <span class="pl-c1">0</span><span class="pl-k">px</span> <span class="pl-c1">0</span><span class="pl-k">px</span> ;
+			<span class="pl-c1">text-align</span>: <span class="pl-c1">center</span> ;
+		}
+		<span class="pl-e">.chart__value</span> {
+			<span class="pl-c1">flex</span>: <span class="pl-c1">0</span> <span class="pl-c1">0</span> <span class="pl-c1">auto</span> ;
+			<span class="pl-c1">margin</span>: <span class="pl-c1">0</span><span class="pl-k">px</span> <span class="pl-c1">0</span><span class="pl-k">px</span> <span class="pl-c1">0</span><span class="pl-k">px</span> <span class="pl-c1">0</span><span class="pl-k">px</span> ;
+			<span class="pl-c1">text-align</span>: <span class="pl-c1">center</span> ;
+		}
+		<span class="pl-e">.chart__bar</span> {
+			<span class="pl-c1">background-color</span>: <span class="pl-c1">#2196f3</span> ;
+			<span class="pl-c1">border-radius</span>: <span class="pl-c1">3</span><span class="pl-k">px</span> <span class="pl-c1">3</span><span class="pl-k">px</span> <span class="pl-c1">3</span><span class="pl-k">px</span> <span class="pl-c1">3</span><span class="pl-k">px</span> ;
+			<span class="pl-c1">display</span>: <span class="pl-c1">block</span> ;
+			<span class="pl-c1">margin-top</span>: <span class="pl-c1">8</span><span class="pl-k">px</span> ;
+		}
+
+	&lt;/<span class="pl-ent">style</span>&gt;
+&lt;/<span class="pl-ent">head</span>&gt;
+&lt;<span class="pl-ent">body</span>&gt;
+	&lt;<span class="pl-ent">cfoutput</span>&gt;
+
+		&lt;<span class="pl-ent">h1</span>&gt;
+			Using CSS Flexbox To Create A Simple Bar Chart
+		&lt;/<span class="pl-ent">h1</span>&gt;
+
+		&lt;<span class="pl-ent">dl</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>chart<span class="pl-pds">"</span></span>&gt;
+			&lt;<span class="pl-ent">cfloop</span> <span class="pl-e">item</span>=<span class="pl-s"><span class="pl-pds">"</span>reading<span class="pl-pds">"</span></span> <span class="pl-e">array</span>=<span class="pl-s"><span class="pl-pds">"</span>#<span class="pl-smi">readings</span>#<span class="pl-pds">"</span></span>&gt;
+				<span class="pl-c">&lt;!---</span>
+<span class="pl-c">					NOTE: In modern HTML, it's valid to wrap each Description Term (DT)</span>
+<span class="pl-c">					and its associated Description Details (DD) in a DIV. This gives us</span>
+<span class="pl-c">					greater control over the rendering of the content.</span>
+<span class="pl-c">				---&gt;</span>
+				&lt;<span class="pl-ent">div</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>chart__reading<span class="pl-pds">"</span></span>&gt;
+
+					&lt;<span class="pl-ent">dt</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>chart__label<span class="pl-pds">"</span></span>&gt;
+						#<span class="pl-c1">encodeForHtml</span>( <span class="pl-smi">reading</span>.<span class="pl-smi">label</span> )#
+					&lt;/<span class="pl-ent">dt</span>&gt;
+
+					&lt;<span class="pl-ent">dd</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>chart__value<span class="pl-pds">"</span></span>&gt;
+						#<span class="pl-c1">encodeForHtml</span>( <span class="pl-smi">reading</span>.<span class="pl-smi">value</span> )#
+
+						<span class="pl-c">&lt;!--- Visual rendering of the "bar". ---&gt;</span>
+						&lt;<span class="pl-ent">span</span>
+							<span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>chart__bar<span class="pl-pds">"</span></span>
+							<span class="pl-e">style</span>=<span class="pl-s"><span class="pl-pds">"</span><span class="pl-c1">height</span>: #<span class="pl-smi">reading</span>.<span class="pl-smi">value</span>#px ;<span class="pl-pds">"</span></span>&gt;
+						&lt;/<span class="pl-ent">span</span>&gt;
+					&lt;/<span class="pl-ent">dd</span>&gt;
+
+				&lt;/<span class="pl-ent">div</span>&gt;
+			&lt;/<span class="pl-ent">cfloop</span>&gt;
+		&lt;/<span class="pl-ent">dl</span>&gt;
+
+	&lt;/<span class="pl-ent">cfoutput</span>&gt;
+
+&lt;/<span class="pl-ent">body</span>&gt;
+&lt;/<span class="pl-ent">html</span>&gt;

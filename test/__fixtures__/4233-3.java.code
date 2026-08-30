@@ -1,0 +1,8 @@
+DbDoc doc = new DbDocImpl().add("field1", new JsonString().setValue("value 1")).add("field2", new JsonNumber().setValue("12345.44E22"))
+         .add("field3", JsonLiteral.TRUE).add("field4", JsonLiteral.FALSE).add("field5", JsonLiteral.NULL)
+         .add("field6",
+                 new DbDocImpl().add("inner field 1", new JsonString().setValue("inner value 1")).add("inner field 2", new JsonNumber().setValue("2"))
+                         .add("inner field 3", JsonLiteral.TRUE).add("inner field 4", JsonLiteral.FALSE).add("inner field 5", JsonLiteral.NULL)
+                         .add("inner field 6", new JsonArray()).add("inner field 7", new DbDocImpl()))
+         .add("field7", new JsonArray().addValue(new JsonString().setValue("arr1")).addValue(new JsonNumber().setValue("3")).addValue(JsonLiteral.TRUE)
+                 .addValue(JsonLiteral.FALSE).addValue(JsonLiteral.NULL).addValue(new JsonArray()).addValue(new DbDocImpl()));

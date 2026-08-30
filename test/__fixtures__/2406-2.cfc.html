@@ -1,0 +1,239 @@
+&lt;<span class="pl-k">cfcomponent</span> <span class="pl-e">output</span>=<span class="pl-s"><span class="pl-pds">"</span>false<span class="pl-pds">"</span></span>&gt;
+&lt;<span class="pl-ent">cfscript</span>&gt;
+
+
+	<span class="pl-c">// I map the incoming opaque pixels to shapes within the sprite</span>
+	<span class="pl-c">// image.</span>
+	<span class="pl-k">function</span> <span class="pl-en">init</span>(){
+
+		<span class="pl-c">// I am the collection of known, valid shapes. As shapes</span>
+		<span class="pl-c">// evolve in the map, some may be absorbed by others and will</span>
+		<span class="pl-c">// be removed from this collection.</span>
+		<span class="pl-c1">variables</span>.<span class="pl-smi">shapes</span> <span class="pl-k">=</span> {};
+
+		<span class="pl-c">// Each shape is keyed by its own unique ID.</span>
+		<span class="pl-c1">variables</span>.<span class="pl-smi">shapeIDIndex</span> <span class="pl-k">=</span> <span class="pl-c1">0</span>;
+
+		<span class="pl-c">// Return this object reference.</span>
+		<span class="pl-k">return</span>( <span class="pl-c1">this</span> );
+
+	};
+
+
+	<span class="pl-c">// I add the given shape pixel to the map. When a pixel is added,</span>
+	<span class="pl-c">// it is either consumed by an existing shape, or is the means to</span>
+	<span class="pl-c">// start a completely new shape.</span>
+	<span class="pl-k">function</span> <span class="pl-en">addPixel</span>( <span class="pl-en">Numeric</span> <span class="pl-smi">x</span>, <span class="pl-en">Numeric</span> <span class="pl-smi">y</span> ){
+
+		<span class="pl-c">// Check the surrounding pixels for known shapes.</span>
+		<span class="pl-k">var</span> <span class="pl-smi">surroundingShapes</span> <span class="pl-k">=</span> <span class="pl-c1">this</span>.<span class="pl-en">_getSurroundingShapes</span>( <span class="pl-smi">x</span>, <span class="pl-smi">y</span> );
+
+		<span class="pl-c">// Check to see if we have any surrounding shapes.</span>
+		<span class="pl-k">if</span> (<span class="pl-c1">arrayLen</span>( <span class="pl-smi">surroundingShapes</span> )){
+
+			<span class="pl-c">// Add the current pixel to the first known shape.</span>
+			<span class="pl-smi">surroundingShapes</span>[ <span class="pl-c1">1</span> ].<span class="pl-en">addPixel</span>( <span class="pl-smi">x</span>, <span class="pl-smi">y</span> );
+
+			<span class="pl-c">// If this new pixel has bridged the gap between two</span>
+			<span class="pl-c">// known shapes, when this pixel has united the two</span>
+			<span class="pl-c">// shapes into one shape. As such, one of the surrounding</span>
+			<span class="pl-c">// shapes must absorb the other ones.</span>
+			<span class="pl-c1">this</span>.<span class="pl-en">_mergeShapes</span>( <span class="pl-smi">surroundingShapes</span> );
+
+			<span class="pl-c">// Nothing mroe to do with this pixel.</span>
+			<span class="pl-k">return</span>;
+
+		}
+
+		<span class="pl-c">// If we made it this far then we have a completely new shape.</span>
+		<span class="pl-c">// Create the shape with a new, unique ID.</span>
+		<span class="pl-k">var</span> <span class="pl-smi">shape</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">SpriteShape</span>(
+			<span class="pl-k">++</span><span class="pl-c1">variables</span>.<span class="pl-smi">shapeIDIndex</span>,
+			<span class="pl-smi">x</span>,
+			<span class="pl-smi">y</span>
+		);
+
+		<span class="pl-c">// Store the new shape.</span>
+		<span class="pl-c1">variables</span>.<span class="pl-smi">shapes</span>[ <span class="pl-smi">shape</span>.<span class="pl-en">getID</span>() ] <span class="pl-k">=</span> <span class="pl-smi">shape</span>;
+
+	}
+
+
+	<span class="pl-c">// I get the shape that contains the given pixel.</span>
+	<span class="pl-k">function</span> <span class="pl-en">_getShapeContainingPixel</span>( <span class="pl-en">Numeric</span> <span class="pl-smi">x</span>, <span class="pl-en">Numeric</span> <span class="pl-smi">y</span> ){
+
+		<span class="pl-c">// Short-circuit some out-of-bounds cases.</span>
+		<span class="pl-k">if</span> (
+			(<span class="pl-smi">x</span> <span class="pl-k">&lt;</span> <span class="pl-c1">0</span>) <span class="pl-k">||</span>
+			(<span class="pl-smi">y</span> <span class="pl-k">&lt;</span> <span class="pl-c1">0</span>)
+			){
+
+			<span class="pl-c">// These are not valid coordinates.</span>
+			<span class="pl-k">return</span>;
+
+		}
+
+		<span class="pl-c">// Loop over the known shapes to if any of them contain a</span>
+		<span class="pl-c">// pixel with the given coordinates.</span>
+		<span class="pl-k">for</span> (<span class="pl-k">var</span> <span class="pl-smi">shapeID</span> <span class="pl-k">in</span> <span class="pl-c1">variables</span>.<span class="pl-smi">shapes</span>){
+
+			<span class="pl-k">var</span> <span class="pl-smi">shape</span> <span class="pl-k">=</span> <span class="pl-c1">variables</span>.<span class="pl-smi">shapes</span>[ <span class="pl-smi">shapeID</span> ];
+
+			<span class="pl-k">if</span> (<span class="pl-smi">shape</span>.<span class="pl-en">containsPixel</span>( <span class="pl-smi">x</span>, <span class="pl-smi">y</span> )){
+
+				<span class="pl-k">return</span>( <span class="pl-smi">shape</span> );
+
+			}
+
+		}
+
+		<span class="pl-c">// If we made it this far, no shape was found.</span>
+		<span class="pl-k">return</span>;
+
+	}
+
+
+	<span class="pl-c">// I return the unique set of shapes found in the sprite map.</span>
+	<span class="pl-k">function</span> <span class="pl-en">getShapes</span>(){
+
+		<span class="pl-k">var</span> <span class="pl-smi">shapes</span> <span class="pl-k">=</span> [];
+
+		<span class="pl-c">// Convert the key-based collection into an indexed collection.</span>
+		<span class="pl-k">for</span> (<span class="pl-k">var</span> <span class="pl-smi">shapeID</span> <span class="pl-k">in</span> <span class="pl-c1">variables</span>.<span class="pl-smi">shapes</span>){
+
+			<span class="pl-c1">arrayAppend</span>(
+				<span class="pl-smi">shapes</span>,
+				<span class="pl-c1">variables</span>.<span class="pl-smi">shapes</span>[ <span class="pl-smi">shapeID</span> ]
+			);
+
+		}
+
+		<span class="pl-c">// Return the shapes.</span>
+		<span class="pl-k">return</span>( <span class="pl-smi">shapes</span> );
+
+	}
+
+
+	<span class="pl-c">// I get the shapes in the pixels surrounding the given coordinate.</span>
+	<span class="pl-k">function</span> <span class="pl-en">_getSurroundingShapes</span>( <span class="pl-en">Numeric</span> <span class="pl-smi">x</span>, <span class="pl-en">Numeric</span> <span class="pl-smi">y</span> ){
+
+		<span class="pl-c">// Define the four potentionally known coorindates in relation</span>
+		<span class="pl-c">// to the given pixel. The other direcitons (east and south)</span>
+		<span class="pl-c">// have not yet been explored.</span>
+		<span class="pl-c">//</span>
+		<span class="pl-c">// NOTE: This direcitonal assumption is based on the logic</span>
+		<span class="pl-c">// contained within the scanning alogrithm of the SpriteMapper</span>
+		<span class="pl-c">// component. As such, this part of the code is strongly</span>
+		<span class="pl-c">// coupled to the other component.</span>
+		<span class="pl-k">var</span> <span class="pl-smi">pixels</span> <span class="pl-k">=</span> [
+			{
+				<span class="pl-v">x</span> = (<span class="pl-smi">x</span> <span class="pl-k">-</span> <span class="pl-c1">1</span>),
+				<span class="pl-v">y</span> = <span class="pl-smi">y</span>
+			},
+			{
+				<span class="pl-v">x</span> = (<span class="pl-smi">x</span> <span class="pl-k">-</span> <span class="pl-c1">1</span>),
+				<span class="pl-v">y</span> = (<span class="pl-smi">y</span> <span class="pl-k">-</span> <span class="pl-c1">1</span>)
+			},
+			{
+				<span class="pl-v">x</span> = <span class="pl-smi">x</span>,
+				<span class="pl-v">y</span> = (<span class="pl-smi">y</span> <span class="pl-k">-</span> <span class="pl-c1">1</span>)
+			},
+			{
+				<span class="pl-v">x</span> = (<span class="pl-smi">x</span> <span class="pl-k">+</span> <span class="pl-c1">1</span>),
+				<span class="pl-v">y</span> = (<span class="pl-smi">y</span> <span class="pl-k">-</span> <span class="pl-c1">1</span>)
+			}
+		];
+
+		<span class="pl-c">// Define the shapes that surround the given pixel.</span>
+		<span class="pl-k">var</span> <span class="pl-smi">shapes</span> <span class="pl-k">=</span> [];
+
+		<span class="pl-c">// Keep track of the IDs of the shapes we found, so that we</span>
+		<span class="pl-c">// keep the collection of returned shapes unique.</span>
+		<span class="pl-k">var</span> <span class="pl-smi">shapeIDs</span> <span class="pl-k">=</span> {};
+
+		<span class="pl-c">// For a small optimization, we know that if we find a shape</span>
+		<span class="pl-c">// in the first pixel, we can skip the check for the middle</span>
+		<span class="pl-c">// two pixels and jump to the last pixel.</span>
+		<span class="pl-k">var</span> <span class="pl-smi">skipMiddlePixels</span> <span class="pl-k">=</span> <span class="pl-c1">false</span>;
+
+		<span class="pl-c">// Loop over connected pixels to gather regions.</span>
+		<span class="pl-k">for</span> (<span class="pl-k">var</span> <span class="pl-smi">i</span> <span class="pl-k">=</span> <span class="pl-c1">1</span> ; <span class="pl-smi">i</span> <span class="pl-k">&lt;=</span> <span class="pl-c1">4</span> ; <span class="pl-smi">i</span><span class="pl-k">++</span>){
+
+			<span class="pl-k">if</span> (<span class="pl-smi">skipMiddlePixels</span> <span class="pl-k">&amp;&amp;</span> (<span class="pl-smi">i</span> <span class="pl-k">&lt;</span> <span class="pl-c1">4</span>)){
+
+				<span class="pl-k">continue</span>;
+
+			}
+
+			<span class="pl-k">var</span> <span class="pl-smi">pixel</span> <span class="pl-k">=</span> <span class="pl-smi">pixels</span>[ <span class="pl-smi">i</span> ];
+
+			<span class="pl-c">// Get the parent shape (if there is one).</span>
+			<span class="pl-k">var</span> <span class="pl-smi">shape</span> <span class="pl-k">=</span> <span class="pl-c1">this</span>.<span class="pl-en">_getShapeContainingPixel</span>( <span class="pl-smi">pixel</span>.<span class="pl-smi">x</span>, <span class="pl-smi">pixel</span>.<span class="pl-smi">y</span> );
+
+			<span class="pl-c">// If we found a shape at the given coordinates,</span>
+			<span class="pl-c">// add it to the collection.</span>
+			<span class="pl-k">if</span> (
+				<span class="pl-k">!</span><span class="pl-c1">isNull</span>( <span class="pl-smi">shape</span> ) <span class="pl-k">&amp;&amp;</span>
+				<span class="pl-k">!</span><span class="pl-c1">structKeyExists</span>( <span class="pl-smi">shapeIDs</span>, <span class="pl-smi">shape</span>.<span class="pl-en">getID</span>() )
+				){
+
+				<span class="pl-c">// Add this shape to the collection.</span>
+				<span class="pl-c1">arrayAppend</span>( <span class="pl-smi">shapes</span>, <span class="pl-smi">shape</span> );
+
+				<span class="pl-c">// Cache the ID.</span>
+				<span class="pl-smi">shapeIDs</span>[ <span class="pl-smi">shape</span>.<span class="pl-en">getID</span>() ] <span class="pl-k">=</span> <span class="pl-c1">true</span>;
+
+				<span class="pl-c">// If this is the first pixel, then skip directly</span>
+				<span class="pl-c">// to the last pixel.</span>
+				<span class="pl-k">if</span> (<span class="pl-smi">i</span> <span class="pl-k">==</span> <span class="pl-c1">1</span>){
+
+					<span class="pl-smi">skipMiddlePixels</span> <span class="pl-k">=</span> <span class="pl-c1">true</span>;
+
+				}
+
+			}
+
+		}
+
+		<span class="pl-c">// Return the surrounding shapes.</span>
+		<span class="pl-k">return</span>( <span class="pl-smi">shapes</span> );
+
+	}
+
+
+	<span class="pl-c">// I merge the given, connected shapes.</span>
+	<span class="pl-k">function</span> <span class="pl-en">_mergeShapes</span>( <span class="pl-smi">shapes</span> ){
+
+		<span class="pl-c">// Get the number of shapes to merge.</span>
+		<span class="pl-k">var</span> <span class="pl-smi">shapeCount</span> <span class="pl-k">=</span> <span class="pl-c1">arrayLen</span>( <span class="pl-smi">shapes</span> );
+
+		<span class="pl-c">// If there is only one shape, there's nothing to merge.</span>
+		<span class="pl-k">if</span> (<span class="pl-smi">shapeCount</span> <span class="pl-k">==</span> <span class="pl-c1">1</span>){
+
+			<span class="pl-k">return</span>;
+
+		}
+
+		<span class="pl-c">// If there is more than one shape, all the secondary shapes</span>
+		<span class="pl-c">// will get merge down into the first shape. Get a reference</span>
+		<span class="pl-c">// to the first shape.</span>
+		<span class="pl-k">var</span> <span class="pl-smi">firstShape</span> <span class="pl-k">=</span> <span class="pl-smi">shapes</span>[ <span class="pl-c1">1</span> ];
+
+		<span class="pl-c">// Merge all the remaining shapes into the first shape.</span>
+		<span class="pl-k">for</span> (<span class="pl-k">var</span> <span class="pl-smi">i</span> <span class="pl-k">=</span> <span class="pl-c1">2</span> ; <span class="pl-smi">i</span> <span class="pl-k">&lt;=</span> <span class="pl-smi">shapeCount</span> ; <span class="pl-smi">i</span><span class="pl-k">++</span>){
+
+			<span class="pl-k">var</span> <span class="pl-smi">oldShape</span> <span class="pl-k">=</span> <span class="pl-smi">shapes</span>[ <span class="pl-smi">i</span> ];
+
+			<span class="pl-c">// Remove this shape from the cache.</span>
+			<span class="pl-c1">structDelete</span>( <span class="pl-c1">variables</span>.<span class="pl-smi">shapes</span>, <span class="pl-smi">oldShape</span>.<span class="pl-en">getID</span>() );
+
+			<span class="pl-c">// Merge this shape into the first one.</span>
+			<span class="pl-smi">firstShape</span>.<span class="pl-en">absorbShape</span>( <span class="pl-smi">oldShape</span> );
+
+		}
+
+	}
+
+
+&lt;/<span class="pl-ent">cfscript</span>&gt;
+&lt;/<span class="pl-k">cfcomponent</span>&gt;

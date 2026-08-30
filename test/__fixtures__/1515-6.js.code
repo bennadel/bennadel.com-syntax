@@ -1,0 +1,190 @@
+// Create a Javascript class to handle the contact list.
+function ContactList(){
+	var objSelf = this;
+
+	// Get a jQuery reference to the list.
+	this.List = $( "#contact-list" );
+
+	// Get jQuery references to the key parts of our table.
+	// This way, we don't have to keep looking them up.
+	// This will make it faster.
+	this.DOMReferences = {
+		Template: this.List.find( "tbody.dom-template" ),
+		Content: this.List.find( "tbody.table-content" )
+		};
+
+	// Bind the listener for the contacts updated event.
+	$( document ).bind(
+		"contactsUpdated",
+		function(){
+			// Get the contacts for the contact list.
+			objSelf.GetContacts();
+		}
+		);
+
+	// Get the initial contact list.
+	this.GetContacts();
+}
+
+
+// Define a method to delete the given contact.
+ContactList.prototype.DeleteContact = function( ID ){
+	var objSelf = this;
+
+	// Get contacts via AJAX.
+	$.ajax(
+		{
+			type: "get",
+			url: "./api/Contacts.cfc",
+			data: {
+				method: "DeleteContact",
+				id: ID
+				},
+			dataType: "json",
+
+			// Define request handlers.
+			success: function( objResponse ){
+				// Check to see if request was successful.
+				if (objResponse.SUCCESS){
+
+					// The request was successful. Trigger the
+					// contacts updated event on the document.
+					// That will trigger our own update as well
+					// as anyone else listening.
+					$( document ).trigger( "contactsUpdated" );
+
+				} else {
+
+					// The response was not successful. Show
+					// an errors to the user.
+					objSelf.ShowErrors( objResponse.ERRORS );
+
+				}
+			},
+
+			error: function( objRequest, strError ){
+				objSelf.ShowErrors( [ "An unknown connection error occurred." ] );
+			}
+		}
+		);
+}
+
+
+// Define a method to get the contacts.
+ContactList.prototype.GetContacts = function(){
+	var objSelf = this;
+
+	// Get contacts via AJAX.
+	$.ajax(
+		{
+			type: "get",
+			url: "./api/Contacts.cfc",
+			data: {
+				method: "GetContacts"
+				},
+			dataType: "json",
+
+			// Define request handlers.
+			success: function( objResponse ){
+				// Check to see if request was successful.
+				if (objResponse.SUCCESS){
+
+					// The request was successful. Show the
+					// contacts in our table.
+					objSelf.ShowContacts( objResponse.DATA );
+
+				} else {
+
+					// The response was not successful. Show
+					// an errors to the user.
+					objSelf.ShowErrors( objResponse.ERRORS );
+
+				}
+			},
+
+			error: function( objRequest, strError ){
+				objSelf.ShowErrors( [ "An unknown connection error occurred." ] );
+			}
+		}
+		);
+}
+
+
+// Define a method to show the given contacts in the table. This
+// will clear and repopulate the table.
+ContactList.prototype.ShowContacts = function( arrContacts ){
+	var objSelf = this;
+
+	// Map the new contacts to an array of jQuery table rows.
+	var arrRows = $.map(
+		arrContacts,
+		function( objContact, intIndex ){
+			// Create a duplicate of our template row.
+			var jRow = objSelf.DOMReferences.Template.children( "tr" ).clone();
+
+			// Set the ID of the row.
+			jRow.attr( "id", objContact.ID );
+
+			// Store column values.
+			jRow.find( "td.name-column" ).text( objContact.NAME );
+			jRow.find( "td.hair-column" ).text( objContact.HAIR );
+
+			// Bind the delete link.
+			jRow.find( "td.actions-column a" )
+				.attr( "href", "javascript:void( 0 )" )
+				.click(
+					function( objEvent ){
+						// Delete the contact.
+						objSelf.DeleteContact( objContact.ID );
+
+						// Stop default event.
+						return( false );
+					}
+					)
+			;
+
+			// Return the raw DOM row.
+			return( jRow.get( 0 ) );
+		}
+		);
+
+	// Append the initalized rows to the table.
+	this.DOMReferences.Content
+		.empty()
+		.append( arrRows )
+	;
+}
+
+
+// Define a method to help display any errors.
+ContactList.prototype.ShowErrors = function( arrErrors ){
+	var strError = "Please review the following:\n";
+
+	// Loop over each error to build up the error string.
+	$.each(
+		arrErrors,
+		function( intI, strValue ){
+			strError += ("\n- " + strValue);
+		}
+		);
+
+	// Alert the error.
+	alert( strError );
+}
+
+
+// ----------------------------------------------------- //
+// ----------------------------------------------------- //
+
+
+// When the document is ready, init contact list. It is important
+// that we wait for the DOM loaded event to that we have access to
+// the DOM elements.
+$(
+	function(){
+
+		// Create an instance of the contact list.
+		var objContactList = new ContactList();
+
+	}
+	);

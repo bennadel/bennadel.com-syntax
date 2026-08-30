@@ -1,0 +1,71 @@
+// Require core modules.
+var express = require( "express" );
+var DogStatsD = require( "hot-shots" );
+var os = require( "os" );
+var path = require( "path" );
+
+// ----------------------------------------------------------------------------------- //
+// ----------------------------------------------------------------------------------- //
+
+// Create our DogStatsD client.
+var statsd = new DogStatsD({
+	host: process.env.DOGSTATSD_HOST,
+	port: process.env.DOGSTATSD_PORT,
+	errorHandler: function ( error ) {
+
+		console.log(
+			JSON.stringify({
+				log_level: "error",
+				error: error
+			})
+		);
+
+	}
+});
+
+var app = express();
+
+// Route all calls to "/assets" to the in-built static-file module.
+app.use(
+	"/assets",
+	express.static( path.join( __dirname, "assets" ) )
+);
+
+// Define our hello-world route.
+app.all(
+	"/",
+	function ( request, response, next ) {
+
+		statsd.increment( "page_request" );
+
+		console.log(
+			JSON.stringify({
+				log_level: "trace",
+				message: `Handling request on web host ${ os.hostname() }.`
+			})
+		);
+
+		response.sendFile(
+			( __dirname + "/index.htm" ),
+			{
+				headers: {
+					"X-Host-Name": os.hostname()
+				}
+			}
+		);
+
+	}
+);
+
+var port = ( process.env.PORT || 8080 );
+
+// Wire the Expression application to an exposed port so that it can start
+// receiving traffic.
+app.listen(
+	port,
+	function () {
+
+		console.log( "Express server has bootstrapped on port:", port );
+
+	}
+);

@@ -1,0 +1,15 @@
+<span class="pl-k">FROM</span>
+	isle i
+<span class="pl-k">INNER JOIN</span>
+	product p
+<span class="pl-k">ON</span>
+	<span class="pl-c1">p</span>.<span class="pl-c1">isleID</span> <span class="pl-k">=</span> <span class="pl-c1">i</span>.<span class="pl-c1">id</span> <span class="pl-c">-- Pick UP EVERY PRODUCT in the store.</span>
+
+<span class="pl-c">-- ... then once I have EVERY SINGLE PRODUCT in my basket...</span>
+
+<span class="pl-k">WHERE</span>
+	<span class="pl-c1">i</span>.<span class="pl-c1">number</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>3<span class="pl-pds">'</span></span> <span class="pl-c">-- Put DOWN products in other isles.</span>
+<span class="pl-k">AND</span>
+	<span class="pl-c1">p</span>.<span class="pl-c1">type</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>Oatmeal<span class="pl-pds">'</span></span> <span class="pl-c">-- Put DOWN products of other types.</span>
+<span class="pl-k">AND</span>
+	<span class="pl-c1">p</span>.<span class="pl-c1">brand</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>Quaker<span class="pl-pds">'</span></span> <span class="pl-c">-- Put DOWN products of other brands.</span>

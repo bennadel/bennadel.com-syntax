@@ -1,0 +1,145 @@
+&lt;!doctype html&gt;
+&lt;<span class="pl-ent">html</span> <span class="pl-e">ng-app</span>=<span class="pl-s"><span class="pl-pds">"</span>Demo<span class="pl-pds">"</span></span>&gt;
+&lt;<span class="pl-ent">head</span>&gt;
+	&lt;<span class="pl-ent">meta</span> <span class="pl-e">charset</span>=<span class="pl-s"><span class="pl-pds">"</span>utf-8<span class="pl-pds">"</span></span> /&gt;
+
+	&lt;<span class="pl-ent">title</span>&gt;
+		ng-Template Requests Are Affected By $http Interceptors In AngularJS
+	&lt;/<span class="pl-ent">title</span>&gt;
+&lt;/<span class="pl-ent">head</span>&gt;
+&lt;<span class="pl-ent">body</span>&gt;
+
+	&lt;<span class="pl-ent">h1</span>&gt;
+		ng-Template Requests Are Affected By $http Interceptors In AngularJS
+	&lt;/<span class="pl-ent">h1</span>&gt;
+
+	<span class="pl-c">&lt;!--</span>
+<span class="pl-c">		Each of these ngInclude URLs can be pulled out of the Script / ng-template</span>
+<span class="pl-c">		directives below.</span>
+<span class="pl-c">	--&gt;</span>
+	&lt;<span class="pl-ent">div</span> <span class="pl-e">ng-include</span>=<span class="pl-s"><span class="pl-pds">"</span> 'one.htm' <span class="pl-pds">"</span></span>&gt;&lt;/<span class="pl-ent">div</span>&gt;
+	&lt;<span class="pl-ent">div</span> <span class="pl-e">ng-include</span>=<span class="pl-s"><span class="pl-pds">"</span> 'two.htm' <span class="pl-pds">"</span></span>&gt;&lt;/<span class="pl-ent">div</span>&gt;
+	&lt;<span class="pl-ent">div</span> <span class="pl-e">ng-include</span>=<span class="pl-s"><span class="pl-pds">"</span> 'three.htm' <span class="pl-pds">"</span></span>&gt;&lt;/<span class="pl-ent">div</span>&gt;
+
+
+	<span class="pl-c">&lt;!--</span>
+<span class="pl-c">		These ng-include templates are here to provide a local implementation of the</span>
+<span class="pl-c">		"remote" URL content. This way, AngularJS doesn't have to make an HTTP request</span>
+<span class="pl-c">		over the wire (but, as you will see, it still goes through the $http() service).</span>
+<span class="pl-c">	--&gt;</span>
+
+	&lt;<span class="pl-ent">script</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/ng-template<span class="pl-pds">"</span></span> <span class="pl-e">id</span>=<span class="pl-s"><span class="pl-pds">"</span>one.htm<span class="pl-pds">"</span></span>&gt;
+
+		&lt;<span class="pl-ent">p</span>&gt;
+			I am the 1st ng-template include: &lt;<span class="pl-ent">span</span> <span class="pl-e">bn-now</span>&gt;&lt;/<span class="pl-ent">span</span>&gt;.
+		&lt;/<span class="pl-ent">p</span>&gt;
+
+	&lt;/<span class="pl-ent">script</span>&gt;
+
+	&lt;<span class="pl-ent">script</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/ng-template<span class="pl-pds">"</span></span> <span class="pl-e">id</span>=<span class="pl-s"><span class="pl-pds">"</span>two.htm<span class="pl-pds">"</span></span>&gt;
+
+		&lt;<span class="pl-ent">p</span>&gt;
+			I am the 2nd ng-template include: &lt;<span class="pl-ent">span</span> <span class="pl-e">bn-now</span>&gt;&lt;/<span class="pl-ent">span</span>&gt;.
+		&lt;/<span class="pl-ent">p</span>&gt;
+
+	&lt;/<span class="pl-ent">script</span>&gt;
+
+	&lt;<span class="pl-ent">script</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/ng-template<span class="pl-pds">"</span></span> <span class="pl-e">id</span>=<span class="pl-s"><span class="pl-pds">"</span>three.htm<span class="pl-pds">"</span></span>&gt;
+
+		&lt;<span class="pl-ent">p</span>&gt;
+			I am the 3rd ng-template include: &lt;<span class="pl-ent">span</span> <span class="pl-e">bn-now</span>&gt;&lt;/<span class="pl-ent">span</span>&gt;.
+		&lt;/<span class="pl-ent">p</span>&gt;
+
+	&lt;/<span class="pl-ent">script</span>&gt;
+
+
+	<span class="pl-c">&lt;!-- Load scripts. --&gt;</span>
+	&lt;<span class="pl-ent">script</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/javascript<span class="pl-pds">"</span></span> <span class="pl-e">src</span>=<span class="pl-s"><span class="pl-pds">"</span>../../vendor/angularjs/angular-1.3.13.min.js<span class="pl-pds">"</span></span>&gt;&lt;/<span class="pl-ent">script</span>&gt;
+	&lt;<span class="pl-ent">script</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/javascript<span class="pl-pds">"</span></span>&gt;
+
+		<span class="pl-c">// Create an application module for our demo.</span>
+		<span class="pl-k">var</span> app <span class="pl-k">=</span> <span class="pl-smi">angular</span>.<span class="pl-en">module</span>( <span class="pl-s"><span class="pl-pds">"</span>Demo<span class="pl-pds">"</span></span>, [] );
+
+
+		<span class="pl-c">// -------------------------------------------------- //</span>
+		<span class="pl-c">// -------------------------------------------------- //</span>
+
+
+		<span class="pl-c">// I add a delay to the HTTP request / response promise chain. Since all</span>
+		<span class="pl-c">// template requests go through the $http() service, these changes will also</span>
+		<span class="pl-c">// affect local requests for ng-template (which can be triggered by ngInclude</span>
+		<span class="pl-c">// and other directive template URLs).</span>
+		<span class="pl-smi">app</span>.<span class="pl-en">config</span>(
+			<span class="pl-k">function</span> <span class="pl-en">simulateHttpLatency</span>( <span class="pl-smi">$httpProvider</span> ) {
+
+				<span class="pl-smi">$httpProvider</span>.<span class="pl-smi">interceptors</span>.<span class="pl-c1">push</span>( slowDownRequest );
+
+
+				<span class="pl-c">// I add a delay to post-HTTP portion of the promise-chain.</span>
+				<span class="pl-k">function</span> <span class="pl-en">slowDownRequest</span>( <span class="pl-smi">$q</span>, <span class="pl-smi">$timeout</span> ) {
+
+					<span class="pl-c">// The delay will be incremented with each request.</span>
+					<span class="pl-k">var</span> delay <span class="pl-k">=</span> <span class="pl-c1">0</span>;
+
+					<span class="pl-k">return</span>({
+						<span class="pl-en">response</span><span class="pl-k">:</span> <span class="pl-k">function</span>( <span class="pl-smi">response</span> ) {
+
+							<span class="pl-k">var</span> latency <span class="pl-k">=</span> <span class="pl-smi">$q</span>.<span class="pl-c1">defer</span>();
+
+							<span class="pl-en">$timeout</span>(
+								<span class="pl-k">function</span> <span class="pl-en">resolver</span>() {
+
+									<span class="pl-smi">latency</span>.<span class="pl-en">resolve</span>( response );
+
+									response <span class="pl-k">=</span> latency <span class="pl-k">=</span> <span class="pl-c1">null</span>;
+
+								},
+
+								<span class="pl-c">// Increment the delay with each HTTP request.</span>
+								( delay <span class="pl-k">+=</span> <span class="pl-c1">1500</span> ),
+
+								<span class="pl-c">// There's no need to trigger a $digest; the $q service</span>
+								<span class="pl-c">// will automatically do that when the request resolves.</span>
+								<span class="pl-c1">false</span>
+							);
+
+							<span class="pl-k">return</span>( <span class="pl-smi">latency</span>.<span class="pl-smi">promise</span> );
+
+						}
+					});
+
+				}
+
+			}
+		);
+
+
+		<span class="pl-c">// -------------------------------------------------- //</span>
+		<span class="pl-c">// -------------------------------------------------- //</span>
+
+
+		<span class="pl-c">// I output the current time in the .text() of the parent element.</span>
+		<span class="pl-smi">app</span>.<span class="pl-en">directive</span>(
+			<span class="pl-s"><span class="pl-pds">"</span>bnNow<span class="pl-pds">"</span></span>,
+			<span class="pl-k">function</span>() {
+
+				<span class="pl-c">// Return the directive configuration object.</span>
+				<span class="pl-k">return</span>({
+					link<span class="pl-k">:</span> link
+				});
+
+
+				<span class="pl-c">// I bind the JavaScript events to the local scope.</span>
+				<span class="pl-k">function</span> <span class="pl-en">link</span>( <span class="pl-smi">scope</span>, <span class="pl-smi">element</span>, <span class="pl-smi">attributes</span> ) {
+
+					<span class="pl-smi">element</span>.<span class="pl-c1">text</span>( ( <span class="pl-k">new</span> <span class="pl-en">Date</span>() ).<span class="pl-en">toTimeString</span>().<span class="pl-c1">split</span>( <span class="pl-s"><span class="pl-pds">"</span> <span class="pl-pds">"</span></span> ).<span class="pl-c1">shift</span>() );
+
+				}
+
+			}
+		);
+
+	&lt;/<span class="pl-ent">script</span>&gt;
+
+&lt;/<span class="pl-ent">body</span>&gt;
+&lt;/<span class="pl-ent">html</span>&gt;

@@ -1,0 +1,168 @@
+<cfscript>
+
+	param name="form.name" type="string" default="";
+	param name="form.email" type="string" default="";
+	param name="form.password" type="string" default="";
+	param name="form.submitted" type="boolean" default=false;
+
+	userService = new UserService();
+	errorTranslator = new ErrorTranslator();
+	errorResponse = "";
+
+	if ( form.submitted ) {
+
+		try {
+
+			// Not all validation can be done at the "entity service" layer. Some
+			// validation must be performed across entities and must be performed at a
+			// higher level in the application. For the demo, we'll just hard-code a
+			// uniqueness check for email.
+			if ( form.email == "ben@test.com" ) {
+
+				throw( type = "App.Model.User.Conflict" );
+
+			}
+
+			newID = userService.createUser(
+				name = form.name.trim(),
+				email = form.email.lcase().trim(),
+				password = form.password.trim()
+			);
+
+			// Yay, user created successfully (not the point of this exploration).
+
+		} catch ( any error ) {
+
+			errorResponse = errorTranslator.getResponse( error );
+
+		}
+
+	}
+
+</cfscript>
+<cfoutput>
+
+	<!doctype html>
+	<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<link rel="stylesheet" type="text/css" href="./main.css">
+		<style type="text/css">
+
+			.is-error {
+				box-shadow: inset 0px 0px 0px 4px hotpink ;
+			}
+
+		</style>
+	</head>
+	<body>
+
+		<h1>
+			Sign-up Form
+		</h1>
+
+		<!--- If there is a server-side error response, render the user-safe message. --->
+		<cfif isStruct( errorResponse )>
+			<p role="alert" aria-live="assertive">
+				#encodeForHtml( errorResponse.message )#
+			</p>
+		</cfif>
+
+		<form method="post" action="./test.cfm">
+			<input type="hidden" name="submitted" value="true" />
+
+			<p>
+				<label for="target--name">
+					Name:
+				</label>
+				<input
+					id="target--name"
+					type="text"
+					name="name"
+					value="#encodeForHtmlAttribute( form.name )#" data-1p-ignore
+					data-error-types="
+						App.Model.User.Name.Empty
+						App.Model.User.Name.TooLong
+					"
+				/>
+			</p>
+			<p>
+				<label for="target--email">
+					Email:
+				</label>
+				<input
+					id="target--email"
+					type="text"
+					name="email"
+					value="#encodeForHtmlAttribute( form.email )#" data-1p-ignore
+					data-error-types="
+						App.Model.User.Email.
+						App.Model.User.Conflict
+					"
+				/>
+			</p>
+			<p>
+				<label for="target--password">
+					Password:
+				</label>
+				<input
+					id="target--password"
+					type="password"
+					name="password" data-1p-ignore
+					data-error-types="App.Model.User.Password."
+				/>
+			</p>
+			<p>
+				<button type="submit">
+					Create Account
+				</button>
+			</p>
+		</form>
+
+		<!---
+			If there's a server-side processing error, we need to serialize it into the
+			client-side code such that we can query the DOM and look for inputs that
+			appear to match the server-side validation error.
+		--->
+		<cfif isStruct( errorResponse )>
+			<script type="text/javascript">
+
+				var errorResponse = JSON.parse( "#encodeForJavaScript( serializeJson( errorResponse ) )#" );
+				var formControls = document.querySelectorAll( "[data-error-types]" );
+
+				for ( var control of formControls ) {
+
+					// If any of the embedded prefixes appear in the server-side error
+					// type, mark this form control as being error-related.
+					for ( var prefix of extractPrefixes( control.dataset.errorTypes ) ) {
+
+						if ( errorResponse.type.startsWith( prefix ) ) {
+
+							control.classList.add( "is-error" );
+							break;
+
+						}
+
+					}
+
+				}
+
+
+				/**
+				* I break the [data-error-types] attribute into an array of types.
+				*/
+				function extractPrefixes( dataAttribute ) {
+
+					return dataAttribute.split( /[,\s]+/g )
+						.filter( match => match )
+					;
+
+				}
+
+			</script>
+		</cfif>
+
+	</body>
+	</html>
+
+</cfoutput>

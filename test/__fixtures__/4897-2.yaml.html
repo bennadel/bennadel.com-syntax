@@ -1,0 +1,27 @@
+<span class="pl-ent">name</span>: <span class="pl-s"><span class="pl-pds">"</span>appbigsexypoems-build-main<span class="pl-pds">"</span></span>
+
+<span class="pl-ent">services</span>:
+
+  <span class="pl-ent">app</span>:
+    <span class="pl-ent">build</span>: <span class="pl-s"><span class="pl-pds">"</span>.<span class="pl-pds">"</span></span>
+    <span class="pl-ent">image</span>: <span class="pl-s"><span class="pl-pds">"</span>appbigsexypoems-build-main:local<span class="pl-pds">"</span></span>
+    <span class="pl-ent">pull_policy</span>: <span class="pl-s"><span class="pl-pds">"</span>never<span class="pl-pds">"</span></span>
+    <span class="pl-ent">command</span>: <span class="pl-s">[ "npm", "run", "build" ]</span>
+    <span class="pl-ent">volumes</span>:
+      - <span class="pl-s"><span class="pl-pds">"</span>./:/app<span class="pl-pds">"</span></span>
+      - <span class="pl-s"><span class="pl-pds">"</span>../../client:/app/client<span class="pl-pds">"</span></span>
+      - <span class="pl-s"><span class="pl-pds">"</span>../../wwwroot/static:/app/static<span class="pl-pds">"</span></span>
+      <span class="pl-c"># Allow docker to manage the node modules.</span>
+      - <span class="pl-s"><span class="pl-pds">"</span>node_modules:/app/node_modules<span class="pl-pds">"</span></span>
+
+  <span class="pl-c"># Provides a "watch" execution for the light-weight build above.</span>
+  <span class="pl-ent">dev</span>:
+    <span class="pl-ent">extends</span>: <span class="pl-s"><span class="pl-pds">"</span>app<span class="pl-pds">"</span></span>
+    <span class="pl-ent">profiles</span>:
+      - <span class="pl-s"><span class="pl-pds">"</span>dev<span class="pl-pds">"</span></span>
+    <span class="pl-ent">command</span>: <span class="pl-s">[ "npm", "run", "watch" ]</span>
+
+<span class="pl-c"># Using docker volumes to manage node_modules ensures that we don't overwrite the</span>
+<span class="pl-c"># node_modules folder when we mount our source code. It also helps performance.</span>
+<span class="pl-ent">volumes</span>:
+  <span class="pl-ent">node_modules</span>:

@@ -1,0 +1,19 @@
+&lt;<span class="pl-ent">cfscript</span>&gt;
+
+	<span class="pl-ent">param</span> <span class="pl-e">name</span> = <span class="pl-s"><span class="pl-pds">"</span>url.charCode<span class="pl-pds">"</span></span> <span class="pl-e">type</span> = <span class="pl-s"><span class="pl-pds">"</span>numeric<span class="pl-pds">"</span></span>;
+
+	<span class="pl-c">// Build an object with the target ASCII value encoded as a string</span>
+	<span class="pl-c">// character in one of the key values.</span>
+	<span class="pl-smi">result</span> <span class="pl-k">=</span> {
+		<span class="pl-s"><span class="pl-pds">"</span><span class="pl-v">charCode</span><span class="pl-pds">"</span></span> = <span class="pl-c1">url</span>.<span class="pl-smi">charCode</span>,
+		<span class="pl-s"><span class="pl-pds">"</span><span class="pl-v">data</span><span class="pl-pds">"</span></span> = <span class="pl-s"><span class="pl-pds">"</span>[#<span class="pl-c1">chr</span>( <span class="pl-c1">url</span>.<span class="pl-smi">charCode</span> )#]<span class="pl-pds">"</span></span>
+	};
+
+	<span class="pl-smi">response</span> <span class="pl-k">=</span> <span class="pl-c1">serializeJson</span>( <span class="pl-smi">result</span> );
+
+&lt;/<span class="pl-ent">cfscript</span>&gt;
+
+&lt;<span class="pl-ent">cfcontent</span>
+	<span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>application/x-json; charset=utf-8<span class="pl-pds">"</span></span>
+	<span class="pl-e">variable</span>=<span class="pl-s"><span class="pl-pds">"</span>#<span class="pl-c1">charsetDecode</span>( <span class="pl-smi">response</span>, <span class="pl-pds">'</span>utf-8<span class="pl-pds">'</span> )#<span class="pl-pds">"</span></span>
+	/&gt;

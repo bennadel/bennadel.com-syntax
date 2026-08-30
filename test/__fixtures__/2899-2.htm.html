@@ -1,0 +1,195 @@
+&lt;!doctype html&gt;
+&lt;<span class="pl-ent">html</span> <span class="pl-e">ng-app</span>=<span class="pl-s"><span class="pl-pds">"</span>Demo<span class="pl-pds">"</span></span>&gt;
+&lt;<span class="pl-ent">head</span>&gt;
+	&lt;<span class="pl-ent">meta</span> <span class="pl-e">charset</span>=<span class="pl-s"><span class="pl-pds">"</span>utf-8<span class="pl-pds">"</span></span> /&gt;
+
+	&lt;<span class="pl-ent">title</span>&gt;
+		Handling Plupload Init Race Condition In AngularJS
+	&lt;/<span class="pl-ent">title</span>&gt;
+
+	&lt;<span class="pl-ent">link</span> <span class="pl-e">rel</span>=<span class="pl-s"><span class="pl-pds">"</span>stylesheet<span class="pl-pds">"</span></span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/css<span class="pl-pds">"</span></span> <span class="pl-e">href</span>=<span class="pl-s"><span class="pl-pds">"</span>./demo.css<span class="pl-pds">"</span></span>&gt;&lt;/<span class="pl-ent">link</span>&gt;
+&lt;/<span class="pl-ent">head</span>&gt;
+&lt;<span class="pl-ent">body</span> <span class="pl-e">ng-controller</span>=<span class="pl-s"><span class="pl-pds">"</span>AppController<span class="pl-pds">"</span></span>&gt;
+
+	&lt;<span class="pl-ent">h1</span>&gt;
+		Handling Plupload Init Race Condition In AngularJS
+	&lt;/<span class="pl-ent">h1</span>&gt;
+
+	&lt;<span class="pl-ent">p</span>&gt;
+		&lt;<span class="pl-ent">a</span> <span class="pl-e">ng-click</span>=<span class="pl-s"><span class="pl-pds">"</span>toggleUploader()<span class="pl-pds">"</span></span>&gt;Show uploader&lt;/<span class="pl-ent">a</span>&gt;
+	&lt;/<span class="pl-ent">p</span>&gt;
+
+	&lt;<span class="pl-ent">div</span>
+		<span class="pl-e">ng-if</span>=<span class="pl-s"><span class="pl-pds">"</span>isShowingUploader<span class="pl-pds">"</span></span>
+		<span class="pl-e">bn-uploader</span>
+		<span class="pl-e">id</span>=<span class="pl-s"><span class="pl-pds">"</span>uploader-container<span class="pl-pds">"</span></span>&gt;
+
+		&lt;<span class="pl-ent">span</span> <span class="pl-e">id</span>=<span class="pl-s"><span class="pl-pds">"</span>uploader-button<span class="pl-pds">"</span></span>&gt;Browse Files&lt;/<span class="pl-ent">span</span>&gt;
+
+	&lt;/<span class="pl-ent">div</span>&gt;
+
+
+	<span class="pl-c">&lt;!-- Load scripts. --&gt;</span>
+	&lt;<span class="pl-ent">script</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/javascript<span class="pl-pds">"</span></span> <span class="pl-e">src</span>=<span class="pl-s"><span class="pl-pds">"</span>../../vendor/angularjs/angular-1.4.3.min.js<span class="pl-pds">"</span></span>&gt;&lt;/<span class="pl-ent">script</span>&gt;
+	&lt;<span class="pl-ent">script</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/javascript<span class="pl-pds">"</span></span> <span class="pl-e">src</span>=<span class="pl-s"><span class="pl-pds">"</span>./moxie.patched.js<span class="pl-pds">"</span></span>&gt;&lt;/<span class="pl-ent">script</span>&gt;
+	&lt;<span class="pl-ent">script</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/javascript<span class="pl-pds">"</span></span> <span class="pl-e">src</span>=<span class="pl-s"><span class="pl-pds">"</span>./plupload.dev.patched.js<span class="pl-pds">"</span></span>&gt;&lt;/<span class="pl-ent">script</span>&gt;
+	&lt;<span class="pl-ent">script</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/javascript<span class="pl-pds">"</span></span>&gt;
+
+		<span class="pl-c">// Create an application module for our demo.</span>
+		<span class="pl-k">var</span> app <span class="pl-k">=</span> <span class="pl-smi">angular</span>.<span class="pl-en">module</span>( <span class="pl-s"><span class="pl-pds">"</span>Demo<span class="pl-pds">"</span></span>, [] );
+
+
+		<span class="pl-c">// --------------------------------------------------------------------------- //</span>
+		<span class="pl-c">// --------------------------------------------------------------------------- //</span>
+
+
+		<span class="pl-c">// I control the root of the application.</span>
+		<span class="pl-smi">angular</span>.<span class="pl-en">module</span>( <span class="pl-s"><span class="pl-pds">"</span>Demo<span class="pl-pds">"</span></span> ).<span class="pl-en">controller</span>(
+			<span class="pl-s"><span class="pl-pds">"</span>AppController<span class="pl-pds">"</span></span>,
+			<span class="pl-k">function</span> <span class="pl-en">AppController</span>( <span class="pl-smi">$scope</span>, <span class="pl-smi">$location</span> ) {
+
+				<span class="pl-c">// I determine if the uploader is being shown.</span>
+				<span class="pl-smi">$scope</span>.<span class="pl-smi">isShowingUploader</span> <span class="pl-k">=</span> <span class="pl-c1">false</span>;
+
+				<span class="pl-c">// I listen to the URL changes since we are going to let the state of</span>
+				<span class="pl-c">// the URL control whether or not the uploader is visible.</span>
+				<span class="pl-smi">$scope</span>.<span class="pl-en">$on</span>( <span class="pl-s"><span class="pl-pds">"</span>$locationChangeSuccess<span class="pl-pds">"</span></span>, handleLocationChange );
+
+
+				<span class="pl-c">// ---</span>
+				<span class="pl-c">// PUBLIC METHODS.</span>
+				<span class="pl-c">// ---</span>
+
+
+				<span class="pl-c">// I toggle the uploader open or close.</span>
+				<span class="pl-c">// --</span>
+				<span class="pl-c">// NOTE: This works by adjusting the state of the URL which will, in</span>
+				<span class="pl-c">// turn, trigger our URL handler and update our local view-model.</span>
+				<span class="pl-smi">$scope</span>.<span class="pl-en">toggleUploader</span> <span class="pl-k">=</span> <span class="pl-k">function</span>() {
+
+					<span class="pl-k">var</span> newValue <span class="pl-k">=</span> ( <span class="pl-smi">$location</span>.<span class="pl-c1">search</span>().<span class="pl-smi">uploader</span> <span class="pl-k">===</span> <span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span> )
+						<span class="pl-k">?</span> <span class="pl-c1">null</span>
+						<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span>
+					;
+
+					<span class="pl-smi">$location</span>.<span class="pl-c1">search</span>( <span class="pl-s"><span class="pl-pds">"</span>uploader<span class="pl-pds">"</span></span>, newValue );
+
+				};
+
+
+				<span class="pl-c">// ---</span>
+				<span class="pl-c">// PRIVATE METHODS.</span>
+				<span class="pl-c">// ---</span>
+
+
+				<span class="pl-c">// When the URL changes, I update the local view-model to reflect the</span>
+				<span class="pl-c">// desired uploader state.</span>
+				<span class="pl-k">function</span> <span class="pl-en">handleLocationChange</span>() {
+
+					<span class="pl-smi">$scope</span>.<span class="pl-smi">isShowingUploader</span> <span class="pl-k">=</span> ( <span class="pl-smi">$location</span>.<span class="pl-c1">search</span>().<span class="pl-smi">uploader</span> <span class="pl-k">===</span> <span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span> );
+
+				}
+
+			}
+		);
+
+
+		<span class="pl-c">// --------------------------------------------------------------------------- //</span>
+		<span class="pl-c">// --------------------------------------------------------------------------- //</span>
+
+
+		<span class="pl-c">// I control the uploader.</span>
+		<span class="pl-smi">angular</span>.<span class="pl-en">module</span>( <span class="pl-s"><span class="pl-pds">"</span>Demo<span class="pl-pds">"</span></span> ).<span class="pl-en">controller</span>(
+			<span class="pl-s"><span class="pl-pds">"</span>UploadController<span class="pl-pds">"</span></span>,
+			<span class="pl-k">function</span> <span class="pl-en">UploadController</span>( <span class="pl-smi">$scope</span>, <span class="pl-smi">$location</span> ) {
+
+				<span class="pl-c">// For the sake of the demo, let's immediately redirect back into a</span>
+				<span class="pl-c">// state in which the uploader should be closed. This will demonstrate</span>
+				<span class="pl-c">// the race condition between the uploader initialization and the view</span>
+				<span class="pl-c">// rendering and linking.</span>
+				<span class="pl-smi">$location</span>.<span class="pl-c1">search</span>( <span class="pl-s"><span class="pl-pds">"</span>uploader<span class="pl-pds">"</span></span>, <span class="pl-c1">null</span> );
+
+			}
+		);
+
+
+		<span class="pl-c">// I manage the UI portion of the uploader.</span>
+		<span class="pl-smi">angular</span>.<span class="pl-en">module</span>( <span class="pl-s"><span class="pl-pds">"</span>Demo<span class="pl-pds">"</span></span> ).<span class="pl-en">directive</span>(
+			<span class="pl-s"><span class="pl-pds">"</span>bnUploader<span class="pl-pds">"</span></span>,
+			<span class="pl-k">function</span> <span class="pl-en">bnUploaderDirective</span>( <span class="pl-smi">$timeout</span> ) {
+
+				<span class="pl-c">// Return the directive configuration object.</span>
+				<span class="pl-k">return</span>({
+					controller<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>UploadController<span class="pl-pds">"</span></span>,
+					link<span class="pl-k">:</span> link,
+					restrict<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>A<span class="pl-pds">"</span></span>
+				});
+
+
+				<span class="pl-c">// I bind the JavaScript events to the view-model.</span>
+				<span class="pl-k">function</span> <span class="pl-en">link</span>( <span class="pl-smi">scope</span>, <span class="pl-smi">element</span>, <span class="pl-smi">attributes</span> ) {
+
+					<span class="pl-en">console</span>.<span class="pl-c1">log</span>( <span class="pl-s"><span class="pl-pds">"</span>.... Uploader directive linked.<span class="pl-pds">"</span></span> );
+
+					<span class="pl-c">// Let's log the next tick so we can when things happen in the console.</span>
+					<span class="pl-c1">setTimeout</span>(
+						<span class="pl-k">function</span>() {
+
+							<span class="pl-en">console</span>.<span class="pl-c1">log</span>( <span class="pl-s"><span class="pl-pds">"</span>&gt;&gt;&gt;&gt; Tick &lt;&lt;&lt;&lt;<span class="pl-pds">"</span></span> );
+
+						}
+					);
+
+
+					<span class="pl-c">// Create our Plupload uploader instance.</span>
+					<span class="pl-k">var</span> uploader <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">plupload.Uploader</span>({
+						runtimes<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>html5<span class="pl-pds">"</span></span>,
+						browse_button <span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>uploader-button<span class="pl-pds">'</span></span>,
+						container<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>uploader-container<span class="pl-pds">"</span></span>,
+						drop_element<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>uploader-container<span class="pl-pds">"</span></span>,
+						url <span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>./this-isnt-relevant-to-the-demo/<span class="pl-pds">"</span></span>
+					});
+
+					<span class="pl-c">// Due to a race condition in the Plupload initialization, we want to</span>
+					<span class="pl-c">// defer the actual call to .init(). This way, if the current scope is</span>
+					<span class="pl-c">// quickly destroyed, we won't leave a whole lot of junk in memory.</span>
+					<span class="pl-k">var</span> initTimer <span class="pl-k">=</span> <span class="pl-en">$timeout</span>(
+						<span class="pl-k">function</span> <span class="pl-en">initUploader</span>() {
+
+							<span class="pl-smi">uploader</span>.<span class="pl-en">init</span>();
+
+						},
+						<span class="pl-c1">0</span>,
+						<span class="pl-c1">false</span> <span class="pl-c">// No need to trigger a digest.</span>
+					);
+
+					<span class="pl-c">// Since we are allocating some heavy objects, we need to make sure</span>
+					<span class="pl-c">// that we cleanup after ourselves. When the scope is destroyed, we</span>
+					<span class="pl-c">// need to teardown all of Plupload stuff.</span>
+					<span class="pl-smi">scope</span>.<span class="pl-en">$on</span>( <span class="pl-s"><span class="pl-pds">"</span>$destroy<span class="pl-pds">"</span></span>, handleDestroy );
+
+
+					<span class="pl-c">// I handle the destroy event, performing cleanup.</span>
+					<span class="pl-k">function</span> <span class="pl-en">handleDestroy</span>() {
+
+						<span class="pl-en">console</span>.<span class="pl-c1">warn</span>( <span class="pl-s"><span class="pl-pds">"</span>.... Destroying uploader.<span class="pl-pds">"</span></span> );
+
+						<span class="pl-c">// If the Plupload uploader had not yet been initialized, stop</span>
+						<span class="pl-c">// the timer to make sure it doesn't try to.</span>
+						<span class="pl-smi">$timeout</span>.<span class="pl-en">cancel</span>( initTimer );
+
+						<span class="pl-c">// We can safely call this even if the uploader was never</span>
+						<span class="pl-c">// initialized.</span>
+						<span class="pl-smi">uploader</span>.<span class="pl-en">destroy</span>();
+
+					}
+
+				}
+
+			}
+		);
+
+	&lt;/<span class="pl-ent">script</span>&gt;
+
+&lt;/<span class="pl-ent">body</span>&gt;
+&lt;/<span class="pl-ent">html</span>&gt;

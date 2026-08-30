@@ -1,0 +1,113 @@
+&lt;<span class="pl-k">cfcomponent</span> <span class="pl-e">output</span>=<span class="pl-s"><span class="pl-pds">"</span>false<span class="pl-pds">"</span></span>&gt;
+&lt;<span class="pl-ent">cfscript</span>&gt;
+
+
+	<span class="pl-c">// I manage the pixels for a single shape within the sprite. As</span>
+	<span class="pl-c">// pixels are added, they are mapped and the bouding box of the</span>
+	<span class="pl-c">// shape is updated.</span>
+	<span class="pl-k">function</span> <span class="pl-en">init</span>( <span class="pl-en">Numeric</span> <span class="pl-smi">id</span>, <span class="pl-en">Numeric</span> <span class="pl-smi">x</span>, <span class="pl-en">Numeric</span> <span class="pl-smi">y</span> ){
+
+		<span class="pl-c">// Store the unique ID of the shape.</span>
+		<span class="pl-c1">variables</span>.<span class="pl-smi">id</span> <span class="pl-k">=</span> <span class="pl-smi">id</span>;
+
+		<span class="pl-c">// Store the pixel map, including our first pixel.</span>
+		<span class="pl-c1">variables</span>.<span class="pl-smi">pixelMap</span> <span class="pl-k">=</span> {
+			<span class="pl-s"><span class="pl-pds">"</span><span class="pl-v">#</span><span class="pl-smi">x</span><span class="pl-v">#:#</span><span class="pl-smi">y</span><span class="pl-v">#</span><span class="pl-pds">"</span></span> = <span class="pl-c1">true</span>
+		};
+
+		<span class="pl-c">// Set up the initial bounding box defined by the first pixel.</span>
+		<span class="pl-c1">variables</span>.<span class="pl-smi">minX</span> <span class="pl-k">=</span> <span class="pl-smi">x</span>;
+		<span class="pl-c1">variables</span>.<span class="pl-smi">maxX</span> <span class="pl-k">=</span> (<span class="pl-smi">x</span> <span class="pl-k">+</span> <span class="pl-c1">1</span>);
+		<span class="pl-c1">variables</span>.<span class="pl-smi">minY</span> <span class="pl-k">=</span> <span class="pl-smi">y</span>;
+		<span class="pl-c1">variables</span>.<span class="pl-smi">maxY</span> <span class="pl-k">=</span> (<span class="pl-smi">y</span> <span class="pl-k">+</span> <span class="pl-c1">1</span>);
+
+		<span class="pl-c">// Return this object reference.</span>
+		<span class="pl-k">return</span>( <span class="pl-c1">this</span> );
+
+	}
+
+
+	<span class="pl-c">// I absorb the dimentions of the given shape.</span>
+	<span class="pl-k">function</span> <span class="pl-en">absorbShape</span>( <span class="pl-en">Any</span> <span class="pl-smi">shape</span> ){
+
+		<span class="pl-c">// Absorb all of the pixels in the underlying map.</span>
+		<span class="pl-c1">structAppend</span>(
+			<span class="pl-c1">variables</span>.<span class="pl-smi">pixelMap</span>,
+			<span class="pl-smi">shape</span>.<span class="pl-en">getPixelMap</span>()
+		);
+
+		<span class="pl-c">// Get the other shape's boudning box.</span>
+		<span class="pl-k">var</span> <span class="pl-smi">boundingBox</span> <span class="pl-k">=</span> <span class="pl-smi">shape</span>.<span class="pl-en">getBoundingBox</span>();
+
+		<span class="pl-c">// Grow the current bounding box to encompass the new</span>
+		<span class="pl-c">// bounding box of the absorbed shape.</span>
+		<span class="pl-c1">variables</span>.<span class="pl-smi">minX</span> <span class="pl-k">=</span> <span class="pl-c1">min</span>( <span class="pl-c1">variables</span>.<span class="pl-smi">minX</span>, <span class="pl-smi">boundingBox</span>.<span class="pl-smi">minX</span> );
+		<span class="pl-c1">variables</span>.<span class="pl-smi">maxX</span> <span class="pl-k">=</span> <span class="pl-c1">max</span>( <span class="pl-c1">variables</span>.<span class="pl-smi">maxX</span>, <span class="pl-smi">boundingBox</span>.<span class="pl-smi">maxX</span> );
+		<span class="pl-c1">variables</span>.<span class="pl-smi">minY</span> <span class="pl-k">=</span> <span class="pl-c1">min</span>( <span class="pl-c1">variables</span>.<span class="pl-smi">minY</span>, <span class="pl-smi">boundingBox</span>.<span class="pl-smi">minY</span> );
+		<span class="pl-c1">variables</span>.<span class="pl-smi">maxY</span> <span class="pl-k">=</span> <span class="pl-c1">max</span>( <span class="pl-c1">variables</span>.<span class="pl-smi">maxY</span>, <span class="pl-smi">boundingBox</span>.<span class="pl-smi">maxY</span> );
+
+	}
+
+
+	<span class="pl-c">// I add the given pixel to the shape.</span>
+	<span class="pl-k">function</span> <span class="pl-en">addPixel</span>( <span class="pl-en">Numeric</span> <span class="pl-smi">x</span>, <span class="pl-en">Numeric</span> <span class="pl-smi">y</span> ){
+
+		<span class="pl-c">// Add it the map.</span>
+		<span class="pl-c1">variables</span>.<span class="pl-smi">pixelMap</span>[ <span class="pl-s"><span class="pl-pds">"</span>#<span class="pl-smi">x</span>#:#<span class="pl-smi">y</span>#<span class="pl-pds">"</span></span> ] <span class="pl-k">=</span> <span class="pl-c1">true</span>;
+
+		<span class="pl-c">// Adjust the min/max box coordinates.</span>
+		<span class="pl-c1">variables</span>.<span class="pl-smi">minX</span> <span class="pl-k">=</span> <span class="pl-c1">min</span>( <span class="pl-c1">variables</span>.<span class="pl-smi">minX</span>, <span class="pl-smi">x</span> );
+		<span class="pl-c1">variables</span>.<span class="pl-smi">maxX</span> <span class="pl-k">=</span> <span class="pl-c1">max</span>( <span class="pl-c1">variables</span>.<span class="pl-smi">maxX</span>, (<span class="pl-smi">x</span> <span class="pl-k">+</span> <span class="pl-c1">1</span>) );
+		<span class="pl-c1">variables</span>.<span class="pl-smi">minY</span> <span class="pl-k">=</span> <span class="pl-c1">min</span>( <span class="pl-c1">variables</span>.<span class="pl-smi">minY</span>, <span class="pl-smi">y</span> );
+		<span class="pl-c1">variables</span>.<span class="pl-smi">maxY</span> <span class="pl-k">=</span> <span class="pl-c1">max</span>( <span class="pl-c1">variables</span>.<span class="pl-smi">maxY</span>, (<span class="pl-smi">y</span> <span class="pl-k">+</span> <span class="pl-c1">1</span>) );
+
+	}
+
+
+	<span class="pl-c">// I determine if the given pixel is within the known pixels of</span>
+	<span class="pl-c">// mapped shape.</span>
+	<span class="pl-k">function</span> <span class="pl-en">containsPixel</span>( <span class="pl-en">Numeric</span> <span class="pl-smi">x</span>, <span class="pl-en">Numeric</span> <span class="pl-smi">y</span> ){
+
+		<span class="pl-k">return</span>(
+			<span class="pl-c1">structKeyExists</span>( <span class="pl-c1">variables</span>.<span class="pl-smi">pixelMap</span>, <span class="pl-s"><span class="pl-pds">"</span>#<span class="pl-smi">x</span>#:#<span class="pl-smi">y</span>#<span class="pl-pds">"</span></span> )
+		);
+
+	}
+
+
+	<span class="pl-c">// I get the bounding box for the shape based on the min/max</span>
+	<span class="pl-c">// coordinates of the bounding box.</span>
+	<span class="pl-k">function</span> <span class="pl-en">getBoundingBox</span>(){
+
+		<span class="pl-k">var</span> <span class="pl-smi">boundingBox</span> <span class="pl-k">=</span> {
+			<span class="pl-v">minX</span> = <span class="pl-c1">variables</span>.<span class="pl-smi">minX</span>,
+			<span class="pl-v">maxX</span> = <span class="pl-c1">variables</span>.<span class="pl-smi">maxX</span>,
+			<span class="pl-v">minY</span> = <span class="pl-c1">variables</span>.<span class="pl-smi">minY</span>,
+			<span class="pl-v">maxY</span> = <span class="pl-c1">variables</span>.<span class="pl-smi">maxY</span>,
+			<span class="pl-v">width</span> = (<span class="pl-c1">variables</span>.<span class="pl-smi">maxX</span> <span class="pl-k">-</span> <span class="pl-c1">variables</span>.<span class="pl-smi">minX</span>),
+			<span class="pl-v">height</span> = (<span class="pl-c1">variables</span>.<span class="pl-smi">maxY</span> <span class="pl-k">-</span> <span class="pl-c1">variables</span>.<span class="pl-smi">minY</span>)
+		};
+
+		<span class="pl-k">return</span>( <span class="pl-smi">boundingBox</span> );
+
+	}
+
+
+	<span class="pl-c">// I return the ID property.</span>
+	<span class="pl-k">function</span> <span class="pl-en">getID</span>(){
+
+		<span class="pl-k">return</span>( <span class="pl-c1">variables</span>.<span class="pl-smi">id</span> );
+
+	}
+
+
+	<span class="pl-c">// I return the underlying pixel map.</span>
+	<span class="pl-k">function</span> <span class="pl-en">getPixelMap</span>(){
+
+		<span class="pl-k">return</span>( <span class="pl-c1">variables</span>.<span class="pl-smi">pixelMap</span> );
+
+	}
+
+
+&lt;/<span class="pl-ent">cfscript</span>&gt;
+&lt;/<span class="pl-k">cfcomponent</span>&gt;

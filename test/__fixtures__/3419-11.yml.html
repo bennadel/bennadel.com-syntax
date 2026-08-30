@@ -1,0 +1,66 @@
+<span class="pl-ent">version</span>: <span class="pl-s"><span class="pl-pds">"</span>3<span class="pl-pds">"</span></span>
+
+<span class="pl-ent">services</span>:
+<span class="pl-ent">web_1</span>:
+<span class="pl-ent">image</span>: <span class="pl-s">dailyprime/web:latest</span>
+<span class="pl-ent">container_name</span>: <span class="pl-s">web_1</span>
+<span class="pl-ent">restart</span>: <span class="pl-s">unless-stopped</span>
+<span class="pl-ent">networks</span>:
+- <span class="pl-s">dailyprime-net</span>
+<span class="pl-ent">environment</span>:
+<span class="pl-ent">DOGSTATSD_HOST</span>: <span class="pl-s">dd_agent</span>
+<span class="pl-ent">DOGSTATSD_PORT</span>: <span class="pl-c1">8125</span>
+<span class="pl-ent">NODE_ENV</span>: <span class="pl-s">production</span>
+<span class="pl-ent">PORT</span>: <span class="pl-c1">8080</span>
+<span class="pl-ent">links</span>:
+- <span class="pl-s">dd_agent</span>
+
+<span class="pl-ent">web_2</span>:
+<span class="pl-ent">image</span>: <span class="pl-s">dailyprime/web:latest</span>
+<span class="pl-ent">container_name</span>: <span class="pl-s">web_2</span>
+<span class="pl-ent">restart</span>: <span class="pl-s">unless-stopped</span>
+<span class="pl-ent">networks</span>:
+- <span class="pl-s">dailyprime-net</span>
+<span class="pl-ent">environment</span>:
+<span class="pl-ent">DOGSTATSD_HOST</span>: <span class="pl-s">dd_agent</span>
+<span class="pl-ent">DOGSTATSD_PORT</span>: <span class="pl-c1">8125</span>
+<span class="pl-ent">NODE_ENV</span>: <span class="pl-s">production</span>
+<span class="pl-ent">PORT</span>: <span class="pl-c1">8080</span>
+<span class="pl-ent">links</span>:
+- <span class="pl-s">dd_agent</span>
+
+<span class="pl-ent">proxy</span>:
+<span class="pl-ent">image</span>: <span class="pl-s">dailyprime/proxy-prod:latest</span>
+<span class="pl-ent">container_name</span>: <span class="pl-s">proxy</span>
+<span class="pl-ent">restart</span>: <span class="pl-s">unless-stopped</span>
+<span class="pl-ent">networks</span>:
+- <span class="pl-s">dailyprime-net</span>
+<span class="pl-ent">ports</span>:
+- <span class="pl-s"><span class="pl-pds">"</span>80:80<span class="pl-pds">"</span></span>
+- <span class="pl-s"><span class="pl-pds">"</span>443:443<span class="pl-pds">"</span></span>
+<span class="pl-ent">volumes</span>:
+- <span class="pl-s">/etc/letsencrypt:/etc/letsencrypt</span>
+- <span class="pl-s">/tmp/letsencrypt/www:/tmp/letsencrypt/www</span>
+<span class="pl-ent">links</span>:
+- <span class="pl-s">web_1</span>
+- <span class="pl-s">web_2</span>
+
+<span class="pl-ent">dd_agent</span>:
+<span class="pl-ent">image</span>: <span class="pl-s">datadog/agent:latest</span>
+<span class="pl-ent">container_name</span>: <span class="pl-s">dd_agent</span>
+<span class="pl-ent">networks</span>:
+- <span class="pl-s">dailyprime-net</span>
+<span class="pl-ent">environment</span>:
+<span class="pl-ent">DD_API_KEY</span>: <span class="pl-s">_____REPLACE_WITH_YOUR_DATADOG_KEY_____</span>
+<span class="pl-ent">DD_DOGSTATSD_NON_LOCAL_TRAFFIC</span>: <span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span>
+<span class="pl-ent">DD_LOGS_ENABLED</span>: <span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span>
+<span class="pl-ent">volumes</span>:
+- <span class="pl-s">/opt/datadog-agent/conf.d:/conf.d:ro</span>
+- <span class="pl-s">/opt/datadog-agent/run:/opt/datadog-agent/run:rw</span>
+- <span class="pl-s">/proc/:/host/proc/:ro</span>
+- <span class="pl-s">/sys/fs/cgroup/:/host/sys/fs/cgroup:ro</span>
+- <span class="pl-s">/var/run/docker.sock:/var/run/docker.sock:ro</span>
+
+<span class="pl-ent">networks</span>:
+<span class="pl-ent">dailyprime-net</span>:
+<span class="pl-ent">driver</span>: <span class="pl-s">bridge</span>

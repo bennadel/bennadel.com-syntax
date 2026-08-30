@@ -1,0 +1,15 @@
+FROM
+	isle i
+INNER JOIN
+	product p
+ON
+	p.isleID = i.id -- Pick UP EVERY PRODUCT in the store.
+
+-- ... then once I have EVERY SINGLE PRODUCT in my basket...
+
+WHERE
+	i.number = '3' -- Put DOWN products in other isles.
+AND
+	p.type = 'Oatmeal' -- Put DOWN products of other types.
+AND
+	p.brand = 'Quaker' -- Put DOWN products of other brands.

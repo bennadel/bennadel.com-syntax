@@ -1,0 +1,15 @@
+schema.createCollection( "contacts", true )
+	.add( "{\"name\": \"Jen\"}" )
+	.add( "{\"name\": \"Ted\"}" )
+	.add( "{\"name\": \"Stan\"}" )
+	.execute()
+;
+
+var contacts = schema.createCollection( "contacts", true )
+	.find( "$.name = :nameParam" )
+	.orderBy( "name" )
+	.limit( 1 )
+	.bind( "nameParam", "Jen" )
+	.execute()
+	.fetchAll()
+;

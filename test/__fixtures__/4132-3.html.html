@@ -1,0 +1,120 @@
+&lt;!doctype html&gt;
+&lt;<span class="pl-ent">html</span> <span class="pl-e">lang</span>=<span class="pl-s"><span class="pl-pds">"</span>en<span class="pl-pds">"</span></span>&gt;
+&lt;<span class="pl-ent">head</span>&gt;
+	&lt;<span class="pl-ent">meta</span> <span class="pl-e">charset</span>=<span class="pl-s"><span class="pl-pds">"</span>utf-8<span class="pl-pds">"</span></span> /&gt;
+	&lt;<span class="pl-ent">title</span>&gt;
+		Applying Multiple Animation @keyframes To Support Prefers-Reduced-Motion In CSS
+	&lt;/<span class="pl-ent">title</span>&gt;
+	&lt;<span class="pl-ent">link</span> <span class="pl-e">rel</span>=<span class="pl-s"><span class="pl-pds">"</span>stylesheet<span class="pl-pds">"</span></span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/css<span class="pl-pds">"</span></span> <span class="pl-e">href</span>=<span class="pl-s"><span class="pl-pds">"</span>./demo.css<span class="pl-pds">"</span></span>&gt;
+	&lt;<span class="pl-ent">style</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/css<span class="pl-pds">"</span></span>&gt;
+
+		<span class="pl-e">.modal</span> {
+			<span class="pl-c">/* Four-sided positioning, plays nicely with scale() transformations. */</span>
+			<span class="pl-c1">bottom</span>: <span class="pl-c1">0</span><span class="pl-k">px</span> ;
+			<span class="pl-c1">left</span>: <span class="pl-c1">0</span><span class="pl-k">px</span> ;
+			<span class="pl-c1">position</span>: <span class="pl-c1">fixed</span> ;
+			<span class="pl-c1">right</span>: <span class="pl-c1">0</span><span class="pl-k">px</span> ;
+			<span class="pl-c1">top</span>: <span class="pl-c1">0</span><span class="pl-k">px</span> ;
+
+			<span class="pl-c">/*</span>
+<span class="pl-c">				Animating the modal element into view: our modal-enter animation is going</span>
+<span class="pl-c">				to use the REDUCED MOTION animation by default. Then, it will become</span>
+<span class="pl-c">				"progressively enhanced" to use the FULL MOTION animation properties</span>
+<span class="pl-c">				depending on the user's preference.</span>
+<span class="pl-c">			*/</span>
+			<span class="pl-c1">animation-duration</span>: <span class="pl-c1">1</span><span class="pl-k">s</span> ; <span class="pl-c">/* NOTE: Absurdly SLOW for demo purposes. */</span>
+			<span class="pl-c1">animation-fill-mode</span>: <span class="pl-c1">both</span> ;
+			<span class="pl-c1">animation-iteration-count</span>: <span class="pl-c1">1</span> ;
+			<span class="pl-c1">animation-name</span>: modal-enter-reduced-motion ; <span class="pl-c">/* Start with reduced motion. */</span>
+			<span class="pl-c1">animation-timing-function</span>: <span class="pl-c1">ease-out</span> ;
+		}
+
+		<span class="pl-c">/*</span>
+<span class="pl-c">			If the user has no preference (the default settings in the OS), enhance the</span>
+<span class="pl-c">			modal window to use BOTH the REDUCED MOTION and the FULL MOTION properties.</span>
+<span class="pl-c">		*/</span>
+		<span class="pl-k">@media</span> ( prefers-reduced-motion: no-preference ) {
+			<span class="pl-e">.modal</span> {
+				<span class="pl-c1">animation-name</span>:
+					modal-enter-reduced-motion,
+					modal-enter-full-motion
+				;
+			}
+		}
+
+		<span class="pl-c">/* Reduce motion only uses opacity, but DOESN'T MOVE the elements around. */</span>
+		<span class="pl-k">@keyframes</span> <span class="pl-v">modal-enter-reduced-motion</span> {
+			<span class="pl-e">from</span> {
+				<span class="pl-c1">opacity</span>: <span class="pl-c1">0</span> ;
+			}
+			<span class="pl-e">to</span> {
+				<span class="pl-c1">opacity</span>: <span class="pl-c1">1</span> ;
+			}
+		}
+
+		<span class="pl-k">@keyframes</span> <span class="pl-v">modal-enter-full-motion</span> {
+			<span class="pl-e">from</span> {
+				<span class="pl-c1">transform</span>: <span class="pl-c1">scale</span>( <span class="pl-c1">0.7</span> ) ;
+			}
+			<span class="pl-e">to</span> {
+				<span class="pl-c1">transform</span>: <span class="pl-c1">scale</span>( <span class="pl-c1">1.0</span> ) ;
+			}
+		}
+
+	&lt;/<span class="pl-ent">style</span>&gt;
+&lt;/<span class="pl-ent">head</span>&gt;
+&lt;<span class="pl-ent">body</span>&gt;
+
+	&lt;<span class="pl-ent">h1</span>&gt;
+		Applying Multiple Animation @keyframes To Support Prefers-Reduced-Motion In CSS
+	&lt;/<span class="pl-ent">h1</span>&gt;
+
+	&lt;<span class="pl-ent">p</span>&gt;
+		&lt;<span class="pl-ent">a</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>toggle<span class="pl-pds">"</span></span>&gt;Open modal&lt;/<span class="pl-ent">a</span>&gt;
+	&lt;/<span class="pl-ent">p</span>&gt;
+
+	<span class="pl-c">&lt;!--</span>
+<span class="pl-c">		This modal window will use FIXED positioning and have a four-sided (top, right,</span>
+<span class="pl-c">		bottom, left) arrangement. It will also fade into view using CSS transitions.</span>
+<span class="pl-c">	--&gt;</span>
+	&lt;<span class="pl-ent">template</span>&gt;
+		&lt;<span class="pl-ent">div</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>modal<span class="pl-pds">"</span></span>&gt;
+			&lt;<span class="pl-ent">a</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>toggle<span class="pl-pds">"</span></span>&gt;Close modal&lt;/<span class="pl-ent">a</span>&gt;
+		&lt;/<span class="pl-ent">div</span>&gt;
+	&lt;/<span class="pl-ent">template</span>&gt;
+
+
+	<span class="pl-c">&lt;!-- Load scripts. --&gt;</span>
+	&lt;<span class="pl-ent">script</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/javascript<span class="pl-pds">"</span></span> <span class="pl-e">src</span>=<span class="pl-s"><span class="pl-pds">"</span>../../vendor/jquery/3.6.0/jquery-3.6.0.min.js<span class="pl-pds">"</span></span>&gt;&lt;/<span class="pl-ent">script</span>&gt;
+	&lt;<span class="pl-ent">script</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/javascript<span class="pl-pds">"</span></span>&gt;
+
+		<span class="pl-k">var</span> modal <span class="pl-k">=</span> <span class="pl-c1">null</span>;
+		<span class="pl-k">var</span> template <span class="pl-k">=</span> <span class="pl-en">$</span>( <span class="pl-s"><span class="pl-pds">"</span>template<span class="pl-pds">"</span></span> );
+
+		<span class="pl-c">// We'll use event-delegation so that we can capture the click event in the</span>
+		<span class="pl-c">// modal, which isn't even rendered yet.</span>
+		<span class="pl-en">$</span>( <span class="pl-c1">document</span> ).<span class="pl-en">on</span>( <span class="pl-s"><span class="pl-pds">"</span>click<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>.toggle<span class="pl-pds">"</span></span>, toggleModal );
+
+		<span class="pl-c">// I show / hide the modal window by adding it to or removing it from the DOM</span>
+		<span class="pl-c">// (Document Object Model) tree, respectively.</span>
+		<span class="pl-k">function</span> <span class="pl-en">toggleModal</span>() {
+
+			<span class="pl-k">if</span> ( modal ) {
+
+				<span class="pl-smi">modal</span>.<span class="pl-c1">remove</span>();
+				modal <span class="pl-k">=</span> <span class="pl-c1">null</span>;
+
+			} <span class="pl-k">else</span> {
+
+				modal <span class="pl-k">=</span> <span class="pl-en">$</span>( <span class="pl-smi">template</span>.<span class="pl-en">prop</span>( <span class="pl-s"><span class="pl-pds">"</span>content<span class="pl-pds">"</span></span> ).<span class="pl-smi">firstElementChild</span>.<span class="pl-c1">cloneNode</span>( <span class="pl-c1">true</span> ) )
+					.<span class="pl-en">appendTo</span>( <span class="pl-c1">document</span>.<span class="pl-c1">body</span> )
+				;
+
+			}
+
+		}
+
+	&lt;/<span class="pl-ent">script</span>&gt;
+
+&lt;/<span class="pl-ent">body</span>&gt;
+&lt;/<span class="pl-ent">html</span>&gt;

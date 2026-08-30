@@ -1,0 +1,26 @@
+<span class="pl-ent">version</span>: <span class="pl-s"><span class="pl-pds">"</span>2.4<span class="pl-pds">"</span></span>
+
+<span class="pl-ent">services</span>:
+  <span class="pl-c"># ... truncated for demo ...</span>
+
+  <span class="pl-c"># MySQL server.</span>
+  <span class="pl-ent">mysql</span>:
+    <span class="pl-ent">image</span>: <span class="pl-s"><span class="pl-pds">"</span>mysql:8.0.28<span class="pl-pds">"</span></span>
+    <span class="pl-ent">ports</span>:
+      - <span class="pl-s"><span class="pl-pds">"</span>3306:3306<span class="pl-pds">"</span></span>
+    <span class="pl-ent">environment</span>:
+      <span class="pl-ent">MYSQL_DATABASE</span>: <span class="pl-s"><span class="pl-pds">"</span>bennadel<span class="pl-pds">"</span></span>
+      <span class="pl-ent">MYSQL_ROOT_PASSWORD</span>: <span class="pl-s"><span class="pl-pds">"</span>password<span class="pl-pds">"</span></span> <span class="pl-c"># LOCAL DEVELOPMENT ONLY!!!!!!!!</span>
+    <span class="pl-ent">volumes</span>:
+      <span class="pl-c"># Configuration scripts - the SQL files in this directory will be run when the</span>
+      <span class="pl-c"># container is first created. Files will be executed in alphabetical order.</span>
+      - <span class="pl-s"><span class="pl-pds">"</span>./build/mysql/initdb:/docker-entrypoint-initdb.d<span class="pl-pds">"</span></span>
+      <span class="pl-c"># Data persistence directory - the underlying database data will be stored on the</span>
+      <span class="pl-c"># host machine in this directory. But, this directory is managed transparently</span>
+      <span class="pl-c"># by Docker Desktop for Mac - I have no idea where it actually is.</span>
+      - <span class="pl-s"><span class="pl-pds">"</span>bennadel_mysql_data:/var/lib/mysql<span class="pl-pds">"</span></span>
+    <span class="pl-ent">healthcheck</span>:
+      <span class="pl-ent">test</span>: <span class="pl-s"><span class="pl-pds">"</span>echo hello<span class="pl-pds">"</span></span>
+
+<span class="pl-ent">volumes</span>:
+  <span class="pl-ent">bennadel_mysql_data</span>:

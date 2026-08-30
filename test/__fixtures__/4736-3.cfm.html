@@ -1,0 +1,168 @@
+&lt;<span class="pl-ent">cfscript</span>&gt;
+
+	<span class="pl-ent">param</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>form.name<span class="pl-pds">"</span></span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>string<span class="pl-pds">"</span></span> <span class="pl-e">default</span>=<span class="pl-s"><span class="pl-pds">""</span></span>;
+	<span class="pl-ent">param</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>form.email<span class="pl-pds">"</span></span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>string<span class="pl-pds">"</span></span> <span class="pl-e">default</span>=<span class="pl-s"><span class="pl-pds">""</span></span>;
+	<span class="pl-ent">param</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>form.password<span class="pl-pds">"</span></span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>string<span class="pl-pds">"</span></span> <span class="pl-e">default</span>=<span class="pl-s"><span class="pl-pds">""</span></span>;
+	<span class="pl-ent">param</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>form.submitted<span class="pl-pds">"</span></span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>boolean<span class="pl-pds">"</span></span> <span class="pl-e">default</span>=<span class="pl-c1">false</span>;
+
+	<span class="pl-smi">userService</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">UserService</span>();
+	<span class="pl-smi">errorTranslator</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">ErrorTranslator</span>();
+	<span class="pl-smi">errorResponse</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">""</span></span>;
+
+	<span class="pl-k">if</span> ( <span class="pl-c1">form</span>.<span class="pl-smi">submitted</span> ) {
+
+		<span class="pl-k">try</span> {
+
+			<span class="pl-c">// Not all validation can be done at the "entity service" layer. Some</span>
+			<span class="pl-c">// validation must be performed across entities and must be performed at a</span>
+			<span class="pl-c">// higher level in the application. For the demo, we'll just hard-code a</span>
+			<span class="pl-c">// uniqueness check for email.</span>
+			<span class="pl-k">if</span> ( <span class="pl-c1">form</span>.<span class="pl-smi">email</span> <span class="pl-k">==</span> <span class="pl-s"><span class="pl-pds">"</span>ben@test.com<span class="pl-pds">"</span></span> ) {
+
+				<span class="pl-c1">throw</span>( <span class="pl-e">type</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>App.Model.User.Conflict<span class="pl-pds">"</span></span> );
+
+			}
+
+			<span class="pl-smi">newID</span> <span class="pl-k">=</span> <span class="pl-smi">userService</span>.<span class="pl-en">createUser</span>(
+				<span class="pl-e">name</span> <span class="pl-k">=</span> <span class="pl-c1">form</span>.<span class="pl-smi">name</span>.<span class="pl-c1">trim</span>(),
+				<span class="pl-e">email</span> <span class="pl-k">=</span> <span class="pl-c1">form</span>.<span class="pl-smi">email</span>.<span class="pl-c1">lcase</span>().<span class="pl-c1">trim</span>(),
+				<span class="pl-e">password</span> <span class="pl-k">=</span> <span class="pl-c1">form</span>.<span class="pl-smi">password</span>.<span class="pl-c1">trim</span>()
+			);
+
+			<span class="pl-c">// Yay, user created successfully (not the point of this exploration).</span>
+
+		} <span class="pl-k">catch</span> ( <span class="pl-c1">any</span> <span class="pl-smi">error</span> ) {
+
+			<span class="pl-smi">errorResponse</span> <span class="pl-k">=</span> <span class="pl-smi">errorTranslator</span>.<span class="pl-en">getResponse</span>( <span class="pl-smi">error</span> );
+
+		}
+
+	}
+
+&lt;/<span class="pl-ent">cfscript</span>&gt;
+&lt;<span class="pl-ent">cfoutput</span>&gt;
+
+	&lt;!doctype html&gt;
+	&lt;<span class="pl-ent">html</span> <span class="pl-e">lang</span>=<span class="pl-s"><span class="pl-pds">"</span>en<span class="pl-pds">"</span></span>&gt;
+	&lt;<span class="pl-ent">head</span>&gt;
+		&lt;<span class="pl-ent">meta</span> <span class="pl-e">charset</span>=<span class="pl-s"><span class="pl-pds">"</span>utf-8<span class="pl-pds">"</span></span>&gt;
+		&lt;<span class="pl-ent">link</span> <span class="pl-e">rel</span>=<span class="pl-s"><span class="pl-pds">"</span>stylesheet<span class="pl-pds">"</span></span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/css<span class="pl-pds">"</span></span> <span class="pl-e">href</span>=<span class="pl-s"><span class="pl-pds">"</span>./main.css<span class="pl-pds">"</span></span>&gt;
+		&lt;<span class="pl-ent">style</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/css<span class="pl-pds">"</span></span>&gt;
+
+			<span class="pl-e">.is-error</span> {
+				<span class="pl-c1">box-shadow</span>: <span class="pl-c1">inset</span> <span class="pl-c1">0</span><span class="pl-k">px</span> <span class="pl-c1">0</span><span class="pl-k">px</span> <span class="pl-c1">0</span><span class="pl-k">px</span> <span class="pl-c1">4</span><span class="pl-k">px</span> <span class="pl-c1">hotpink</span> ;
+			}
+
+		&lt;/<span class="pl-ent">style</span>&gt;
+	&lt;/<span class="pl-ent">head</span>&gt;
+	&lt;<span class="pl-ent">body</span>&gt;
+
+		&lt;<span class="pl-ent">h1</span>&gt;
+			Sign-up Form
+		&lt;/<span class="pl-ent">h1</span>&gt;
+
+		<span class="pl-c">&lt;!--- If there is a server-side error response, render the user-safe message. ---&gt;</span>
+		&lt;<span class="pl-ent">cfif</span> <span class="pl-c1">isStruct</span>( <span class="pl-smi">errorResponse</span> )&gt;
+			&lt;<span class="pl-ent">p</span> <span class="pl-e">role</span>=<span class="pl-s"><span class="pl-pds">"</span>alert<span class="pl-pds">"</span></span> <span class="pl-e">aria-live</span>=<span class="pl-s"><span class="pl-pds">"</span>assertive<span class="pl-pds">"</span></span>&gt;
+				#<span class="pl-c1">encodeForHtml</span>( <span class="pl-smi">errorResponse</span>.<span class="pl-smi">message</span> )#
+			&lt;/<span class="pl-ent">p</span>&gt;
+		&lt;/<span class="pl-ent">cfif</span>&gt;
+
+		&lt;<span class="pl-ent">form</span> <span class="pl-e">method</span>=<span class="pl-s"><span class="pl-pds">"</span>post<span class="pl-pds">"</span></span> <span class="pl-e">action</span>=<span class="pl-s"><span class="pl-pds">"</span>./test.cfm<span class="pl-pds">"</span></span>&gt;
+			&lt;<span class="pl-ent">input</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>hidden<span class="pl-pds">"</span></span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>submitted<span class="pl-pds">"</span></span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span> /&gt;
+
+			&lt;<span class="pl-ent">p</span>&gt;
+				&lt;<span class="pl-ent">label</span> <span class="pl-e">for</span>=<span class="pl-s"><span class="pl-pds">"</span>target--name<span class="pl-pds">"</span></span>&gt;
+					Name:
+				&lt;/<span class="pl-ent">label</span>&gt;
+				&lt;<span class="pl-ent">input</span>
+					<span class="pl-e">id</span>=<span class="pl-s"><span class="pl-pds">"</span>target--name<span class="pl-pds">"</span></span>
+					<span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text<span class="pl-pds">"</span></span>
+					<span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span>
+					<span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>#<span class="pl-c1">encodeForHtmlAttribute</span>( <span class="pl-c1">form</span>.<span class="pl-smi">name</span> )#<span class="pl-pds">"</span></span> <span class="pl-e">data-1p-ignore</span>
+					<span class="pl-e">data-error-types</span>=<span class="pl-s"><span class="pl-pds">"</span></span>
+<span class="pl-s">						App.Model.User.Name.Empty</span>
+<span class="pl-s">						App.Model.User.Name.TooLong</span>
+<span class="pl-s">					<span class="pl-pds">"</span></span>
+				/&gt;
+			&lt;/<span class="pl-ent">p</span>&gt;
+			&lt;<span class="pl-ent">p</span>&gt;
+				&lt;<span class="pl-ent">label</span> <span class="pl-e">for</span>=<span class="pl-s"><span class="pl-pds">"</span>target--email<span class="pl-pds">"</span></span>&gt;
+					Email:
+				&lt;/<span class="pl-ent">label</span>&gt;
+				&lt;<span class="pl-ent">input</span>
+					<span class="pl-e">id</span>=<span class="pl-s"><span class="pl-pds">"</span>target--email<span class="pl-pds">"</span></span>
+					<span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text<span class="pl-pds">"</span></span>
+					<span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>email<span class="pl-pds">"</span></span>
+					<span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>#<span class="pl-c1">encodeForHtmlAttribute</span>( <span class="pl-c1">form</span>.<span class="pl-smi">email</span> )#<span class="pl-pds">"</span></span> <span class="pl-e">data-1p-ignore</span>
+					<span class="pl-e">data-error-types</span>=<span class="pl-s"><span class="pl-pds">"</span></span>
+<span class="pl-s">						App.Model.User.Email.</span>
+<span class="pl-s">						App.Model.User.Conflict</span>
+<span class="pl-s">					<span class="pl-pds">"</span></span>
+				/&gt;
+			&lt;/<span class="pl-ent">p</span>&gt;
+			&lt;<span class="pl-ent">p</span>&gt;
+				&lt;<span class="pl-ent">label</span> <span class="pl-e">for</span>=<span class="pl-s"><span class="pl-pds">"</span>target--password<span class="pl-pds">"</span></span>&gt;
+					Password:
+				&lt;/<span class="pl-ent">label</span>&gt;
+				&lt;<span class="pl-ent">input</span>
+					<span class="pl-e">id</span>=<span class="pl-s"><span class="pl-pds">"</span>target--password<span class="pl-pds">"</span></span>
+					<span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>password<span class="pl-pds">"</span></span>
+					<span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>password<span class="pl-pds">"</span></span> <span class="pl-e">data-1p-ignore</span>
+					<span class="pl-e">data-error-types</span>=<span class="pl-s"><span class="pl-pds">"</span>App.Model.User.Password.<span class="pl-pds">"</span></span>
+				/&gt;
+			&lt;/<span class="pl-ent">p</span>&gt;
+			&lt;<span class="pl-ent">p</span>&gt;
+				&lt;<span class="pl-ent">button</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>submit<span class="pl-pds">"</span></span>&gt;
+					Create Account
+				&lt;/<span class="pl-ent">button</span>&gt;
+			&lt;/<span class="pl-ent">p</span>&gt;
+		&lt;/<span class="pl-ent">form</span>&gt;
+
+		<span class="pl-c">&lt;!---</span>
+<span class="pl-c">			If there's a server-side processing error, we need to serialize it into the</span>
+<span class="pl-c">			client-side code such that we can query the DOM and look for inputs that</span>
+<span class="pl-c">			appear to match the server-side validation error.</span>
+<span class="pl-c">		---&gt;</span>
+		&lt;<span class="pl-ent">cfif</span> <span class="pl-c1">isStruct</span>( <span class="pl-smi">errorResponse</span> )&gt;
+			&lt;<span class="pl-ent">script</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/javascript<span class="pl-pds">"</span></span>&gt;
+
+				<span class="pl-k">var</span> <span class="pl-smi">errorResponse</span> <span class="pl-k">=</span> <span class="pl-c1">JSON</span>.<span class="pl-c1">parse</span>( <span class="pl-s"><span class="pl-pds">"</span>#<span class="pl-c1">encodeForJavaScript</span>( <span class="pl-c1">serializeJson</span>( <span class="pl-smi">errorResponse</span> ) )#<span class="pl-pds">"</span></span> );
+				<span class="pl-k">var</span> <span class="pl-smi">formControls</span> <span class="pl-k">=</span> <span class="pl-c1">document</span>.<span class="pl-c1">querySelectorAll</span>( <span class="pl-s"><span class="pl-pds">"</span>[data-error-types]<span class="pl-pds">"</span></span> );
+
+				<span class="pl-k">for</span> ( <span class="pl-k">var</span> <span class="pl-smi">control</span> <span class="pl-k">of</span> <span class="pl-smi">formControls</span> ) {
+
+					<span class="pl-c">// If any of the embedded prefixes appear in the server-side error</span>
+					<span class="pl-c">// type, mark this form control as being error-related.</span>
+					<span class="pl-k">for</span> ( <span class="pl-k">var</span> <span class="pl-smi">prefix</span> <span class="pl-k">of</span> <span class="pl-en">extractPrefixes</span>( <span class="pl-smi">control</span>.<span class="pl-smi">dataset</span>.<span class="pl-smi">errorTypes</span> ) ) {
+
+						<span class="pl-k">if</span> ( <span class="pl-smi">errorResponse</span>.<span class="pl-c1">type</span>.<span class="pl-en">startsWith</span>( <span class="pl-smi">prefix</span> ) ) {
+
+							<span class="pl-smi">control</span>.<span class="pl-smi">classList</span>.<span class="pl-c1">add</span>( <span class="pl-s"><span class="pl-pds">"</span>is-error<span class="pl-pds">"</span></span> );
+							<span class="pl-k">break</span>;
+
+						}
+
+					}
+
+				}
+
+
+				<span class="pl-c">/**</span>
+<span class="pl-c">				* I break the [data-error-types] attribute into an array of types.</span>
+<span class="pl-c">				*/</span>
+				<span class="pl-k">function</span> <span class="pl-en">extractPrefixes</span>( <span class="pl-v">dataAttribute</span> ) {
+
+					<span class="pl-k">return</span> <span class="pl-smi">dataAttribute</span>.<span class="pl-c1">split</span>(<span class="pl-s"><span class="pl-sr"> <span class="pl-pds">/</span><span class="pl-c1">[,\s]</span><span class="pl-k">+</span><span class="pl-pds">/</span><span class="pl-k">g</span></span></span> )
+						.<span class="pl-en">filter</span>( <span class="pl-v">match</span> <span class="pl-k">=&gt;</span> <span class="pl-smi">match</span> )
+					;
+
+				}
+
+			&lt;/<span class="pl-ent">script</span>&gt;
+		&lt;/<span class="pl-ent">cfif</span>&gt;
+
+	&lt;/<span class="pl-ent">body</span>&gt;
+	&lt;/<span class="pl-ent">html</span>&gt;
+
+&lt;/<span class="pl-ent">cfoutput</span>&gt;

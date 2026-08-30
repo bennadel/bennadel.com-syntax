@@ -1,0 +1,146 @@
+<cffunction
+	name="dealerMustHit"
+	access="public"
+	returntype="boolean"
+	output="false"
+	hint="I determine if the given dealer hand must hit (less than 17).">
+
+	<!--- Define arguments. --->
+	<cfargument
+		name="hand"
+		type="array"
+		required="true"
+		hint="I am the dealer hand being checked for hit requirement."
+		/>
+
+	<!--- Return true if the hand sum is less than 17. --->
+	<cfreturn (getHandTotal( arguments.hand ) lt 17) />
+</cffunction>
+
+
+<cffunction
+	name="getHandTotal"
+	access="public"
+	returntype="numeric"
+	output="false"
+	hint="I get the total sum of the cards in the given blackjack hand.">
+
+	<!--- Define arguments. --->
+	<cfargument
+		name="hand"
+		type="array"
+		required="true"
+		hint="I am the blackjack hand being counted (summed)."
+		/>
+
+	<!--- Define the local scope. --->
+	<cfset var local = {} />
+
+	<!--- Create a running total for the cards. --->
+	<cfset local.sum = 0 />
+
+	<!---
+		Loop over cards to get the initial count. On the first
+		pass, the Aces (A) will be counted as 11. If the hand
+		is bust, they will be re-tallied with Ace being 2.
+	--->
+	<cfloop
+		index="local.card"
+		array="#arguments.hand#">
+
+		<!--- Check to see what kind of card we have. --->
+		<cfif isNumeric( local.card )>
+
+			<!--- Simply add given value. --->
+			<cfset local.sum += local.card />
+
+		<cfelseif (toString( local.card ) eq "A")>
+
+			<!--- On the first pass, add the Ace as an 11. --->
+			<cfset local.sum += 11 />
+
+		<cfelse>
+
+			<!---
+				All other cards will be face cards at this time,
+				which will 10.
+			--->
+			<cfset local.sum += 10 />
+
+		</cfif>
+
+	</cfloop>
+
+
+	<!---
+		Now that we have summed the cards for the first time,
+		check to see if the hand is bust.
+	--->
+	<cfif (local.sum lte 21)>
+
+		<!--- The hand is not bust, so return sum. --->
+		<cfreturn local.sum />
+
+	</cfif>
+
+
+	<!---
+		The first pass resulted in a busted hand. This may or may
+		not have been due to the way we counted Aces. As such,
+		let's reset the sum and run through summing process again,
+		this time with the Ace counting for 2.
+	--->
+	<cfset local.sum = 0 />
+
+	<!--- Loop over cards a second time. --->
+	<cfloop
+		index="local.card"
+		array="#arguments.hand#">
+
+		<!--- Check to see what kind of card we have. --->
+		<cfif isNumeric( local.card )>
+
+			<!--- Simply add given value. --->
+			<cfset local.sum += local.card />
+
+		<cfelseif (local.card eq "A")>
+
+			<!--- On the second pass, add the Ace as an 2. --->
+			<cfset local.sum += 2 />
+
+		<cfelse>
+
+			<!---
+				All other cards will be face cards at this time,
+				which will 10.
+			--->
+			<cfset local.sum += 10 />
+
+		</cfif>
+
+	</cfloop>
+
+
+	<!--- Now, no matter what sum we have, just return it. --->
+	<cfreturn local.sum />
+</cffunction>
+
+
+<cffunction
+	name="isHandBust"
+	access="public"
+	returntype="boolean"
+	output="false"
+	hint="I determine if the given hand is bust (over 21).">
+
+	<!--- Define arguments. --->
+	<cfargument
+		name="hand"
+		type="array"
+		required="true"
+		hint="I am the blackjack hand being checked for bust."
+		/>
+
+	<!--- Return true if the hand sum is over 21. --->
+	<cfreturn (getHandTotal( arguments.hand ) gt 21) />
+</cffunction>

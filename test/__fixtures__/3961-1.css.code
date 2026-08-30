@@ -1,0 +1,6 @@
+.segment {}
+
+.user {
+	left: 0px ;
+	position: sticky ;
+}

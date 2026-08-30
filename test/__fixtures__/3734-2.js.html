@@ -1,0 +1,17 @@
+(<span class="pl-k">function</span> <span class="pl-en">capturePointerEvents</span>() {
+
+	<span class="pl-k">var</span> parentTag <span class="pl-k">=</span> ( <span class="pl-c1">document</span>.<span class="pl-smi">head</span> <span class="pl-k">||</span> <span class="pl-c1">document</span>.<span class="pl-c1">body</span> <span class="pl-k">||</span> <span class="pl-c1">document</span>.<span class="pl-c1">documentElement</span> );
+	<span class="pl-k">var</span> styleTag <span class="pl-k">=</span> <span class="pl-c1">document</span>.<span class="pl-c1">createElement</span>( <span class="pl-s"><span class="pl-pds">"</span>style<span class="pl-pds">"</span></span> );
+
+	<span class="pl-smi">styleTag</span>.<span class="pl-c1">setAttribute</span>( <span class="pl-s"><span class="pl-pds">"</span>type<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>text/css<span class="pl-pds">"</span></span> );
+	<span class="pl-smi">styleTag</span>.<span class="pl-c1">setAttribute</span>( <span class="pl-s"><span class="pl-pds">"</span>data-caution<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Injected by bookmarklet<span class="pl-pds">"</span></span> );
+	<span class="pl-smi">styleTag</span>.<span class="pl-smi">innerHTML</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">`</span></span>
+<span class="pl-s">		html,</span>
+<span class="pl-s">		html * {</span>
+<span class="pl-s">			pointer-events: auto !important ;</span>
+<span class="pl-s">		}</span>
+<span class="pl-s">	<span class="pl-pds">`</span></span>;
+
+	<span class="pl-smi">parentTag</span>.<span class="pl-c1">appendChild</span>( styleTag );
+
+})();

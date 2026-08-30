@@ -1,0 +1,88 @@
+&lt;<span class="pl-ent">cfscript</span>&gt;
+
+	<span class="pl-c">// The SPA experience is gated by the current session. If the user is not yet</span>
+	<span class="pl-c">// authenticated, we need to bounce them out to the login page.</span>
+	<span class="pl-k">if</span> ( <span class="pl-k">!</span> <span class="pl-c1">session</span>.<span class="pl-smi">isLoggedIn</span> ) {
+
+		<span class="pl-c">// After the user logs-in, we want to redirect them to this page. As such, we</span>
+		<span class="pl-c">// have to pass the CURRENT URL to the login page as a parameter (redirectTo).</span>
+		<span class="pl-smi">redirectTo</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">DynamicUrl</span>( <span class="pl-c1">cgi</span>.<span class="pl-smi">script_name</span> )
+			.<span class="pl-en">addUrlParams</span>( <span class="pl-c1">url</span> )
+			.<span class="pl-en">toUrl</span>()
+		;
+
+		<span class="pl-c">// NOTE: If the current URL has a FRAGMENT on it, that FRAGMENT will be</span>
+		<span class="pl-c">// maintained through this redirect (even though it is not sent to the server).</span>
+		<span class="pl-c">// The login page will then grab the fragment and convert it into a "spaRoute"</span>
+		<span class="pl-c">// URL parameter for safer passage.</span>
+		<span class="pl-c1">location</span>(
+			<span class="pl-e">url</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>./index.cfm?redirectTo=#<span class="pl-c1">encodeForUrl</span>( <span class="pl-smi">redirectTo</span> )#<span class="pl-pds">"</span></span>,
+			<span class="pl-e">addToken</span> <span class="pl-k">=</span> <span class="pl-c1">false</span>
+		);
+
+	}
+
+	<span class="pl-c">// ------------------------------------------------------------------------------- //</span>
+	<span class="pl-c">// ------------------------------------------------------------------------------- //</span>
+
+	<span class="pl-c">// The SPA (Single-Page Application) works by using client-side routing that is - in</span>
+	<span class="pl-c">// this example - driven by the URL fragment (ie, not using HTML5-mode routing).</span>
+	<span class="pl-c">// Since URL fragments are notoriously hard to pass-around (since they are never sent</span>
+	<span class="pl-c">// to the server), we'll send a URL-based "spaRoute" to be passed-around instead</span>
+	<span class="pl-c">// (which will get sent to the server). If this parameter exists, we're going to</span>
+	<span class="pl-c">// convert it to the current SPA fragment as part of the initial SPA rendering.</span>
+	<span class="pl-k">if</span> ( <span class="pl-c1">url</span>.<span class="pl-c1">keyExists</span>( <span class="pl-s"><span class="pl-pds">"</span>spaRoute<span class="pl-pds">"</span></span> ) ) {
+
+		<span class="pl-c">// Pull the spaRoute out of the current URL.</span>
+		<span class="pl-smi">nextLocation</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">DynamicUrl</span>( <span class="pl-c1">cgi</span>.<span class="pl-smi">script_name</span> )
+			.<span class="pl-en">addUrlParams</span>( <span class="pl-c1">url</span> )
+			.<span class="pl-en">deleteUrlParam</span>( <span class="pl-s"><span class="pl-pds">"</span>spaRoute<span class="pl-pds">"</span></span> )
+			<span class="pl-c">// Move the spaRoute parameter into the next URL fragment.</span>
+			.<span class="pl-en">addFragment</span>( <span class="pl-c1">url</span>.<span class="pl-smi">spaRoute</span> )
+			.<span class="pl-en">toUrl</span>()
+		;
+
+		<span class="pl-c1">location</span>( <span class="pl-e">url</span> <span class="pl-k">=</span> <span class="pl-smi">nextLocation</span>, <span class="pl-e">addToken</span> <span class="pl-k">=</span> <span class="pl-c1">false</span> );
+
+	}
+
+&lt;/<span class="pl-ent">cfscript</span>&gt;
+&lt;<span class="pl-ent">cfoutput</span>&gt;
+
+	&lt;!doctype html&gt;
+	&lt;<span class="pl-ent">html</span> <span class="pl-e">lang</span>=<span class="pl-s"><span class="pl-pds">"</span>en<span class="pl-pds">"</span></span>&gt;
+	&lt;<span class="pl-ent">head</span>&gt;
+		&lt;<span class="pl-ent">meta</span> <span class="pl-e">charset</span>=<span class="pl-s"><span class="pl-pds">"</span>utf-8<span class="pl-pds">"</span></span> /&gt;
+		&lt;<span class="pl-ent">title</span>&gt;
+			Main SPA (Single-Page App) Experience
+		&lt;/<span class="pl-ent">title</span>&gt;
+	&lt;/<span class="pl-ent">head</span>&gt;
+	&lt;<span class="pl-ent">body</span>&gt;
+
+		&lt;<span class="pl-ent">h1</span>&gt;
+			Main SPA (Single-Page App) Experience
+		&lt;/<span class="pl-ent">h1</span>&gt;
+
+		&lt;<span class="pl-ent">p</span>&gt;
+			Your current route:
+			&lt;<span class="pl-ent">code</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>route<span class="pl-pds">"</span></span> <span class="pl-e">style</span>=<span class="pl-s"><span class="pl-pds">"</span><span class="pl-c1">background</span>: <span class="pl-c1">yellow</span> ;<span class="pl-pds">"</span></span>&gt;&lt;/<span class="pl-ent">code</span>&gt;
+		&lt;/<span class="pl-ent">p</span>&gt;
+
+		&lt;<span class="pl-ent">p</span>&gt;
+			&lt;<span class="pl-ent">a</span> <span class="pl-e">href</span>=<span class="pl-s"><span class="pl-pds">"</span>./logout.cfm<span class="pl-pds">"</span></span>&gt;Logout&lt;/<span class="pl-ent">a</span>&gt;
+		&lt;/<span class="pl-ent">p</span>&gt;
+
+		&lt;<span class="pl-ent">script</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/javascript<span class="pl-pds">"</span></span>&gt;
+
+			<span class="pl-c">// Output the current spa-route fragment in the view.</span>
+			<span class="pl-c1">document</span>
+				.<span class="pl-c1">querySelector</span>( <span class="pl-s"><span class="pl-pds">"</span>.route<span class="pl-pds">"</span></span> )
+				.<span class="pl-smi">textContent</span> <span class="pl-k">=</span> <span class="pl-c1">window</span>.<span class="pl-c1">location</span>.<span class="pl-c1">hash</span>
+			;
+
+		&lt;/<span class="pl-ent">script</span>&gt;
+
+	&lt;/<span class="pl-ent">body</span>&gt;
+	&lt;/<span class="pl-ent">html</span>&gt;
+
+&lt;/<span class="pl-ent">cfoutput</span>&gt;

@@ -1,0 +1,21 @@
+<span class="pl-k">var</span> CircuitBreakerFactory <span class="pl-k">=</span> <span class="pl-c1">require</span>( <span class="pl-s"><span class="pl-pds">"</span>@bennadel/circuit-breaker<span class="pl-pds">"</span></span> ).<span class="pl-smi">CircuitBreakerFactory</span>;
+<span class="pl-k">var</span> Monitor <span class="pl-k">=</span> <span class="pl-c1">require</span>( <span class="pl-s"><span class="pl-pds">"</span>@bennadel/circuit-breaker<span class="pl-pds">"</span></span> ).<span class="pl-smi">Monitor</span>;
+
+<span class="pl-k">class</span> <span class="pl-en">MyMonitor</span> <span class="pl-k">extends</span> <span class="pl-e">Monitor</span> {
+
+	<span class="pl-en">logClosed</span>( <span class="pl-smi">stateSnapshot</span> ) {
+		<span class="pl-c">/* ... */</span>
+	}
+
+	<span class="pl-en">logOpened</span>( <span class="pl-smi">stateSnapshot</span> ) {
+		<span class="pl-c">/* ... */</span>
+	}
+
+}
+
+<span class="pl-c">// ....</span>
+
+<span class="pl-k">var</span> circuitBreaker <span class="pl-k">=</span> <span class="pl-smi">CircuitBreakerFactory</span>.<span class="pl-en">create</span>({
+	id<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>Remote API<span class="pl-pds">"</span></span>,
+	monitor<span class="pl-k">:</span> <span class="pl-k">new</span> <span class="pl-en">MyMonitor</span>()
+});

@@ -1,0 +1,28 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+	<title>Defaulting The iPhone Keyboard To: Number, Email, Url</title>
+</head>
+<body>
+
+	<h1>
+		Defaulting The iPhone Keyboard To: Number, Email, Url
+	</h1>
+
+	<form>
+
+		Type="Number":<br />
+		<input type="number" /><br />
+		<br />
+
+		Type="Url":<br />
+		<input type="url" /><br />
+		<br />
+
+		Type="Email":<br />
+		<input type="email" /><br />
+
+	</form>
+
+</body>
+</html>

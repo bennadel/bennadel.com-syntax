@@ -1,0 +1,15 @@
+schema<span class="pl-k">.</span>createCollection( <span class="pl-s"><span class="pl-pds">"</span>contacts<span class="pl-pds">"</span></span>, <span class="pl-c1">true</span> )
+	.add( <span class="pl-s"><span class="pl-pds">"</span>{<span class="pl-cce">\"</span>name<span class="pl-cce">\"</span>: <span class="pl-cce">\"</span>Jen<span class="pl-cce">\"</span>}<span class="pl-pds">"</span></span> )
+	.add( <span class="pl-s"><span class="pl-pds">"</span>{<span class="pl-cce">\"</span>name<span class="pl-cce">\"</span>: <span class="pl-cce">\"</span>Ted<span class="pl-cce">\"</span>}<span class="pl-pds">"</span></span> )
+	.add( <span class="pl-s"><span class="pl-pds">"</span>{<span class="pl-cce">\"</span>name<span class="pl-cce">\"</span>: <span class="pl-cce">\"</span>Stan<span class="pl-cce">\"</span>}<span class="pl-pds">"</span></span> )
+	.execute()
+;
+
+<span class="pl-k">var</span> contacts <span class="pl-k">=</span> schema<span class="pl-k">.</span>createCollection( <span class="pl-s"><span class="pl-pds">"</span>contacts<span class="pl-pds">"</span></span>, <span class="pl-c1">true</span> )
+	.find( <span class="pl-s"><span class="pl-pds">"</span>$.name = :nameParam<span class="pl-pds">"</span></span> )
+	.orderBy( <span class="pl-s"><span class="pl-pds">"</span>name<span class="pl-pds">"</span></span> )
+	.limit( <span class="pl-c1">1</span> )
+	.bind( <span class="pl-s"><span class="pl-pds">"</span>nameParam<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Jen<span class="pl-pds">"</span></span> )
+	.execute()
+	.fetchAll()
+;

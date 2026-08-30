@@ -1,0 +1,103 @@
+<cfscript>
+
+	readings = [
+		{ label: "2022-01", value: randRange( 1, 200 ) },
+		{ label: "2022-02", value: randRange( 1, 200 ) },
+		{ label: "2022-03", value: randRange( 1, 200 ) },
+		{ label: "2022-04", value: randRange( 1, 200 ) },
+		{ label: "2022-05", value: randRange( 1, 200 ) },
+		{ label: "2022-06", value: randRange( 1, 200 ) },
+		{ label: "2022-07", value: randRange( 1, 200 ) },
+		{ label: "2022-08", value: randRange( 1, 200 ) },
+		{ label: "2022-09", value: randRange( 1, 200 ) },
+		{ label: "2022-10", value: randRange( 1, 200 ) },
+		{ label: "2022-11", value: randRange( 1, 200 ) },
+		{ label: "2022-12", value: randRange( 1, 200 ) }
+	];
+
+</cfscript>
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<style type="text/css">
+
+		/* The chart is a row-oriented flexbox container. */
+		.chart {
+			border: 3px solid #666666 ;
+			display: flex ;
+			font-family: monospace ;
+			gap: 10px ;
+			margin: 0px 0px 0px 0px ;
+			padding: 10px 13px 8px 13px ;
+		}
+		/*
+			Each reading in the chart is a column-oriented flexbox container. The items in
+			this flexbox container are REVERSED so that the label renders at the bottom,
+			visually, but is still the first element, semantically.
+		*/
+		.chart__reading {
+			display: flex ;
+			flex: 1 1 auto ;
+			flex-direction: column-reverse ;
+			gap: 5px ;
+			height: 250px ;
+			margin: 0px 0px 0px 0px ;
+		}
+		.chart__label {
+			flex: 0 0 auto ;
+			margin: 0px 0px 0px 0px ;
+			text-align: center ;
+		}
+		.chart__value {
+			flex: 0 0 auto ;
+			margin: 0px 0px 0px 0px ;
+			text-align: center ;
+		}
+		.chart__bar {
+			background-color: #2196f3 ;
+			border-radius: 3px 3px 3px 3px ;
+			display: block ;
+			margin-top: 8px ;
+		}
+
+	</style>
+</head>
+<body>
+	<cfoutput>
+
+		<h1>
+			Using CSS Flexbox To Create A Simple Bar Chart
+		</h1>
+
+		<dl class="chart">
+			<cfloop item="reading" array="#readings#">
+				<!---
+					NOTE: In modern HTML, it's valid to wrap each Description Term (DT)
+					and its associated Description Details (DD) in a DIV. This gives us
+					greater control over the rendering of the content.
+				--->
+				<div class="chart__reading">
+
+					<dt class="chart__label">
+						#encodeForHtml( reading.label )#
+					</dt>
+
+					<dd class="chart__value">
+						#encodeForHtml( reading.value )#
+
+						<!--- Visual rendering of the "bar". --->
+						<span
+							class="chart__bar"
+							style="height: #reading.value#px ;">
+						</span>
+					</dd>
+
+				</div>
+			</cfloop>
+		</dl>
+
+	</cfoutput>
+
+</body>
+</html>

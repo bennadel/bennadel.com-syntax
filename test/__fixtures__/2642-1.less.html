@@ -1,0 +1,82 @@
+<span class="pl-c">// When a variable is defined in a mixin, it is made available in the calling context.</span>
+<span class="pl-c">// This includes nested mixin definitions as well as nested mixin invocations.</span>
+<span class="pl-e">.test-mixin-scope</span>() {
+
+	<span class="pl-e">#nested.outer</span>() ;
+
+	<span class="pl-ent">test-mixin-scope-test</span>: <span class="pl-smi">@inner</span> ;
+
+}
+
+
+<span class="pl-c">// Here, we have several locally-scoped mixins. Each mixin is only available to the</span>
+<span class="pl-c">// scope in which it was defined. Each mixin is invoked after it is defined.</span>
+<span class="pl-e">#nested</span> {
+
+	<span class="pl-c">// This variable is visible only to the #nested namespace. That said, it will not</span>
+	<span class="pl-c">// interfear with the ability for the nested mixins to bubble-up their variables</span>
+	<span class="pl-c">// into the calling context.</span>
+	<span class="pl-smi">@inner</span>: <span class="pl-s"><span class="pl-pds">"</span>Namespace default<span class="pl-pds">"</span></span> ;
+
+	<span class="pl-e">.outer</span>() {
+
+		<span class="pl-e">.middle</span>() {
+
+			<span class="pl-c">// Here, we are defining a default value based on the @inner variable that</span>
+			<span class="pl-c">// is scoped ot the namespace. Note that this does not intefear with the</span>
+			<span class="pl-c">// mixins @inner variable that is locally-defined and injected into the</span>
+			<span class="pl-c">// various calling contexts.</span>
+			<span class="pl-e">.inner</span>( <span class="pl-smi">@input</span>: <span class="pl-smi">@inner</span> ) {
+
+				<span class="pl-c">// This value will be made available to all of the calling contexts.</span>
+				<span class="pl-smi">@inner</span>: <span class="pl-s"><span class="pl-pds">"</span>Passed up from das inner mixin<span class="pl-pds">"</span></span> ;
+
+				<span class="pl-c">// Test the translation of the #nested namespace inner to input.</span>
+				<span class="pl-ent">namespace-test</span>: <span class="pl-smi">@input</span> ;
+
+			}
+
+			<span class="pl-e">.inner</span>() ;
+
+			<span class="pl-ent">middle-test</span>: <span class="pl-smi">@inner</span> ;
+
+		}
+
+		<span class="pl-e">.middle</span>() ;
+
+		<span class="pl-ent">outer-test</span>: <span class="pl-smi">@inner</span> ;
+
+	}
+
+}
+
+
+<span class="pl-c">// When we invoke the .test-mixin-scope() mixin, well be triggering the invocation</span>
+<span class="pl-c">// of several nested mixin calls; ultimately, this will call the .inner() mixin which</span>
+<span class="pl-c">// will create a variable which will become available in the stack up to the body{}.</span>
+<span class="pl-ent">body</span> {
+
+	<span class="pl-c">// Were going to give the body context its own @inner variable. Since variables</span>
+	<span class="pl-c">// act somewhat like "constants", this will prevent the .inner() mixin from</span>
+	<span class="pl-c">// overriding the @inner value in parent scopes.</span>
+	<span class="pl-smi">@inner</span>: <span class="pl-s"><span class="pl-pds">"</span>Start the demo<span class="pl-pds">"</span></span> ;
+
+	<span class="pl-c">// Of course, variables arent "exactly" constants. So, you can override the</span>
+	<span class="pl-c">// current value inside the context of a single block and/or mixin.</span>
+	<span class="pl-smi">@inner</span>: <span class="pl-s"><span class="pl-pds">"</span>Rock the body<span class="pl-pds">"</span></span> ;
+
+	<span class="pl-c">// Unlike a mixin, a CSS guard (and any other ruleset) creates its own private</span>
+	<span class="pl-c">// scope. As such, the @inner value set here will not override the current value</span>
+	<span class="pl-c">// of the @inner variable.</span>
+	<span class="pl-e">&amp;</span> <span class="pl-k">when</span> ( <span class="pl-c1">true</span> ) {
+
+		<span class="pl-smi">@inner</span>: <span class="pl-s"><span class="pl-pds">"</span>In CSS guard<span class="pl-pds">"</span></span> ;
+
+	}
+
+	<span class="pl-e">.test-mixin-scope</span>() ;
+
+	<span class="pl-c">// Check to see which @inner value is visible.</span>
+	<span class="pl-ent">body-test</span>: <span class="pl-smi">@inner</span> ;
+
+}

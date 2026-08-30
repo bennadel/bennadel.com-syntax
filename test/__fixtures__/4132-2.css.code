@@ -1,0 +1,27 @@
+/* By default, we'll use the REDUCED MOTION version of the animation. */
+:root {
+	--transform-start: 1.0 ;
+	--transform-end: 1.0 ;
+}
+
+/*
+	Then, if the user has NO PREFERENCE for motion, we can OVERRIDE the
+	animation definition to include both the motion and non-motion properties.
+*/
+@media ( prefers-reduced-motion: no-preference ) {
+	:root {
+		--transform-start: 0.7 ;
+		--transform-end: 1.0 ;
+	}
+}
+
+@keyframes modal-enter {
+	from {
+		opacity: 0 ;
+		transform: scale( var( --transform-start ) ) ;
+	}
+	to {
+		opacity: 1 ;
+		transform: scale( var( --transform-end ) ) ;
+	}
+}

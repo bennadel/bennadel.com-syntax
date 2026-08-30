@@ -1,0 +1,7 @@
+.textBlock * {
+	&:focus,
+	&:focus-visible {
+		animation-name: none ;
+		outline: none ;
+	}
+}

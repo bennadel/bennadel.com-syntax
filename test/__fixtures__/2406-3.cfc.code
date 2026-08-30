@@ -1,0 +1,113 @@
+<cfcomponent output="false">
+<cfscript>
+
+
+	// I manage the pixels for a single shape within the sprite. As
+	// pixels are added, they are mapped and the bouding box of the
+	// shape is updated.
+	function init( Numeric id, Numeric x, Numeric y ){
+
+		// Store the unique ID of the shape.
+		variables.id = id;
+
+		// Store the pixel map, including our first pixel.
+		variables.pixelMap = {
+			"#x#:#y#" = true
+		};
+
+		// Set up the initial bounding box defined by the first pixel.
+		variables.minX = x;
+		variables.maxX = (x + 1);
+		variables.minY = y;
+		variables.maxY = (y + 1);
+
+		// Return this object reference.
+		return( this );
+
+	}
+
+
+	// I absorb the dimentions of the given shape.
+	function absorbShape( Any shape ){
+
+		// Absorb all of the pixels in the underlying map.
+		structAppend(
+			variables.pixelMap,
+			shape.getPixelMap()
+		);
+
+		// Get the other shape's boudning box.
+		var boundingBox = shape.getBoundingBox();
+
+		// Grow the current bounding box to encompass the new
+		// bounding box of the absorbed shape.
+		variables.minX = min( variables.minX, boundingBox.minX );
+		variables.maxX = max( variables.maxX, boundingBox.maxX );
+		variables.minY = min( variables.minY, boundingBox.minY );
+		variables.maxY = max( variables.maxY, boundingBox.maxY );
+
+	}
+
+
+	// I add the given pixel to the shape.
+	function addPixel( Numeric x, Numeric y ){
+
+		// Add it the map.
+		variables.pixelMap[ "#x#:#y#" ] = true;
+
+		// Adjust the min/max box coordinates.
+		variables.minX = min( variables.minX, x );
+		variables.maxX = max( variables.maxX, (x + 1) );
+		variables.minY = min( variables.minY, y );
+		variables.maxY = max( variables.maxY, (y + 1) );
+
+	}
+
+
+	// I determine if the given pixel is within the known pixels of
+	// mapped shape.
+	function containsPixel( Numeric x, Numeric y ){
+
+		return(
+			structKeyExists( variables.pixelMap, "#x#:#y#" )
+		);
+
+	}
+
+
+	// I get the bounding box for the shape based on the min/max
+	// coordinates of the bounding box.
+	function getBoundingBox(){
+
+		var boundingBox = {
+			minX = variables.minX,
+			maxX = variables.maxX,
+			minY = variables.minY,
+			maxY = variables.maxY,
+			width = (variables.maxX - variables.minX),
+			height = (variables.maxY - variables.minY)
+		};
+
+		return( boundingBox );
+
+	}
+
+
+	// I return the ID property.
+	function getID(){
+
+		return( variables.id );
+
+	}
+
+
+	// I return the underlying pixel map.
+	function getPixelMap(){
+
+		return( variables.pixelMap );
+
+	}
+
+
+</cfscript>
+</cfcomponent>

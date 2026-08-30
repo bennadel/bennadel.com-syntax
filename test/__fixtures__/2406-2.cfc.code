@@ -1,0 +1,239 @@
+<cfcomponent output="false">
+<cfscript>
+
+
+	// I map the incoming opaque pixels to shapes within the sprite
+	// image.
+	function init(){
+
+		// I am the collection of known, valid shapes. As shapes
+		// evolve in the map, some may be absorbed by others and will
+		// be removed from this collection.
+		variables.shapes = {};
+
+		// Each shape is keyed by its own unique ID.
+		variables.shapeIDIndex = 0;
+
+		// Return this object reference.
+		return( this );
+
+	};
+
+
+	// I add the given shape pixel to the map. When a pixel is added,
+	// it is either consumed by an existing shape, or is the means to
+	// start a completely new shape.
+	function addPixel( Numeric x, Numeric y ){
+
+		// Check the surrounding pixels for known shapes.
+		var surroundingShapes = this._getSurroundingShapes( x, y );
+
+		// Check to see if we have any surrounding shapes.
+		if (arrayLen( surroundingShapes )){
+
+			// Add the current pixel to the first known shape.
+			surroundingShapes[ 1 ].addPixel( x, y );
+
+			// If this new pixel has bridged the gap between two
+			// known shapes, when this pixel has united the two
+			// shapes into one shape. As such, one of the surrounding
+			// shapes must absorb the other ones.
+			this._mergeShapes( surroundingShapes );
+
+			// Nothing mroe to do with this pixel.
+			return;
+
+		}
+
+		// If we made it this far then we have a completely new shape.
+		// Create the shape with a new, unique ID.
+		var shape = new SpriteShape(
+			++variables.shapeIDIndex,
+			x,
+			y
+		);
+
+		// Store the new shape.
+		variables.shapes[ shape.getID() ] = shape;
+
+	}
+
+
+	// I get the shape that contains the given pixel.
+	function _getShapeContainingPixel( Numeric x, Numeric y ){
+
+		// Short-circuit some out-of-bounds cases.
+		if (
+			(x < 0) ||
+			(y < 0)
+			){
+
+			// These are not valid coordinates.
+			return;
+
+		}
+
+		// Loop over the known shapes to if any of them contain a
+		// pixel with the given coordinates.
+		for (var shapeID in variables.shapes){
+
+			var shape = variables.shapes[ shapeID ];
+
+			if (shape.containsPixel( x, y )){
+
+				return( shape );
+
+			}
+
+		}
+
+		// If we made it this far, no shape was found.
+		return;
+
+	}
+
+
+	// I return the unique set of shapes found in the sprite map.
+	function getShapes(){
+
+		var shapes = [];
+
+		// Convert the key-based collection into an indexed collection.
+		for (var shapeID in variables.shapes){
+
+			arrayAppend(
+				shapes,
+				variables.shapes[ shapeID ]
+			);
+
+		}
+
+		// Return the shapes.
+		return( shapes );
+
+	}
+
+
+	// I get the shapes in the pixels surrounding the given coordinate.
+	function _getSurroundingShapes( Numeric x, Numeric y ){
+
+		// Define the four potentionally known coorindates in relation
+		// to the given pixel. The other direcitons (east and south)
+		// have not yet been explored.
+		//
+		// NOTE: This direcitonal assumption is based on the logic
+		// contained within the scanning alogrithm of the SpriteMapper
+		// component. As such, this part of the code is strongly
+		// coupled to the other component.
+		var pixels = [
+			{
+				x = (x - 1),
+				y = y
+			},
+			{
+				x = (x - 1),
+				y = (y - 1)
+			},
+			{
+				x = x,
+				y = (y - 1)
+			},
+			{
+				x = (x + 1),
+				y = (y - 1)
+			}
+		];
+
+		// Define the shapes that surround the given pixel.
+		var shapes = [];
+
+		// Keep track of the IDs of the shapes we found, so that we
+		// keep the collection of returned shapes unique.
+		var shapeIDs = {};
+
+		// For a small optimization, we know that if we find a shape
+		// in the first pixel, we can skip the check for the middle
+		// two pixels and jump to the last pixel.
+		var skipMiddlePixels = false;
+
+		// Loop over connected pixels to gather regions.
+		for (var i = 1 ; i <= 4 ; i++){
+
+			if (skipMiddlePixels && (i < 4)){
+
+				continue;
+
+			}
+
+			var pixel = pixels[ i ];
+
+			// Get the parent shape (if there is one).
+			var shape = this._getShapeContainingPixel( pixel.x, pixel.y );
+
+			// If we found a shape at the given coordinates,
+			// add it to the collection.
+			if (
+				!isNull( shape ) &&
+				!structKeyExists( shapeIDs, shape.getID() )
+				){
+
+				// Add this shape to the collection.
+				arrayAppend( shapes, shape );
+
+				// Cache the ID.
+				shapeIDs[ shape.getID() ] = true;
+
+				// If this is the first pixel, then skip directly
+				// to the last pixel.
+				if (i == 1){
+
+					skipMiddlePixels = true;
+
+				}
+
+			}
+
+		}
+
+		// Return the surrounding shapes.
+		return( shapes );
+
+	}
+
+
+	// I merge the given, connected shapes.
+	function _mergeShapes( shapes ){
+
+		// Get the number of shapes to merge.
+		var shapeCount = arrayLen( shapes );
+
+		// If there is only one shape, there's nothing to merge.
+		if (shapeCount == 1){
+
+			return;
+
+		}
+
+		// If there is more than one shape, all the secondary shapes
+		// will get merge down into the first shape. Get a reference
+		// to the first shape.
+		var firstShape = shapes[ 1 ];
+
+		// Merge all the remaining shapes into the first shape.
+		for (var i = 2 ; i <= shapeCount ; i++){
+
+			var oldShape = shapes[ i ];
+
+			// Remove this shape from the cache.
+			structDelete( variables.shapes, oldShape.getID() );
+
+			// Merge this shape into the first one.
+			firstShape.absorbShape( oldShape );
+
+		}
+
+	}
+
+
+</cfscript>
+</cfcomponent>

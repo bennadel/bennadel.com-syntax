@@ -1,0 +1,158 @@
+&lt;!doctype html&gt;
+&lt;<span class="pl-ent">html</span> <span class="pl-e">lang</span>=<span class="pl-s"><span class="pl-pds">"</span>en<span class="pl-pds">"</span></span>&gt;
+&lt;<span class="pl-ent">body</span>&gt;
+
+	&lt;<span class="pl-ent">h1</span>&gt;
+		Animating DOM Rectangles Over Focused Elements In JavaScript
+	&lt;/<span class="pl-ent">h1</span>&gt;
+
+	&lt;<span class="pl-ent">p</span>&gt;
+		Before demo &lt;<span class="pl-ent">a</span> <span class="pl-e">href</span>&gt;text block&lt;/<span class="pl-ent">a</span>&gt; (to take focus from demo block and to contrast
+		the normal focus-outline behavior).
+	&lt;/<span class="pl-ent">p</span>&gt;
+
+	&lt;<span class="pl-ent">p</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>textBlock<span class="pl-pds">"</span></span>&gt;
+		&lt;<span class="pl-ent">mark</span> <span class="pl-e">hidden</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>box<span class="pl-pds">"</span></span>&gt;
+			<span class="pl-c">&lt;!--</span>
+<span class="pl-c">				I will scurry across the viewport and highlight focused areas within this</span>
+<span class="pl-c">				paragraph. Since focused text may wrap across line-breaks, I'm providing</span>
+<span class="pl-c">				several internal segments for compound highlighting rectangles.</span>
+<span class="pl-c">			--&gt;</span>
+			&lt;<span class="pl-ent">span</span>&gt;&lt;/<span class="pl-ent">span</span>&gt;
+			&lt;<span class="pl-ent">span</span>&gt;&lt;/<span class="pl-ent">span</span>&gt;
+			&lt;<span class="pl-ent">span</span>&gt;&lt;/<span class="pl-ent">span</span>&gt;
+		&lt;/<span class="pl-ent">mark</span>&gt;
+
+		&lt;<span class="pl-ent">span</span> <span class="pl-e">data-repeat</span>=<span class="pl-s"><span class="pl-pds">"</span>10<span class="pl-pds">"</span></span>&gt;
+			Lorem ipsum dolor &lt;<span class="pl-ent">a</span> <span class="pl-e">href</span>&gt;sit amet&lt;/<span class="pl-ent">a</span>&gt; interrogo communis flumen.
+			&lt;<span class="pl-ent">a</span> <span class="pl-e">href</span>&gt;Mille iuvenis&lt;/<span class="pl-ent">a</span>&gt;, umquam ante cohors, adhibeo citus fortis provincia.
+			Hic posco ego, quis frequens tenebrae. Aliquis turbo is epistula. &lt;<span class="pl-ent">a</span> <span class="pl-e">href</span>&gt;Hic
+			experior quidam voluntas&lt;/<span class="pl-ent">a</span>&gt; nam aliquis vinculum. Noster puto paulo sum post
+			saevus natura. Diversus ventus, quasi cum for meus, scribo dexter prior
+			astrum. Idem condo qua ictus quoque nemo iter. Mortalis frater, denique in
+			puer, tollo nullus quattuor vestigium. &lt;<span class="pl-ent">a</span> <span class="pl-e">href</span>&gt;Iste dico ipse voluntas an sui
+			vitium meus desino quisquis, qua gratus ira tu opto nemo praemium gens rideo
+			diversus error&lt;/<span class="pl-ent">a</span>&gt;.
+		&lt;/<span class="pl-ent">span</span>&gt;
+	&lt;/<span class="pl-ent">p</span>&gt;
+
+	&lt;<span class="pl-ent">style</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/css<span class="pl-pds">"</span></span>&gt;
+		
+		<span class="pl-ent">mark</span><span class="pl-e">.box</span> <span class="pl-ent">span</span> {
+			<span class="pl-c1">background-color</span>: <span class="pl-c1">transparent</span> ;
+			<span class="pl-c1">border-radius</span>: <span class="pl-c1">3</span><span class="pl-k">px</span> ;
+			<span class="pl-c1">border</span>: <span class="pl-c1">1</span><span class="pl-k">px</span> <span class="pl-c1">solid</span> <span class="pl-c1">tomato</span> ;
+			<span class="pl-c1">box-shadow</span>: <span class="pl-c1">inset</span> <span class="pl-c1">0</span> <span class="pl-c1">0</span> <span class="pl-c1">0</span> <span class="pl-c1">3</span><span class="pl-k">px</span> <span class="pl-c1">#ffff04aa</span> ;
+			<span class="pl-c1">opacity</span>: <span class="pl-c1">0</span> ;
+			<span class="pl-c1">pointer-events</span>: <span class="pl-c1">none</span> ;
+			<span class="pl-c1">position</span>: <span class="pl-c1">absolute</span> ;
+			<span class="pl-c1">transition</span>: <span class="pl-c1">all</span> <span class="pl-c1">100</span><span class="pl-k">ms</span> <span class="pl-c1">ease-out</span> ;
+			<span class="pl-c1">z-index</span>: <span class="pl-c1">9999</span> ;
+		}
+
+	&lt;/<span class="pl-ent">style</span>&gt;
+	&lt;<span class="pl-ent">script</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/javascript<span class="pl-pds">"</span></span>&gt;
+
+		<span class="pl-k">var</span> box <span class="pl-k">=</span> <span class="pl-c1">document</span>.<span class="pl-c1">querySelector</span>( <span class="pl-s"><span class="pl-pds">"</span>mark.box<span class="pl-pds">"</span></span> );
+		<span class="pl-k">var</span> boxSegments <span class="pl-k">=</span> <span class="pl-c1">Array</span>.<span class="pl-en">from</span>( <span class="pl-smi">box</span>.<span class="pl-smi">children</span> );
+
+		<span class="pl-c">// When a new element is focused within the document, we want zoom the marker</span>
+		<span class="pl-c">// box(es) over to the focused element to emphasize focus.</span>
+		<span class="pl-c1">document</span>.<span class="pl-c1">addEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>focusin<span class="pl-pds">"</span></span>, ( <span class="pl-c1">event</span> ) <span class="pl-k">=&gt;</span> {
+
+			<span class="pl-k">var</span> target <span class="pl-k">=</span> <span class="pl-c1">event</span>.<span class="pl-c1">target</span>;
+
+			<span class="pl-c">// If an element OUTSIDE of the demo text block was focused, hide the marker -</span>
+			<span class="pl-c">// we only want that to show the crazy boxy inside the demo block.</span>
+			<span class="pl-k">if</span> ( <span class="pl-k">!</span> <span class="pl-smi">target</span>.<span class="pl-c1">closest</span>( <span class="pl-s"><span class="pl-pds">"</span>.textBlock<span class="pl-pds">"</span></span> ) ) {
+
+				<span class="pl-smi">box</span>.<span class="pl-smi">hidden</span> <span class="pl-k">=</span> <span class="pl-c1">true</span>;
+				<span class="pl-k">return</span>;
+
+			}
+
+			<span class="pl-c">// We're about to animate the box segments into place, mark the box as active</span>
+			<span class="pl-c">// (and visible) in the DOM.</span>
+			<span class="pl-smi">box</span>.<span class="pl-smi">hidden</span> <span class="pl-k">=</span> <span class="pl-c1">false</span>;
+
+			<span class="pl-c">// Instead of using the `.getBoundingClientRect()`, which will give us the box</span>
+			<span class="pl-c">// that encompasses ALL areas of the focused text, we're going to use the</span>
+			<span class="pl-c">// `.getClientRects()` to get individual DOMRect readings for each part of the</span>
+			<span class="pl-c">// text if it wraps across lines.</span>
+			<span class="pl-c">// --</span>
+			<span class="pl-c">// Note: if the text doesn't wrap, the two get-rect methods are equivalent.</span>
+			<span class="pl-k">var</span> rects <span class="pl-k">=</span> <span class="pl-c1">Array</span>.<span class="pl-en">from</span>( <span class="pl-smi">target</span>.<span class="pl-c1">getClientRects</span>() );
+			<span class="pl-k">var</span> offsetBlock <span class="pl-k">=</span> <span class="pl-c1">window</span>.<span class="pl-smi">scrollY</span>;
+			<span class="pl-k">var</span> offsetInline <span class="pl-k">=</span> <span class="pl-c1">window</span>.<span class="pl-smi">scrollX</span>;
+			<span class="pl-k">var</span> padBlock <span class="pl-k">=</span> <span class="pl-c1">1</span>;
+			<span class="pl-k">var</span> padInline <span class="pl-k">=</span> <span class="pl-c1">6</span>;
+
+			<span class="pl-smi">boxSegments</span>.<span class="pl-c1">forEach</span>(
+				( <span class="pl-smi">segment</span>, <span class="pl-smi">i</span> ) <span class="pl-k">=&gt;</span> {
+
+					<span class="pl-k">var</span> rect <span class="pl-k">=</span> rects[ i ];
+					<span class="pl-c">// In order to make the animations smooth, we want to position every</span>
+					<span class="pl-c">// segment even if they aren't going to be rendered. This way, when</span>
+					<span class="pl-c">// they do get rendered, it looks like everything originates from the</span>
+					<span class="pl-c">// same location within the viewport. To that end, if we don't have a</span>
+					<span class="pl-c">// matching DOMRect for this segment, just use the first one and mark</span>
+					<span class="pl-c">// the segment as translucent.</span>
+					<span class="pl-k">if</span> ( rect ) {
+
+						<span class="pl-smi">segment</span>.<span class="pl-c1">style</span>.<span class="pl-smi">opacity</span> <span class="pl-k">=</span> <span class="pl-c1">1</span>; <span class="pl-c">// Show.</span>
+
+					} <span class="pl-k">else</span> {
+
+						<span class="pl-smi">segment</span>.<span class="pl-c1">style</span>.<span class="pl-smi">opacity</span> <span class="pl-k">=</span> <span class="pl-c1">0</span>; <span class="pl-c">// Hide.</span>
+						rect <span class="pl-k">=</span> rects[ <span class="pl-c1">0</span> ];
+
+					}
+
+					<span class="pl-smi">segment</span>.<span class="pl-c1">style</span>.<span class="pl-c1">left</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">`</span><span class="pl-pse"><span class="pl-s1">${</span></span><span class="pl-s1"> </span><span class="pl-smi">rect</span><span class="pl-s1">.</span><span class="pl-c1">left</span><span class="pl-s1"> </span><span class="pl-k">-</span><span class="pl-s1"> padInline </span><span class="pl-k">+</span><span class="pl-s1"> offsetInline </span><span class="pl-pse"><span class="pl-s1">}</span></span>px<span class="pl-pds">`</span></span>;
+					<span class="pl-smi">segment</span>.<span class="pl-c1">style</span>.<span class="pl-c1">top</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">`</span><span class="pl-pse"><span class="pl-s1">${</span></span><span class="pl-s1"> </span><span class="pl-smi">rect</span><span class="pl-s1">.</span><span class="pl-c1">top</span><span class="pl-s1"> </span><span class="pl-k">-</span><span class="pl-s1"> padBlock </span><span class="pl-k">+</span><span class="pl-s1"> offsetBlock </span><span class="pl-pse"><span class="pl-s1">}</span></span>px<span class="pl-pds">`</span></span>;
+					<span class="pl-smi">segment</span>.<span class="pl-c1">style</span>.<span class="pl-c1">width</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">`</span><span class="pl-pse"><span class="pl-s1">${</span></span><span class="pl-s1"> </span><span class="pl-smi">rect</span><span class="pl-s1">.</span><span class="pl-c1">width</span><span class="pl-s1"> </span><span class="pl-k">+</span><span class="pl-s1"> ( padInline </span><span class="pl-k">*</span><span class="pl-s1"> </span><span class="pl-c1">2</span><span class="pl-s1"> ) </span><span class="pl-pse"><span class="pl-s1">}</span></span>px<span class="pl-pds">`</span></span>;
+					<span class="pl-smi">segment</span>.<span class="pl-c1">style</span>.<span class="pl-c1">height</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">`</span><span class="pl-pse"><span class="pl-s1">${</span></span><span class="pl-s1"> </span><span class="pl-smi">rect</span><span class="pl-s1">.</span><span class="pl-c1">height</span><span class="pl-s1"> </span><span class="pl-k">+</span><span class="pl-s1"> ( padBlock </span><span class="pl-k">*</span><span class="pl-s1"> </span><span class="pl-c1">2</span><span class="pl-s1"> ) </span><span class="pl-pse"><span class="pl-s1">}</span></span>px<span class="pl-pds">`</span></span>;
+
+				}
+			);
+
+		});
+
+		<span class="pl-c">// When the window loses focus, hide the marker box.</span>
+		<span class="pl-c1">window</span>.<span class="pl-c1">addEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>blur<span class="pl-pds">"</span></span>, ( <span class="pl-c1">event</span> ) <span class="pl-k">=&gt;</span> {
+
+			<span class="pl-smi">box</span>.<span class="pl-smi">hidden</span> <span class="pl-k">=</span> <span class="pl-c1">true</span>;
+
+		});
+
+		<span class="pl-c">// --------------------------------------------------------------------------- //</span>
+		<span class="pl-c">// --------------------------------------------------------------------------- //</span>
+		<span class="pl-c">// Flesh-out lots of text for the demo so we can force window scrolling.</span>
+		<span class="pl-c">// --------------------------------------------------------------------------- //</span>
+		<span class="pl-c">// --------------------------------------------------------------------------- //</span>
+
+		<span class="pl-k">var</span> templateNode <span class="pl-k">=</span> <span class="pl-c1">document</span>.<span class="pl-c1">querySelector</span>( <span class="pl-s"><span class="pl-pds">"</span>[data-repeat]<span class="pl-pds">"</span></span> );
+		<span class="pl-k">var</span> count <span class="pl-k">=</span> <span class="pl-c1">Number</span>( <span class="pl-smi">templateNode</span>.<span class="pl-smi">dataset</span>.<span class="pl-smi">repeat</span> );
+
+		<span class="pl-k">for</span> ( <span class="pl-k">var</span> i <span class="pl-k">=</span> <span class="pl-c1">1</span> ; i <span class="pl-k">&lt;=</span> count ; i<span class="pl-k">++</span> ) {
+
+			<span class="pl-smi">templateNode</span>.<span class="pl-c1">after</span>( <span class="pl-smi">templateNode</span>.<span class="pl-c1">cloneNode</span>( <span class="pl-c1">true</span> ) );
+
+		}
+
+		<span class="pl-c">// Don't honor any anchor links. I want the `&lt;a&gt;` tags to have something to focus;</span>
+		<span class="pl-c">// but I don't want the clicks to actually navigate away from the page or offset.</span>
+		<span class="pl-c1">document</span>.<span class="pl-c1">addEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>click<span class="pl-pds">"</span></span>, ( <span class="pl-c1">event</span> ) <span class="pl-k">=&gt;</span> {
+
+			<span class="pl-k">if</span> ( <span class="pl-c1">event</span>.<span class="pl-c1">target</span>.<span class="pl-c1">closest</span>( <span class="pl-s"><span class="pl-pds">"</span>a<span class="pl-pds">"</span></span> ) ) {
+
+				<span class="pl-c1">event</span>.<span class="pl-c1">preventDefault</span>();
+
+			}
+
+		});
+
+	&lt;/<span class="pl-ent">script</span>&gt;
+
+&lt;/<span class="pl-ent">body</span>&gt;
+&lt;/<span class="pl-ent">html</span>&gt;

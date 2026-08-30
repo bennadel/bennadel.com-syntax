@@ -1,0 +1,19 @@
+<cfscript>
+
+	param name = "url.charCode" type = "numeric";
+
+	// Build an object with the target ASCII value encoded as a string
+	// character in one of the key values.
+	result = {
+		"charCode" = url.charCode,
+		"data" = "[#chr( url.charCode )#]"
+	};
+
+	response = serializeJson( result );
+
+</cfscript>
+
+<cfcontent
+	type="application/x-json; charset=utf-8"
+	variable="#charsetDecode( response, 'utf-8' )#"
+	/>

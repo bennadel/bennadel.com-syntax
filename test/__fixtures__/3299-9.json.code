@@ -1,0 +1,27 @@
+{
+	"id": "Circuit Breaker for API",
+	"closed": true,
+	"settings": {
+		"requestTimeout": 0,
+		"volumeThreshold": 0,
+		"failureThreshold": 0,
+		"activeThreshold": 0
+	},
+	"metrics": {
+		"emit": 0,
+		"execute": 0,
+		"success": 0,
+		"failure": 0,
+		"timeout": 0
+	},
+	"totalMetrics": {
+		"emit": 0,
+		"execute": 0,
+		"success": 0,
+		"failure": 0,
+		"timeout": 0
+	},
+	"current": {
+		"activeRequestCount": 0
+	}
+}
