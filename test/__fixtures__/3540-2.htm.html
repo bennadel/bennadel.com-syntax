@@ -1,0 +1,98 @@
+&lt;!doctype html&gt;
+&lt;<span class="pl-ent">html</span> <span class="pl-e">lang</span>=<span class="pl-s"><span class="pl-pds">"</span>en<span class="pl-pds">"</span></span>&gt;
+&lt;<span class="pl-ent">head</span>&gt;
+	&lt;<span class="pl-ent">meta</span> <span class="pl-e">charset</span>=<span class="pl-s"><span class="pl-pds">"</span>utf-8<span class="pl-pds">"</span></span> /&gt;
+	&lt;<span class="pl-ent">title</span>&gt;
+		Strict Mode Settings In JavaScript Are Scoped To The Script Tag
+	&lt;/<span class="pl-ent">title</span>&gt;
+&lt;/<span class="pl-ent">head</span>&gt;
+&lt;<span class="pl-ent">body</span>&gt;
+
+	&lt;<span class="pl-ent">h1</span>&gt;
+		Strict Mode Settings In JavaScript Are Scoped To The Script Tag
+	&lt;/<span class="pl-ent">h1</span>&gt;
+
+	&lt;<span class="pl-ent">script</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/javascript<span class="pl-pds">"</span></span>&gt;
+
+		<span class="pl-c">// !!! STRICT MODE ASSERTION HERE !!!</span>
+		<span class="pl-s"><span class="pl-pds">"</span>use strict<span class="pl-pds">"</span></span>;
+
+		<span class="pl-k">function</span> <span class="pl-en">sloppyMethod</span>() {
+
+			accidentallyGlobalVariable <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>kablamo!<span class="pl-pds">"</span></span>;
+
+		}
+
+		<span class="pl-c">// In this test, we're going to confirm that the sloppy-method can't be invoked</span>
+		<span class="pl-c">// in the strict mode context. This test is our CONTROL case. We are expecting</span>
+		<span class="pl-c">// this try/catch to result in catch-block execution.</span>
+		<span class="pl-en">console</span>.<span class="pl-en">group</span>( <span class="pl-s"><span class="pl-pds">"</span>Test One<span class="pl-pds">"</span></span> );
+
+		<span class="pl-k">try</span> {
+
+			<span class="pl-en">sloppyMethod</span>();
+			<span class="pl-en">console</span>.<span class="pl-c1">log</span>( <span class="pl-s"><span class="pl-pds">"</span>STRICT mode allowed sloppy method.<span class="pl-pds">"</span></span> );
+
+		} <span class="pl-k">catch</span> ( error ) {
+
+			<span class="pl-en">console</span>.<span class="pl-c1">log</span>( <span class="pl-s"><span class="pl-pds">"</span>STRICT Mode prevented sloppy method.<span class="pl-pds">"</span></span> );
+
+		}
+
+		<span class="pl-en">console</span>.<span class="pl-en">groupEnd</span>();
+
+	&lt;/<span class="pl-ent">script</span>&gt;
+	<span class="pl-c">&lt;!-- </span><span class="pl-ii">----------------------------------------------------------------------------</span><span class="pl-c"> --&gt;</span>
+	<span class="pl-c">&lt;!-- </span><span class="pl-ii">----------------------------------------------------------------------------</span><span class="pl-c"> --&gt;</span>
+	&lt;<span class="pl-ent">script</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/javascript<span class="pl-pds">"</span></span>&gt;
+
+		<span class="pl-c">// In this test, we're going to see what happens if we take a function that was</span>
+		<span class="pl-c">// defined in a STRICT mode and try to use it in SLOPPY mode.</span>
+		<span class="pl-en">console</span>.<span class="pl-en">group</span>( <span class="pl-s"><span class="pl-pds">"</span>Test Two<span class="pl-pds">"</span></span> );
+
+		<span class="pl-k">try</span> {
+
+			<span class="pl-en">sloppyMethod</span>();
+			<span class="pl-en">console</span>.<span class="pl-c1">log</span>( <span class="pl-s"><span class="pl-pds">"</span>SLOPPY mode allowed ORIGINAL sloppy method.<span class="pl-pds">"</span></span> );
+
+		} <span class="pl-k">catch</span> ( error ) {
+
+			<span class="pl-en">console</span>.<span class="pl-c1">log</span>( <span class="pl-s"><span class="pl-pds">"</span>SLOPPY Mode prevented ORIGINAL sloppy method.<span class="pl-pds">"</span></span> );
+
+		}
+
+		<span class="pl-en">console</span>.<span class="pl-en">groupEnd</span>();
+
+	&lt;/<span class="pl-ent">script</span>&gt;
+	<span class="pl-c">&lt;!-- </span><span class="pl-ii">----------------------------------------------------------------------------</span><span class="pl-c"> --&gt;</span>
+	<span class="pl-c">&lt;!-- </span><span class="pl-ii">----------------------------------------------------------------------------</span><span class="pl-c"> --&gt;</span>
+	&lt;<span class="pl-ent">script</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/javascript<span class="pl-pds">"</span></span>&gt;
+
+		<span class="pl-k">function</span> <span class="pl-en">anotherSloppyMethod</span>() {
+
+			anotherAccidentallyGlobalVariable <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>kablamo!<span class="pl-pds">"</span></span>;
+
+		}
+
+		<span class="pl-c">// In this test, we're going to see what happens if we define a NEW SLOPPY</span>
+		<span class="pl-c">// function and try to use it in SLOPPY mode. This will allow us to determine how</span>
+		<span class="pl-c">// the "use strict" assertion is scoped: to the page or to the Script tag.</span>
+		<span class="pl-en">console</span>.<span class="pl-en">group</span>( <span class="pl-s"><span class="pl-pds">"</span>Test Three<span class="pl-pds">"</span></span> );
+
+		<span class="pl-k">try</span> {
+
+			<span class="pl-en">anotherSloppyMethod</span>();
+			<span class="pl-en">console</span>.<span class="pl-c1">log</span>( <span class="pl-s"><span class="pl-pds">"</span>SLOPPY mode allowed ANOTHER sloppy method.<span class="pl-pds">"</span></span> );
+
+		} <span class="pl-k">catch</span> ( error ) {
+
+			<span class="pl-en">console</span>.<span class="pl-c1">log</span>( <span class="pl-s"><span class="pl-pds">"</span>SLOPPY Mode prevented ANOTHER sloppy method.<span class="pl-pds">"</span></span> );
+
+		}
+
+		<span class="pl-en">console</span>.<span class="pl-en">groupEnd</span>();
+
+	&lt;/<span class="pl-ent">script</span>&gt;
+
+&lt;/<span class="pl-ent">body</span>&gt;
+&lt;/<span class="pl-ent">html</span>&gt;

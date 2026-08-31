@@ -1,0 +1,298 @@
+&lt;!doctype html&gt;
+&lt;<span class="pl-ent">html</span> <span class="pl-e">ng-app</span>=<span class="pl-s"><span class="pl-pds">"</span>Demo<span class="pl-pds">"</span></span>&gt;
+&lt;<span class="pl-ent">head</span>&gt;
+	&lt;<span class="pl-ent">meta</span> <span class="pl-e">charset</span>=<span class="pl-s"><span class="pl-pds">"</span>utf-8<span class="pl-pds">"</span></span> /&gt;
+
+	&lt;<span class="pl-ent">title</span>&gt;
+		Exposing An Optional Directive Template Using ng-Template In AngularJS
+	&lt;/<span class="pl-ent">title</span>&gt;
+
+	&lt;<span class="pl-ent">link</span> <span class="pl-e">rel</span>=<span class="pl-s"><span class="pl-pds">"</span>stylesheet<span class="pl-pds">"</span></span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/css<span class="pl-pds">"</span></span> <span class="pl-e">href</span>=<span class="pl-s"><span class="pl-pds">"</span>./demo.css<span class="pl-pds">"</span></span>&gt;&lt;/<span class="pl-ent">link</span>&gt;
+&lt;/<span class="pl-ent">head</span>&gt;
+&lt;<span class="pl-ent">body</span>&gt;
+
+	&lt;<span class="pl-ent">h1</span>&gt;
+		Exposing An Optional Directive Template Using ng-Template In AngularJS
+	&lt;/<span class="pl-ent">h1</span>&gt;
+
+	&lt;<span class="pl-ent">div</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>m-boxes<span class="pl-pds">"</span></span>&gt;
+
+		<span class="pl-c">&lt;!--</span>
+<span class="pl-c">			As we output the elements here, notice that I am providing two values:</span>
+<span class="pl-c">			</span><span class="pl-ii">--</span>
+<span class="pl-c">			* bn-tooltip : This is the tooltip content.</span>
+<span class="pl-c">			* tooltip-template : This is the optional tooltip template</span>
+<span class="pl-c">		--&gt;</span>
+		&lt;<span class="pl-ent">div</span>
+			<span class="pl-e">ng-repeat</span>=<span class="pl-s"><span class="pl-pds">"</span>i in [ 1, 2, 3, 4, 5 ]<span class="pl-pds">"</span></span>
+			<span class="pl-e">bn-tooltip</span>=<span class="pl-s"><span class="pl-pds">"</span>This is box {{ i }}<span class="pl-pds">"</span></span>
+			<span class="pl-e">tooltip-template</span>=<span class="pl-s"><span class="pl-pds">"</span>tooltip-override-{{ i }}.htm<span class="pl-pds">"</span></span>
+			<span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>box<span class="pl-pds">"</span></span>&gt;
+
+			Box {{ i }}
+
+		&lt;/<span class="pl-ent">div</span>&gt;
+
+	&lt;/<span class="pl-ent">div</span>&gt;
+
+
+	<span class="pl-c">&lt;!--</span>
+<span class="pl-c">		This Script/ng-template based content can be optionally used to render the</span>
+<span class="pl-c">		tooltip. If this is present in the $templateCache(), the bnTooltip directive</span>
+<span class="pl-c">		will try to use it. Otherwise, it will defer to its own internal tooltip.</span>
+<span class="pl-c">	--&gt;</span>
+	&lt;<span class="pl-ent">script</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/ng-template<span class="pl-pds">"</span></span> <span class="pl-e">id</span>=<span class="pl-s"><span class="pl-pds">"</span>m-tooltip.htm<span class="pl-pds">"</span></span>&gt;
+
+		&lt;<span class="pl-ent">div</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>m-tooltip<span class="pl-pds">"</span></span>&gt;
+			&lt;<span class="pl-ent">strong</span>&gt;Tooltip:&lt;/<span class="pl-ent">strong</span>&gt; {{ content }}
+		&lt;/<span class="pl-ent">div</span>&gt;
+
+	&lt;/<span class="pl-ent">script</span>&gt;
+
+	&lt;<span class="pl-ent">script</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/ng-template<span class="pl-pds">"</span></span> <span class="pl-e">id</span>=<span class="pl-s"><span class="pl-pds">"</span>tooltip-override-2.htm<span class="pl-pds">"</span></span>&gt;
+
+		&lt;<span class="pl-ent">div</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>m-tooltip<span class="pl-pds">"</span></span>&gt;
+			&lt;<span class="pl-ent">strong</span>&gt;Pro-tip:&lt;/<span class="pl-ent">strong</span>&gt; {{ content }}
+		&lt;/<span class="pl-ent">div</span>&gt;
+
+	&lt;/<span class="pl-ent">script</span>&gt;
+
+	&lt;<span class="pl-ent">script</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/ng-template<span class="pl-pds">"</span></span> <span class="pl-e">id</span>=<span class="pl-s"><span class="pl-pds">"</span>tooltip-override-5.htm<span class="pl-pds">"</span></span>&gt;
+
+		&lt;<span class="pl-ent">div</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>m-tooltip<span class="pl-pds">"</span></span>&gt;
+			&lt;<span class="pl-ent">strong</span>&gt;Up in yo grill:&lt;/<span class="pl-ent">strong</span>&gt; {{ content }} ( index: {{ $index }} )
+		&lt;/<span class="pl-ent">div</span>&gt;
+
+	&lt;/<span class="pl-ent">script</span>&gt;
+
+
+	<span class="pl-c">&lt;!-- Load scripts. --&gt;</span>
+	&lt;<span class="pl-ent">script</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/javascript<span class="pl-pds">"</span></span> <span class="pl-e">src</span>=<span class="pl-s"><span class="pl-pds">"</span>../../vendor/angularjs/angular-1.3.15.min.js<span class="pl-pds">"</span></span>&gt;&lt;/<span class="pl-ent">script</span>&gt;
+	&lt;<span class="pl-ent">script</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/javascript<span class="pl-pds">"</span></span>&gt;
+
+		<span class="pl-c">// Create an application module for our demo.</span>
+		<span class="pl-k">var</span> app <span class="pl-k">=</span> <span class="pl-smi">angular</span>.<span class="pl-en">module</span>( <span class="pl-s"><span class="pl-pds">"</span>Demo<span class="pl-pds">"</span></span>, [] );
+
+
+		<span class="pl-c">// --------------------------------------------------------------------------- //</span>
+		<span class="pl-c">// --------------------------------------------------------------------------- //</span>
+
+
+		<span class="pl-c">// I create a simple tooltip directive.</span>
+		<span class="pl-smi">app</span>.<span class="pl-en">directive</span>(
+			<span class="pl-s"><span class="pl-pds">"</span>bnTooltip<span class="pl-pds">"</span></span>,
+			<span class="pl-k">function</span>( <span class="pl-smi">$templateCache</span>, <span class="pl-smi">$compile</span>, <span class="pl-smi">$document</span> ) {
+
+				<span class="pl-c">// I manage the instance of the tooltip that is rendered on the screen.</span>
+				<span class="pl-k">var</span> manager <span class="pl-k">=</span> (<span class="pl-k">function</span> <span class="pl-en">Manager</span>() {
+
+					<span class="pl-c">// I hold a reference to the current instance of the tooltip. Whenever</span>
+					<span class="pl-c">// the user mouses-into a tooltip element, a new instance of the</span>
+					<span class="pl-c">// tooltip element is created (and the previous one destroyed).</span>
+					<span class="pl-k">var</span> instance <span class="pl-k">=</span> {
+						scope<span class="pl-k">:</span> <span class="pl-c1">null</span>,
+						element<span class="pl-k">:</span> <span class="pl-c1">null</span>
+					};
+
+					<span class="pl-c">// I hold the transclusion functions for the tooltip element. In</span>
+					<span class="pl-c">// addition to the internal one, we also allow optional tempaltes to</span>
+					<span class="pl-c">// be exposed using ngTemplate (and the tooltip-template attribute).</span>
+					<span class="pl-c">// The $compile()'d functions will be cached here.</span>
+					<span class="pl-k">var</span> transcluders <span class="pl-k">=</span> {
+						internal<span class="pl-k">:</span> <span class="pl-en">$compile</span>( <span class="pl-s"><span class="pl-pds">"</span>&lt;div class='m-tooltip'&gt;{{ content }}&lt;/div&gt;<span class="pl-pds">"</span></span> )
+					}
+
+					<span class="pl-c">// Return the public API (used by the link function).</span>
+					<span class="pl-k">return</span>({
+						hide<span class="pl-k">:</span> hide,
+						position<span class="pl-k">:</span> position,
+						show<span class="pl-k">:</span> show
+					});
+
+
+					<span class="pl-c">// ---</span>
+					<span class="pl-c">// PUBLIC METHODS.</span>
+					<span class="pl-c">// ---</span>
+
+
+					<span class="pl-c">// I hide the current instance of the tooltip.</span>
+					<span class="pl-k">function</span> <span class="pl-en">hide</span>() {
+
+						<span class="pl-smi">instance</span>.<span class="pl-c1">scope</span>.<span class="pl-en">$destroy</span>();
+						<span class="pl-smi">instance</span>.<span class="pl-smi">element</span>.<span class="pl-c1">remove</span>();
+
+						<span class="pl-smi">instance</span>.<span class="pl-c1">scope</span> <span class="pl-k">=</span> <span class="pl-smi">instance</span>.<span class="pl-smi">element</span> <span class="pl-k">=</span> <span class="pl-c1">null</span>;
+
+					}
+
+
+					<span class="pl-c">// I reposition the current instance of the tooltip according to the</span>
+					<span class="pl-c">// given page-oriented coordinates.</span>
+					<span class="pl-k">function</span> <span class="pl-en">position</span>( <span class="pl-smi">x</span>, <span class="pl-smi">y</span> ) {
+
+						<span class="pl-smi">instance</span>.<span class="pl-smi">element</span>.<span class="pl-en">css</span>({
+							left<span class="pl-k">:</span> ( x <span class="pl-k">+</span> <span class="pl-c1">25</span> <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span>px<span class="pl-pds">"</span></span> ),
+							top<span class="pl-k">:</span> ( y <span class="pl-k">-</span> <span class="pl-c1">10</span> <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span>px<span class="pl-pds">"</span></span> )
+						});
+
+					}
+
+
+					<span class="pl-c">// I show a new instance of the tooltip with the given content. The</span>
+					<span class="pl-c">// initial show doesn't position the element - a subsequent call to</span>
+					<span class="pl-c">// .position() should be made afterward.</span>
+					<span class="pl-k">function</span> <span class="pl-en">show</span>( <span class="pl-smi">triggerScope</span>, <span class="pl-smi">content</span>, <span class="pl-smi">templateUrl</span> ) {
+
+						<span class="pl-c">// Get the most appropriate linking method - this might be based</span>
+						<span class="pl-c">// on the built-in template; or, it might be based on an optional</span>
+						<span class="pl-c">// template provided by the user.</span>
+						<span class="pl-k">var</span> linker <span class="pl-k">=</span> <span class="pl-en">getLinkFunction</span>( templateUrl );
+
+						<span class="pl-c">// Create a new scope for our template. This scope will inherit</span>
+						<span class="pl-c">// from the scope of the trigger context.</span>
+						<span class="pl-smi">instance</span>.<span class="pl-c1">scope</span> <span class="pl-k">=</span> <span class="pl-smi">triggerScope</span>.<span class="pl-en">$new</span>();
+
+						<span class="pl-c">// Store the view-model - this is the value that actually gets</span>
+						<span class="pl-c">// rendered inside of the tooltip.</span>
+						<span class="pl-smi">instance</span>.<span class="pl-c1">scope</span>.<span class="pl-c1">content</span> <span class="pl-k">=</span> content;
+
+						<span class="pl-c">// Clone the tooltip element and inject it into the page. Since it</span>
+						<span class="pl-c">// globally positioned, it can just be added to the Body container.</span>
+						<span class="pl-smi">instance</span>.<span class="pl-smi">element</span> <span class="pl-k">=</span> <span class="pl-en">linker</span>(
+							<span class="pl-smi">instance</span>.<span class="pl-c1">scope</span>,
+							<span class="pl-k">function</span> <span class="pl-en">appendClone</span>( <span class="pl-smi">clone</span> ) {
+
+								<span class="pl-smi">$document</span>.<span class="pl-en">prop</span>( <span class="pl-s"><span class="pl-pds">"</span>body<span class="pl-pds">"</span></span> )
+									.<span class="pl-c1">appendChild</span>( clone[ <span class="pl-c1">0</span> ] )
+								;
+
+							}
+						);
+
+						<span class="pl-c">// Once the tooltip element has been transcluded, we have to</span>
+						<span class="pl-c">// trigger a $digest since this will have happened outside of an</span>
+						<span class="pl-c">// AngularJS digest. The use of $digest(), as opposed to $apply(),</span>
+						<span class="pl-c">// allows the update to be localized to the tooltip element.</span>
+						<span class="pl-smi">instance</span>.<span class="pl-c1">scope</span>.<span class="pl-en">$digest</span>();
+
+					}
+
+
+					<span class="pl-c">// ---</span>
+					<span class="pl-c">// PRIVATE METHODS.</span>
+					<span class="pl-c">// ---</span>
+
+
+					<span class="pl-c">// I get the linking function for the tooltip element. If there is</span>
+					<span class="pl-c">// an optional template exposed on the cache, that will be used;</span>
+					<span class="pl-c">// otherwise the template will be hard-coded.</span>
+					<span class="pl-k">function</span> <span class="pl-en">getLinkFunction</span>( <span class="pl-smi">templateUrl</span> ) {
+
+						templateUrl <span class="pl-k">=</span> ( templateUrl <span class="pl-k">||</span> <span class="pl-s"><span class="pl-pds">"</span>m-tooltip.htm<span class="pl-pds">"</span></span> );
+
+						<span class="pl-c">// If we've already compiled this template, just return the</span>
+						<span class="pl-c">// existing link function.</span>
+						<span class="pl-k">if</span> ( transcluders[ templateUrl ] ) {
+
+							<span class="pl-k">return</span>( transcluders[ templateUrl ] );
+
+						}
+
+						<span class="pl-c">// If the user has provided an optional template in the cache,</span>
+						<span class="pl-c">// compile it and use it as the linking function.</span>
+						<span class="pl-k">if</span> ( <span class="pl-smi">$templateCache</span>.<span class="pl-c1">get</span>( templateUrl ) ) {
+
+							transcluders[ templateUrl ] <span class="pl-k">=</span> <span class="pl-en">$compile</span>( <span class="pl-smi">$templateCache</span>.<span class="pl-c1">get</span>( templateUrl ) );
+
+							<span class="pl-k">return</span>( transcluders[ templateUrl ] );
+
+						}
+
+						<span class="pl-c">// If the user provided a template, but it didn't exist in the</span>
+						<span class="pl-c">// template cache, try to get the primary optional template and</span>
+						<span class="pl-c">// use that one instead.</span>
+						<span class="pl-k">if</span> ( <span class="pl-smi">$templateCache</span>.<span class="pl-c1">get</span>( <span class="pl-s"><span class="pl-pds">"</span>m-tooltip.htm<span class="pl-pds">"</span></span> ) ) {
+
+							transcluders[ templateUrl ] <span class="pl-k">=</span> <span class="pl-en">$compile</span>( <span class="pl-smi">$templateCache</span>.<span class="pl-c1">get</span>( <span class="pl-s"><span class="pl-pds">"</span>m-tooltip.htm<span class="pl-pds">"</span></span> ) );
+
+							<span class="pl-k">return</span>( transcluders[ templateUrl ] );
+
+						}
+
+						<span class="pl-c">// If the user did not provide a template for the given URL, then</span>
+						<span class="pl-c">// just re-cache the internal linker - this will make the lookup</span>
+						<span class="pl-c">// faster next time.</span>
+						transcluders[ templateUrl ] <span class="pl-k">=</span> <span class="pl-smi">transcluders</span>.<span class="pl-smi">internal</span>;
+
+						<span class="pl-k">return</span>( transcluders[ templateUrl ] );
+
+					}
+
+				})();
+
+
+				<span class="pl-c">// Return the directive configuration.</span>
+				<span class="pl-k">return</span>({
+					link<span class="pl-k">:</span> link
+				});
+
+
+				<span class="pl-c">// I bind the JavaScript events to the local scope.</span>
+				<span class="pl-k">function</span> <span class="pl-en">link</span>( <span class="pl-smi">scope</span>, <span class="pl-smi">element</span>, <span class="pl-smi">attributes</span> ) {
+
+					<span class="pl-smi">element</span>.<span class="pl-en">on</span>( <span class="pl-s"><span class="pl-pds">"</span>mouseenter<span class="pl-pds">"</span></span>, handleMouseEnter );
+
+
+					<span class="pl-c">// I handle the mouse-enter event on the tooltip trigger. When the</span>
+					<span class="pl-c">// user mouses into a tooltip trigger we need to show the tooltip</span>
+					<span class="pl-c">// and then start listening for reasons to hide the tooltip.</span>
+					<span class="pl-k">function</span> <span class="pl-en">handleMouseEnter</span>( <span class="pl-c1">event</span> ) {
+
+						<span class="pl-c">// Show with the tooltip content associated with the element.</span>
+						<span class="pl-smi">manager</span>.<span class="pl-en">show</span>( scope, <span class="pl-smi">attributes</span>.<span class="pl-smi">bnTooltip</span>, <span class="pl-smi">attributes</span>.<span class="pl-smi">tooltipTemplate</span> );
+
+						element
+							.<span class="pl-en">off</span>( <span class="pl-s"><span class="pl-pds">"</span>mouseenter<span class="pl-pds">"</span></span>, handleMouseEnter )
+							.<span class="pl-en">on</span>( <span class="pl-s"><span class="pl-pds">"</span>mouseleave<span class="pl-pds">"</span></span>, handleMouseLeave )
+						;
+
+						<span class="pl-smi">$document</span>.<span class="pl-en">on</span>( <span class="pl-s"><span class="pl-pds">"</span>mousemove<span class="pl-pds">"</span></span>, handleMouseMove );
+
+					}
+
+
+					<span class="pl-c">// I handle the mouse-leave event on the tooltip trigger. When the</span>
+					<span class="pl-c">// user mouses out of the tooltip trigger we need to hide the current</span>
+					<span class="pl-c">// tooltip element.</span>
+					<span class="pl-k">function</span> <span class="pl-en">handleMouseLeave</span>( <span class="pl-c1">event</span> ) {
+
+						<span class="pl-smi">manager</span>.<span class="pl-en">hide</span>();
+
+						element
+							.<span class="pl-en">off</span>( <span class="pl-s"><span class="pl-pds">"</span>mouseleave<span class="pl-pds">"</span></span>, handleMouseLeave )
+							.<span class="pl-en">on</span>( <span class="pl-s"><span class="pl-pds">"</span>mouseenter<span class="pl-pds">"</span></span>, handleMouseEnter )
+						;
+
+						<span class="pl-smi">$document</span>.<span class="pl-en">off</span>( <span class="pl-s"><span class="pl-pds">"</span>mousemove<span class="pl-pds">"</span></span>, handleMouseMove );
+
+					}
+
+
+					<span class="pl-c">// I handle the mouse-move event on the tooltip trigger. When the</span>
+					<span class="pl-c">// user moves around within the bounds of the trigger, we need to</span>
+					<span class="pl-c">// update the position of the tooltip relative to the mouse.</span>
+					<span class="pl-k">function</span> <span class="pl-en">handleMouseMove</span>( <span class="pl-c1">event</span> ) {
+
+						<span class="pl-smi">manager</span>.<span class="pl-en">position</span>( <span class="pl-c1">event</span>.<span class="pl-c1">pageX</span>, <span class="pl-c1">event</span>.<span class="pl-c1">pageY</span> );
+
+					}
+
+				}
+
+			}
+		);
+
+	&lt;/<span class="pl-ent">script</span>&gt;
+
+&lt;/<span class="pl-ent">body</span>&gt;
+&lt;/<span class="pl-ent">html</span>&gt;
