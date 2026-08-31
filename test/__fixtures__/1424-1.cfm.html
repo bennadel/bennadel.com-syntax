@@ -1,0 +1,24 @@
+FROM
+	contact c
+INNER JOIN
+	job j
+ON
+	(
+			c.is_deleted = 0
+		AND
+			c.id = j.contact_id
+		AND
+			j.is_deleted = 0
+		AND
+			j.contact_id = #FORM.contact_id#
+		AND
+			j.contact_role_id = #ContactRoles.CEO#
+		AND
+			j.date_started <span class="pl-ii">&lt;</span>= NOW()
+		AND
+			(
+					j.date_ended IS NULL
+				OR
+					j.date_ended &gt; NOW()
+			)
+	)

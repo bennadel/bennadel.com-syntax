@@ -1,0 +1,48 @@
+<!---
+	Now, we have to loop over the 5 lb increments and find
+	the number of users that recycled a net pickup weight
+	in that sum category.
+--->
+<cfloop
+	index="i"
+	from="0"
+	to="80"
+	step="5">
+
+	SET @number_#i#_#(i + 5)# = ISNULL(
+		(
+			SELECT
+				COUNT(*)
+			FROM
+				(
+
+					SELECT
+						SUM(p.net_weight) AS net_weight
+					FROM
+						pickup p
+					WHERE
+						p.date_pickup >= @date_from
+					AND
+						p.date_pickup < @date_to
+					AND
+						p.user_id IN ( #lstAvailableUsers# )
+
+					GROUP BY
+						p.user_id
+
+				) AS TempWeightTable#i#
+			WHERE
+				net_weight >= #i#
+
+			<!--- Check for the catch-all weight bucket. --->
+			<cfif (i LT 80)>
+				AND
+					net_weight < #(i + 5)#
+			</cfif>
+		),
+
+		<!--- If above is null, return zero. --->
+		0
+	);
+
+</cfloop>

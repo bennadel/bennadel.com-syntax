@@ -1,0 +1,38 @@
+FROM
+	contact c
+INNER JOIN
+	job j
+ON
+	(
+		<!--- Selectivity: 1. --->
+			c.id = #FORM.contact_id#
+
+		<!--- Selectivity: 120. --->
+		AND
+			j.contact_role_id = #ContactRoles.CEO#
+
+		<!--- Selectivity: 400. --->
+		AND
+			(
+					j.date_ended IS NULL
+				OR
+					j.date_ended > NOW()
+			)
+
+		<!--- Selectivity: 500. --->
+		AND
+			c.is_deleted = 0
+
+		<!--- Selectivity: 600. --->
+		AND
+			j.is_deleted = 0
+
+		<!--- Selectivity: 600. --->
+		AND
+			j.date_started <= NOW()
+
+
+		<!--- Join condition. --->
+		AND
+			c.id = j.contact_id
+	)

@@ -1,0 +1,87 @@
+<!---
+	Set up the step-5 table. This will step from 0 to 80
+	getting counts of users who recycled a sum weight in
+	that 5 lb weight bucket.
+--->
+INSERT INTO @number_step_5
+(
+	step,
+	user_count
+)(
+	SELECT
+		tpiv.id AS step,
+		COUNT( * )
+	FROM
+		<!---
+			Take the pivot100 talbe and trim it so that we
+			are only returning pivot IDs that are a 5lb
+			increment. Also, we need to substract one from our
+			1-based ID column as our span weibht buckets
+			start at zero.
+		--->
+		(
+
+			SELECT
+				(piv.id - 1) AS id
+			FROM
+				pivot100 piv
+			WHERE
+				piv.id < 82
+			AND
+				((piv.id - 1) % 5) = 0
+
+		) AS tpiv
+	INNER JOIN
+		<!---
+			Create an in-memory temp table that has all the
+			different net recycling weight sums by user. We
+			don't care about the user at this point, just the
+			total list of sums.
+		--->
+		(
+
+			SELECT
+				SUM( p.net ) AS net_sum
+			FROM
+				pickup p
+			INNER JOIN
+				pickup_useraccount_jn pujn
+			ON
+				(
+						p.id = pujn.pickup_id
+					AND
+						p.date_picked_up BETWEEN @date_from AND @date_to
+					AND
+						pujn.useraccount_id IN ( #lstAvailableUsers# )
+				)
+			GROUP BY
+				pujn.useraccount_id
+
+		) AS tsum
+	ON
+		<!---
+			When joining the sum table to the pivot table,
+			we want the sum to be between the intial pivot
+			value (our start value) and the increment value
+			(5 lbs). However, the last bucket is a catch all
+			for 80lbs - (infinisty).... which we will get by
+			using 999999 (good enough).
+		--->
+		(
+				tsum.net_sum >= tpiv.id
+			AND
+				tsum.net_sum <
+				(
+					CASE
+						WHEN
+							tpiv.id < 80
+						THEN
+							(tpiv.id + 5)
+						ELSE
+							999999
+					END
+				)
+		)
+	GROUP BY
+		tpiv.id
+);
