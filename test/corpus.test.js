@@ -719,6 +719,50 @@ if (!UPDATE) {
 	assertEqual("markup after the html divider is still a tag",
 		dividerInHtm.html.includes("<span class=\"pl-ent\">div</span>"), true);
 
+	// -- template property ----------------------------------------------------------
+
+	// An inline component template -- the `template:` property of an object
+	// literal -- rendered as one flat string because Microsoft's grammar has no
+	// embedded-language support in template literals. The template-property
+	// patch (src/grammars/html.js) hands a string value's content to
+	// text.html.basic. The archive writes the delimiter both on the same line
+	// as the key and on the next line, so both are asserted.
+	var templateNextLine = highlight(
+		"@Component({\n\tselector: \"my-app\",\n\ttemplate:\n\t`\n\t\t<a (click)=\"go()\">Go</a>\n\t`\n})\nexport class AppComponent {}",
+		"ts"
+	);
+	assertEqual("ts fence resolves to the stock typescript grammar",
+		templateNextLine.resolvedLanguage, "source.ts");
+	assertEqual("next-line template markup renders as a tag",
+		templateNextLine.html.includes("<span class=\"pl-ent\">a</span>"), true);
+	// Angular binding syntax deliberately renders as a GENERIC attribute --
+	// see patchTemplateProperty for why -- but it must at least tokenize
+	// cleanly rather than derail the tag.
+	assertEqual("(click) binding renders as an attribute",
+		templateNextLine.html.includes("<span class=\"pl-e\">(click)</span>"), true);
+	assertEqual("inline template carries no illegal tokens",
+		templateNextLine.html.includes("pl-ii"), false);
+
+	var templateSameLine = highlight(
+		"var directive = {\n\ttemplate: \"<div class='box'>Hi</div>\",\n\trestrict: \"E\"\n};",
+		"ts"
+	);
+	assertEqual("same-line quoted template markup renders as a tag",
+		templateSameLine.html.includes("<span class=\"pl-ent\">div</span>"), true);
+	assertEqual("sibling keys after the template still highlight",
+		templateSameLine.html.includes("<span class=\"pl-pds\">\"</span>E<span class=\"pl-pds\">\"</span>"), true);
+
+	// The rule must claim ONLY a string value of exactly `template:` -- a
+	// call-expression value falls through to the ordinary expression rules,
+	// and a prefixed key stays an ordinary string.
+	var templateExpression = highlight("var o = {\n\ttemplate: getTemplate( id )\n};", "ts");
+	assertEqual("call-expression template value still renders as a call",
+		templateExpression.html.includes("<span class=\"pl-en\">getTemplate</span>"), true);
+
+	var templatePrefixed = highlight("var o = {\n\tx_template: `<div>hi</div>`\n};", "ts");
+	assertEqual("prefixed template key keeps its plain string value",
+		templatePrefixed.html.includes("pl-ent"), false);
+
 	// ---------------------------------------------------------------------------
 
 	// Every patch must have actually run on both files. A patch that silently
@@ -732,7 +776,7 @@ if (!UPDATE) {
 	// Same pin for the stock-grammar patch layer (src/grammars/html.js).
 	assertEqual("every stock grammar is patched",
 		[...stockPatches.entries()].map(([scope, names]) => `${scope}:${names.join(",")}`).join(" | "),
-		"text.html.basic:comment-hyphens");
+		"source.ts:template-property | text.html.basic:comment-hyphens");
 
 	// The vendored files are byte-identical to upstream, and this is what makes
 	// that a fact rather than an intention. Both patches are applied to the

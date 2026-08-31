@@ -21,6 +21,7 @@
 export var applied = new Map();
 
 var PATCHES = new Map([
+	["source.ts", [patchTemplateProperty]],
 	["text.html.basic", [patchCommentHyphens]]
 ]);
 
@@ -120,4 +121,107 @@ function patchCommentHyphens(grammar) {
 	}
 
 	return "comment-hyphens";
+}
+
+/**
+* An inline component template renders as one flat string.
+*
+* Angular (and AngularJS, and Vue) components carry their markup as the
+* `template` property of an object literal:
+*
+*   @Component({
+*       template: `<a (click)="go()">Go</a>`
+*   })
+*
+* Microsoft's grammar has no embedded-language support in template literals,
+* so the markup renders as an undifferentiated string. The patch adds a rule
+* to the object-literal dispatch claiming `template:` and handing a string
+* value's CONTENT to text.html.basic -- which resolves through the registry
+* to the patched clone, so the comment-hyphens fix applies inside templates
+* too.
+*
+* The idea is borrowed, not invented, from two published sources: the stock
+* source.js grammar already embeds text.html.basic in `html`-tagged template
+* literals and `innerHTML =` assignments, and Angular's official VS Code
+* grammar (inline-template.ng, angular/vscode-ng-language-service, MIT) claims
+* `template:` inside decorators the same way. Their grammar cannot be adopted
+* as-is for two reasons: it is an INJECTION grammar and starry-night never
+* registers injections, and its string rule is `\G`-anchored to the colon, so
+* it misses the archive's other formatting (the delimiter on the line after
+* `template:` -- vscode-textmate resolves `\G` to never-match on later lines).
+* This rule is a begin/end region instead, which spans lines.
+*
+* Angular-specific attribute syntax -- `(click)`, `[hidden]`, `*ngIf` -- is
+* DELIBERATELY left rendering as generic attribute names (pl-e): measured
+* before writing this, text.html.basic tokenizes all three shapes cleanly,
+* and scoping them properly would mean vendoring Angular's template.ng
+* grammar for one archive's worth of decoration.
+*
+* The value region mirrors upstream's own object-member value rule (begin at
+* the `:`, end looking at `,` or `}`, body handed to #expression), with the
+* three string forms tried first so they win the tie at the delimiter. A
+* non-string value -- `template: getTemplate()` -- falls through to
+* #expression and renders exactly as it did unpatched.
+*/
+function patchTemplateProperty(grammar) {
+	var LITERAL = "object-literal";
+
+	// Every repository entry the new rule hands content to must exist, or the
+	// rule would carry an unresolvable include -- which vscode-textmate answers
+	// by disabling the whole rule, silently.
+	for (var required of ["object-member", "expression", "template-substitution-element", "string-character-escape"]) {
+		if (!grammar.repository[required]) {
+			throw new Error(`${grammar.scopeName}: repository no longer has ${required}; re-derive patchTemplateProperty`);
+		}
+	}
+
+	var literal = grammar.repository[LITERAL];
+
+	// Anchor check: the dispatch being cut in front of must still have its
+	// upstream shape. Anything else means object literals were reworked --
+	// re-derive the patch against the new shape rather than unshifting into a
+	// list that no longer means what it did.
+	if (literal.patterns.length !== 1 || literal.patterns[0].include !== "#object-member") {
+		throw new Error(`${grammar.scopeName}: ${LITERAL} no longer dispatches to exactly [#object-member]; re-derive patchTemplateProperty`);
+	}
+
+	// One rule per string form: the delimiter keeps its string scope, the
+	// content becomes HTML. Escapes and `${}` substitutions are tried before
+	// the HTML include so they keep their TypeScript meaning.
+	function stringRule(delimiter, scope) {
+		return {
+			begin: `(${delimiter})`,
+			beginCaptures: {1: {name: `${scope} punctuation.definition.string.begin.ts`}},
+			end: delimiter,
+			endCaptures: {0: {name: `${scope} punctuation.definition.string.end.ts`}},
+			contentName: "text.html.basic",
+			patterns: [
+				{include: "#template-substitution-element"},
+				{include: "#string-character-escape"},
+				{include: "text.html.basic"}
+			]
+		};
+	}
+
+	// The lookbehind stops `x_template:` from matching; `myTemplate:` already
+	// cannot (the match is case-sensitive on purpose -- Angular's API name is
+	// exactly `template`). A method named template() never matches: the rule
+	// requires the colon.
+	literal.patterns.unshift({
+		begin: "(?<![_$[:alnum:]])(template)\\s*(:)",
+		beginCaptures: {
+			1: {name: "meta.object-literal.key.ts"},
+			2: {name: "meta.object-literal.key.ts punctuation.separator.key-value.ts"}
+		},
+		end: "(?=,|\\})",
+		name: "meta.object.member.ts",
+		patterns: [
+			stringRule("`", "string.template.ts"),
+			stringRule("\"", "string.quoted.double.ts"),
+			stringRule("'", "string.quoted.single.ts"),
+			{include: "#expression"}
+		]
+	});
+
+	return "template-property";
 }
