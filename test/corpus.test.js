@@ -45,6 +45,7 @@ import {promisify} from "node:util";
 import {loadConfig} from "../src/core/config.js";
 import {init, highlight, normalize, longestLine} from "../src/core/highlight.js";
 import {applied as cfmlPatches} from "../src/grammars/cfml.js";
+import {applied as stockPatches} from "../src/grammars/html.js";
 
 var DIR = new URL("./__fixtures__/", import.meta.url);
 var GRAMMARS = new URL("../src/grammars/", import.meta.url);
@@ -682,6 +683,19 @@ if (!UPDATE) {
 	assertEqual("divider comment inside cfoutput is not illegal",
 		dividerInCfoutput.html.includes("pl-ii"), false);
 
+	// The same gap in the STOCK html grammar, patched by src/grammars/html.js
+	// (the patch is applied to a clone before createStarryNight, so it must be
+	// visible through an ordinary `htm` fence).
+	var dividerInHtm = highlight("<!-- ------- -->\n<div>x</div>", "htm");
+	assertEqual("htm fence resolves to the stock html grammar",
+		dividerInHtm.resolvedLanguage, "text.html.basic");
+	assertEqual("divider comment in html is not illegal",
+		dividerInHtm.html.includes("pl-ii"), false);
+	assertEqual("divider in html renders as one comment",
+		dividerInHtm.html.includes("<span class=\"pl-c\">&lt;!-- ------- --&gt;</span>"), true);
+	assertEqual("markup after the html divider is still a tag",
+		dividerInHtm.html.includes("<span class=\"pl-ent\">div</span>"), true);
+
 	// ---------------------------------------------------------------------------
 
 	// Every patch must have actually run on both files. A patch that silently
@@ -691,6 +705,11 @@ if (!UPDATE) {
 	assertEqual("every vendored grammar is patched",
 		[...cfmlPatches.values()].map((names) => names.join(",")).join(" | "),
 		"bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits,function-metadata,comment-hyphens | bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits,function-metadata,comment-hyphens");
+
+	// Same pin for the stock-grammar patch layer (src/grammars/html.js).
+	assertEqual("every stock grammar is patched",
+		[...stockPatches.entries()].map(([scope, names]) => `${scope}:${names.join(",")}`).join(" | "),
+		"text.html.basic:comment-hyphens");
 
 	// The vendored files are byte-identical to upstream, and this is what makes
 	// that a fact rather than an intention. Both patches are applied to the

@@ -6,6 +6,7 @@ import sourceJsRegexp from "@wooorm/starry-night/source.js.regexp";
 import {toHtml} from "hast-util-to-html";
 
 import {loadCfmlGrammars, CFML_TAG, CFML_SCRIPT} from "../grammars/cfml.js";
+import {patchStockGrammars} from "../grammars/html.js";
 
 var starryNight;
 
@@ -187,7 +188,12 @@ export function highlight(code, flag) {
 */
 export async function init(config) {
 	maxLineLength = config.maxLineLength;
-	starryNight = await createStarryNight(all);
+
+	// Patched BEFORE createStarryNight() rather than re-registered after it, so
+	// nothing depends on register()'s replace-on-same-scope behaviour or on when
+	// the registry loads a grammar. The stock module objects are shared
+	// singletons; patchStockGrammars() clones what it touches.
+	starryNight = await createStarryNight(patchStockGrammars(all));
 
 	// After the stock set. These declare their own scope names, so this ADDS
 	// `embedding.cfml` and `embedding.cfml.cfs` rather than replacing Linguist's
