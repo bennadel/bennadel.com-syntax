@@ -1,7 +1,7 @@
 &lt;<span class="pl-ent">cfscript</span>&gt;
 	
 	<span class="pl-c">// I reset the output buffer and write a message to the response.</span>
-	<span class="pl-k">public</span> <span class="pl-c1">void</span> <span class="pl-k">function</span> <span class="pl-en">writeResponse</span>() <span class="pl-e">cachedWithin</span> = <span class="pl-s">createTimeSpan(</span> <span class="pl-ii">0,</span> <span class="pl-ii">0,</span> <span class="pl-ii">1,</span> <span class="pl-ii">0</span> <span class="pl-ii">)</span> {
+	<span class="pl-k">public</span> <span class="pl-c1">void</span> <span class="pl-k">function</span> <span class="pl-en">writeResponse</span>() <span class="pl-e">cachedWithin</span> = <span class="pl-c1">createTimeSpan</span>( <span class="pl-c1">0</span>, <span class="pl-c1">0</span>, <span class="pl-c1">1</span>, <span class="pl-c1">0</span> ) {
 
 		<span class="pl-k">var</span> <span class="pl-smi">message</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>Now: #<span class="pl-c1">now</span>().<span class="pl-c1">timeFormat</span>( <span class="pl-pds">'</span>full<span class="pl-pds">'</span> )#<span class="pl-pds">"</span></span>;
 

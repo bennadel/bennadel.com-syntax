@@ -639,6 +639,26 @@ if (!UPDATE) {
 	assertEqual("cf_ custom-tag name includes its digit",
 		digitTag.html.includes("<span class=\"pl-ent\">cf_h1</span>"), true);
 
+	// -- function metadata --------------------------------------------------------
+
+	// CFML function metadata -- attributes between the signature and the body --
+	// can carry full expressions. Upstream's attribute rule stops unquoted
+	// values at whitespace, so a call's arguments landed on the invalid.illegal
+	// catch-all. The function-metadata patch re-points the region at upstream's
+	// expression-aware attribute rule (the one tag-in-script already uses).
+	var metadata = highlight(
+		"<cfscript>\npublic void function f() cachedWithin = createTimeSpan( 0, 0, 1, 0 ) hint = \"x\" {\n}\n</cfscript>",
+		"cfm"
+	);
+	assertEqual("call expression in function metadata is not illegal",
+		metadata.html.includes("pl-ii"), false);
+	assertEqual("function metadata attribute name survives the swap",
+		metadata.html.includes("<span class=\"pl-e\">cachedWithin</span>"), true);
+	assertEqual("call arguments in function metadata are constants",
+		metadata.html.includes("<span class=\"pl-c1\">1</span>"), true);
+	assertEqual("string metadata value after a call value still highlights",
+		metadata.html.includes("<span class=\"pl-pds\">\"</span>x<span class=\"pl-pds\">\"</span>"), true);
+
 	// ---------------------------------------------------------------------------
 
 	// Every patch must have actually run on both files. A patch that silently
@@ -647,7 +667,7 @@ if (!UPDATE) {
 	// drops a patch from the list.
 	assertEqual("every vendored grammar is patched",
 		[...cfmlPatches.values()].map((names) => names.join(",")).join(" | "),
-		"bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits | bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits");
+		"bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits,function-metadata | bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits,function-metadata");
 
 	// The vendored files are byte-identical to upstream, and this is what makes
 	// that a fact rather than an intention. Both patches are applied to the

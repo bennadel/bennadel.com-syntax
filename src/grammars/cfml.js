@@ -80,7 +80,7 @@ export var CFML_SCRIPT = "embedding.cfml.cfs";
 */
 export var applied = new Map();
 
-var PATCHES = [patchBareInclude, patchSafeNavigation, patchTagIsland, patchBadAmpersand, patchCustomTagDigits];
+var PATCHES = [patchBareInclude, patchSafeNavigation, patchTagIsland, patchBadAmpersand, patchCustomTagDigits, patchFunctionMetadata];
 
 export async function loadCfmlGrammars() {
 	return Promise.all([
@@ -451,4 +451,58 @@ function patchCustomTagDigits(grammar, file) {
 	}
 
 	return "custom-tag-digits";
+}
+
+/**
+* Call expressions in function metadata render as invalid.illegal -> pl-ii.
+*
+* CFML allows attribute metadata between a script function's signature and its
+* body, and the values can be full expressions:
+*
+*   public void function writeResponse() cachedWithin = createTimeSpan( 0, 0, 1, 0 ) {
+*
+* Upstream hands that region to `source-cfml-script-tag-generic-attribute`,
+* whose unquoted-value regex stops at whitespace -- it eats `createTimeSpan(`
+* as one string and leaves ` 0, 0, 1, 0 )` to the `\S+` catch-all:
+* invalid.illegal.attribute-name.cfml, white on red, on every argument. Found
+* by the archive pl-ii sweep (post 3655, fixture 3655-2.cfm).
+*
+* Upstream also ships the fix, one entry over. Tag-in-script statements use
+* `source-cfml-script-tag-generic-attribute-script`, an expression-aware twin
+* that hands everything after `=` to `#source-cfml-script-expressions` until
+* the next `name =` -- which is why `content variable = charsetDecode( ... )`
+* in the SAME fixture renders perfectly. The patch re-points the metadata
+* region's one include at that twin. Nothing is added and no new claim is
+* made; the region keeps upstream's own boundaries (`)` to `{`, `;`, or `=>`).
+*/
+function patchFunctionMetadata(grammar, file) {
+	var TARGET = "source-cfml-script-function-declaration-parameters";
+	var FROM = "#source-cfml-script-tag-generic-attribute";
+	var TO = "#source-cfml-script-tag-generic-attribute-script";
+
+	// The entry being pointed at must exist, or the metadata region would be
+	// handed to an unresolvable include -- which vscode-textmate answers by
+	// disabling the whole rule, silently.
+	if (!grammar.repository[TO.slice(1)]) {
+		throw new Error(`${file}: repository no longer has ${TO.slice(1)}; patchFunctionMetadata has nothing to point at`);
+	}
+
+	// Unguarded for the same reason as the patches above: a rename throws a
+	// TypeError that names the expression.
+	var patterns = grammar.repository[TARGET].patterns;
+
+	var region = patterns.filter((p) => p.begin === "\\)");
+
+	// The anchor is the region's exact upstream shape: one post-signature
+	// region, containing only the include being replaced. Anything else means
+	// upstream reworked function metadata -- re-derive the patch against the
+	// new shape rather than swapping an include inside a rule that no longer
+	// means what it did.
+	if (region.length !== 1 || region[0].patterns.length !== 1 || region[0].patterns[0].include !== FROM) {
+		throw new Error(`${file}: the ${TARGET} post-signature region no longer carries exactly [${FROM}]; re-derive patchFunctionMetadata`);
+	}
+
+	region[0].patterns[0].include = TO;
+
+	return "function-metadata";
 }
