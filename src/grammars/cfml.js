@@ -80,7 +80,7 @@ export var CFML_SCRIPT = "embedding.cfml.cfs";
 */
 export var applied = new Map();
 
-var PATCHES = [patchBareInclude, patchSafeNavigation, patchTagIsland, patchBadAmpersand, patchCustomTagDigits, patchFunctionMetadata, patchCommentHyphens, patchBadAngleBracket];
+var PATCHES = [patchBareInclude, patchSafeNavigation, patchTagIsland, patchBadAmpersand, patchCustomTagDigits, patchFunctionMetadata, patchCommentHyphens, patchBadAngleBracket, patchDoctypeCapture];
 
 export async function loadCfmlGrammars() {
 	return Promise.all([
@@ -657,4 +657,81 @@ function patchBadAngleBracket(grammar, file) {
 	}
 
 	return "bad-angle-bracket";
+}
+
+/**
+* `<!DOCTYPE` renders with no scope on the keyword.
+*
+* The SGML rule's doctype sub-rule assigns entity.name.tag.doctype.html to
+* CAPTURE GROUP 1 of a begin regex that has no capture group -- `(?i:...)` is
+* non-capturing -- so the scope lands on nothing and the keyword falls through
+* as plain text. The DTD strings beside it have a working rule, which is what
+* makes the gap read as deliberate: the strings light up and the keyword does
+* not.
+*
+* The patch wraps the begin in the parentheses upstream forgot, which is the
+* whole fix: group 1 now exists and upstream's own captures entry applies.
+* This is not a new claim, it is the rule's stated intent completed.
+*
+* GitHub renders the keyword plain too -- its text.html.basic carries the
+* SAME dead rule, patched by the twin of this function in html.js -- so the
+* output diverges from GitHub the way comment-hyphens does: correct beats
+* parity.
+*/
+function patchDoctypeCapture(grammar, file) {
+	// Both HTML-content contexts carry their own copy of the SGML rule: the
+	// general one, and the twin used inside <cfoutput> blocks.
+	var ENTRIES = [
+		"text-html-cfml",
+		"text-html-cfml-cfoutput"
+	];
+
+	var BROKEN = "(?i:DOCTYPE)";
+
+	for (var entry of ENTRIES) {
+		// Unguarded for the same reason as the patches above: a rename throws a
+		// TypeError that names the expression.
+		var patterns = grammar.repository[entry].patterns;
+
+		var sgml = patterns.filter((p) => p.name === "meta.tag.sgml.html" && p.begin === "<!");
+
+		if (sgml.length !== 1) {
+			throw new Error(`${file}: ${entry} no longer carries exactly one meta.tag.sgml.html rule; re-derive patchDoctypeCapture`);
+		}
+
+		var doctypes = sgml[0].patterns.filter((p) => p.name === "meta.tag.sgml.doctype.html");
+
+		// Anchor check on the exact broken shape. If upstream fixes the capture
+		// themselves, remove this patch rather than double-wrapping their regex.
+		if (
+			doctypes.length !== 1
+			|| doctypes[0].begin !== BROKEN
+			|| JSON.stringify(doctypes[0].captures) !== JSON.stringify({1: {name: "entity.name.tag.doctype.html"}})
+		) {
+			throw new Error(`${file}: the ${entry} doctype rule no longer has the broken no-capture shape; remove or re-derive patchDoctypeCapture`);
+		}
+
+		doctypes[0].begin = `(${BROKEN})`;
+	}
+
+	// The two entries above must be the ONLY carriers of the broken shape. A
+	// third copy appearing in an upstream update would survive this patch and
+	// keep a plain doctype in some context nobody re-tested -- fail loudly
+	// instead.
+	function count(node) {
+		if (Array.isArray(node)) {
+			return node.reduce((sum, item) => sum + count(item), 0);
+		}
+		if (node && typeof node === "object") {
+			var self = (node.name === "meta.tag.sgml.doctype.html" && node.begin === BROKEN) ? 1 : 0;
+			return Object.values(node).reduce((sum, value) => sum + count(value), self);
+		}
+		return 0;
+	}
+
+	if (count(grammar.repository) > 0) {
+		throw new Error(`${file}: a no-capture doctype rule now appears outside the two HTML-content entries; extend patchDoctypeCapture to cover it`);
+	}
+
+	return "doctype-capture";
 }

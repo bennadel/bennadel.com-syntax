@@ -22,7 +22,7 @@ export var applied = new Map();
 
 var PATCHES = new Map([
 	["source.ts", [patchTemplateProperty]],
-	["text.html.basic", [patchCommentHyphens]]
+	["text.html.basic", [patchCommentHyphens, patchDoctypeCapture]]
 ]);
 
 /**
@@ -121,6 +121,66 @@ function patchCommentHyphens(grammar) {
 	}
 
 	return "comment-hyphens";
+}
+
+/**
+* `<!DOCTYPE` renders with no scope on the keyword.
+*
+* The twin of patchDoctypeCapture in cfml.js -- both grammars descend from the
+* same html.tmbundle SGML rule, dead capture included. The doctype sub-rule
+* assigns entity.name.tag.doctype.html to CAPTURE GROUP 1 of a begin regex
+* that has no capture group (`(?i:...)` is non-capturing), so the keyword
+* falls through as plain text while the DTD strings beside it highlight.
+*
+* The patch wraps the begin in the parentheses upstream forgot; upstream's own
+* captures entry then applies. This DIVERGES from GitHub's rendering (GitHub
+* ships the same dead rule) the way comment-hyphens does: correct beats
+* parity.
+*/
+function patchDoctypeCapture(grammar) {
+	var BROKEN = "(?i:DOCTYPE)";
+
+	// The SGML rule lives in the grammar's top-level patterns, like the comment
+	// rule patchCommentHyphens anchors on.
+	var sgml = grammar.patterns.filter((p) => p.name === "meta.tag.sgml.html" && p.begin === "<!");
+
+	if (sgml.length !== 1) {
+		throw new Error(`${grammar.scopeName}: no longer carries exactly one top-level meta.tag.sgml.html rule; re-derive patchDoctypeCapture`);
+	}
+
+	var doctypes = sgml[0].patterns.filter((p) => p.name === "meta.tag.sgml.doctype.html");
+
+	// Anchor check on the exact broken shape. If upstream fixes the capture
+	// themselves, remove this patch rather than double-wrapping their regex.
+	if (
+		doctypes.length !== 1
+		|| doctypes[0].begin !== BROKEN
+		|| JSON.stringify(doctypes[0].captures) !== JSON.stringify({1: {name: "entity.name.tag.doctype.html"}})
+	) {
+		throw new Error(`${grammar.scopeName}: the doctype rule no longer has the broken no-capture shape; remove or re-derive patchDoctypeCapture`);
+	}
+
+	doctypes[0].begin = `(${BROKEN})`;
+
+	// The SGML rule must be the ONLY carrier of the broken shape. One appearing
+	// elsewhere in a starry-night upgrade would survive this patch and keep a
+	// plain doctype in some context nobody re-tested -- fail loudly instead.
+	function count(node) {
+		if (Array.isArray(node)) {
+			return node.reduce((sum, item) => sum + count(item), 0);
+		}
+		if (node && typeof node === "object") {
+			var self = (node.name === "meta.tag.sgml.doctype.html" && node.begin === BROKEN) ? 1 : 0;
+			return Object.values(node).reduce((sum, value) => sum + count(value), self);
+		}
+		return 0;
+	}
+
+	if (count(grammar) > 0) {
+		throw new Error(`${grammar.scopeName}: a no-capture doctype rule now appears outside the top-level SGML rule; extend patchDoctypeCapture to cover it`);
+	}
+
+	return "doctype-capture";
 }
 
 /**

@@ -706,6 +706,29 @@ if (!UPDATE) {
 	assertEqual("real tag after a bare < still highlights",
 		angleTag.html.includes("<span class=\"pl-ent\">div</span>"), true);
 
+	// -- doctype capture ------------------------------------------------------------
+
+	// The SGML rule's doctype sub-rule assigns its scope to capture group 1 of
+	// a begin regex with no capture group, so the keyword rendered plain while
+	// the DTD strings beside it highlighted. The doctype-capture patches (one
+	// per grammar layer) add the parentheses upstream forgot. GitHub ships the
+	// same dead rule, so this diverges from GitHub: correct beats parity.
+	var doctypeSource = "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\">\n<html></html>";
+
+	var doctypeInCfm = highlight(doctypeSource, "cfm");
+	assertEqual("cfm doctype keyword is a tag name",
+		doctypeInCfm.html.includes("<span class=\"pl-ent\">DOCTYPE</span>"), true);
+	assertEqual("cfm DTD identifier is still a string",
+		doctypeInCfm.html.includes("<span class=\"pl-s\">\"-//W3C//DTD XHTML 1.0 Strict//EN\"</span>"), true);
+
+	var doctypeInCfoutput = highlight(`<cfoutput>${doctypeSource}</cfoutput>`, "cfm");
+	assertEqual("doctype inside cfoutput is a tag name",
+		doctypeInCfoutput.html.includes("<span class=\"pl-ent\">DOCTYPE</span>"), true);
+
+	var doctypeInHtm = highlight("<!doctype html>\n<html></html>", "htm");
+	assertEqual("lowercase html5 doctype is a tag name",
+		doctypeInHtm.html.includes("<span class=\"pl-ent\">doctype</span>"), true);
+
 	// The same gap in the STOCK html grammar, patched by src/grammars/html.js
 	// (the patch is applied to a clone before createStarryNight, so it must be
 	// visible through an ordinary `htm` fence).
@@ -771,12 +794,12 @@ if (!UPDATE) {
 	// drops a patch from the list.
 	assertEqual("every vendored grammar is patched",
 		[...cfmlPatches.values()].map((names) => names.join(",")).join(" | "),
-		"bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits,function-metadata,comment-hyphens,bad-angle-bracket | bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits,function-metadata,comment-hyphens,bad-angle-bracket");
+		"bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits,function-metadata,comment-hyphens,bad-angle-bracket,doctype-capture | bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits,function-metadata,comment-hyphens,bad-angle-bracket,doctype-capture");
 
 	// Same pin for the stock-grammar patch layer (src/grammars/html.js).
 	assertEqual("every stock grammar is patched",
 		[...stockPatches.entries()].map(([scope, names]) => `${scope}:${names.join(",")}`).join(" | "),
-		"source.ts:template-property | text.html.basic:comment-hyphens");
+		"source.ts:template-property | text.html.basic:comment-hyphens,doctype-capture");
 
 	// The vendored files are byte-identical to upstream, and this is what makes
 	// that a fact rather than an intention. Both patches are applied to the
