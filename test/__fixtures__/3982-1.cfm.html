@@ -1,0 +1,73 @@
+<span class="pl-c">&lt;!--- Import custom tag libraries. ---&gt;</span>
+&lt;<span class="pl-ent">cfimport</span> <span class="pl-e">prefix</span>=<span class="pl-s"><span class="pl-pds">"</span>core<span class="pl-pds">"</span></span> <span class="pl-e">taglib</span>=<span class="pl-s"><span class="pl-pds">"</span>./core/<span class="pl-pds">"</span></span> /&gt;
+&lt;<span class="pl-ent">cfimport</span> <span class="pl-e">prefix</span>=<span class="pl-s"><span class="pl-pds">"</span>html<span class="pl-pds">"</span></span> <span class="pl-e">taglib</span>=<span class="pl-s"><span class="pl-pds">"</span>./core/html/<span class="pl-pds">"</span></span> /&gt;
+
+<span class="pl-c">&lt;!--- // ------------------------------------------------------------------------- // ---&gt;</span>
+<span class="pl-c">&lt;!--- // ------------------------------------------------------------------------- // ---&gt;</span>
+
+&lt;<span class="pl-ent">core:Email</span>
+	<span class="pl-e">subject</span>=<span class="pl-s"><span class="pl-pds">"</span>Playing with media queries<span class="pl-pds">"</span></span>
+	<span class="pl-e">teaser</span>=<span class="pl-s"><span class="pl-pds">"</span>Max-widths, Min-widths, oh heck yeah!<span class="pl-pds">"</span></span>&gt;
+	&lt;<span class="pl-ent">core:Body</span>&gt;
+
+		&lt;<span class="pl-ent">html:h</span><span class="pl-ii">1</span> <span class="pl-e">margins</span>=<span class="pl-s"><span class="pl-pds">"</span>none xlarge<span class="pl-pds">"</span></span>&gt;
+			Playing with media queries
+		&lt;/<span class="pl-ent">html</span><span class="pl-e">:h1</span>&gt;
+
+		&lt;<span class="pl-ent">core:HtmlEntityTheme</span> <span class="pl-e">entity</span>=<span class="pl-s"><span class="pl-pds">"</span>p<span class="pl-pds">"</span></span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>box<span class="pl-pds">"</span></span>&gt;
+			background-color: #f0f0f0 ;
+			padding: 30px 10px 30px 10px ;
+			text-align: center ;
+		&lt;/<span class="pl-ent">core:HtmlEntityTheme</span>&gt;
+
+		&lt;<span class="pl-ent">html:p</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>box<span class="pl-pds">"</span></span>&gt;
+			Media query styles!
+		&lt;/<span class="pl-ent">html:p</span>&gt;
+
+		<span class="pl-c">&lt;!---</span>
+<span class="pl-c">			The MaxWidthStyles and MinWidthStyles are encapsulations of the CSS media-</span>
+<span class="pl-c">			query. The "!important" flag is auto-injected so that you don't have to worry</span>
+<span class="pl-c">			about always adding it.</span>
+<span class="pl-c">		---&gt;</span>
+		&lt;<span class="pl-ent">core:MaxWidthStyles</span> <span class="pl-e">width</span>=<span class="pl-s"><span class="pl-pds">"</span>650<span class="pl-pds">"</span></span>&gt;
+			.box {
+				background-color: #d0d0d0 ;
+			}
+		&lt;/<span class="pl-ent">core:MaxWidthStyles</span>&gt;
+		&lt;<span class="pl-ent">core:MaxWidthStyles</span> <span class="pl-e">width</span>=<span class="pl-s"><span class="pl-pds">"</span>600<span class="pl-pds">"</span></span>&gt;
+			.box {
+				background-color: #c0c0c0 ;
+			}
+		&lt;/<span class="pl-ent">core:MaxWidthStyles</span>&gt;
+		&lt;<span class="pl-ent">core:MaxWidthStyles</span> <span class="pl-e">width</span>=<span class="pl-s"><span class="pl-pds">"</span>550<span class="pl-pds">"</span></span>&gt;
+			.box {
+				background-color: #a0a0a0 ;
+			}
+		&lt;/<span class="pl-ent">core:MaxWidthStyles</span>&gt;
+		&lt;<span class="pl-ent">core:MaxWidthStyles</span> <span class="pl-e">width</span>=<span class="pl-s"><span class="pl-pds">"</span>500<span class="pl-pds">"</span></span>&gt;
+			.box {
+				background-color: #909090 ;
+				color: #ffffff ;
+			}
+		&lt;/<span class="pl-ent">core:MaxWidthStyles</span>&gt;
+		&lt;<span class="pl-ent">core:MaxWidthStyles</span> <span class="pl-e">width</span>=<span class="pl-s"><span class="pl-pds">"</span>450<span class="pl-pds">"</span></span>&gt;
+			.box {
+				background-color: #707070 ;
+				color: #ffffff ;
+			}
+		&lt;/<span class="pl-ent">core:MaxWidthStyles</span>&gt;
+		&lt;<span class="pl-ent">core:MaxWidthStyles</span> <span class="pl-e">width</span>=<span class="pl-s"><span class="pl-pds">"</span>400<span class="pl-pds">"</span></span>&gt;
+			.box {
+				background-color: #505050 ;
+				color: #ffffff ;
+			}
+		&lt;/<span class="pl-ent">core:MaxWidthStyles</span>&gt;
+		&lt;<span class="pl-ent">core:MaxWidthStyles</span> <span class="pl-e">width</span>=<span class="pl-s"><span class="pl-pds">"</span>350<span class="pl-pds">"</span></span>&gt;
+			.box {
+				background-color: #303030 ;
+				color: #ffffff ;
+			}
+		&lt;/<span class="pl-ent">core:MaxWidthStyles</span>&gt;
+
+	&lt;/<span class="pl-ent">core:Body</span>&gt;
+&lt;/<span class="pl-ent">core:Email</span>&gt;

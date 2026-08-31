@@ -1,0 +1,20 @@
+<cfscript>
+	
+	// I reset the output buffer and write a message to the response.
+	public void function writeResponse() cachedWithin = createTimeSpan( 0, 0, 1, 0 ) {
+
+		var message = "Now: #now().timeFormat( 'full' )#";
+
+		content
+			type = "text/plain; charset=utf-8"
+			variable = charsetDecode( message, "utf-8" )
+		;
+
+	}
+
+	// ------------------------------------------------------------------------------- //
+	// ------------------------------------------------------------------------------- //
+
+	writeResponse();
+
+</cfscript>
