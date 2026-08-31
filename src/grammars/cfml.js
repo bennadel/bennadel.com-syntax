@@ -80,7 +80,7 @@ export var CFML_SCRIPT = "embedding.cfml.cfs";
 */
 export var applied = new Map();
 
-var PATCHES = [patchBareInclude, patchSafeNavigation, patchTagIsland, patchBadAmpersand, patchCustomTagDigits, patchFunctionMetadata, patchCommentHyphens];
+var PATCHES = [patchBareInclude, patchSafeNavigation, patchTagIsland, patchBadAmpersand, patchCustomTagDigits, patchFunctionMetadata, patchCommentHyphens, patchBadAngleBracket];
 
 export async function loadCfmlGrammars() {
 	return Promise.all([
@@ -585,4 +585,76 @@ function patchCommentHyphens(grammar, file) {
 	}
 
 	return "comment-hyphens";
+}
+
+/**
+* A bare `<` in HTML text renders as invalid.illegal -> pl-ii.
+*
+* Both HTML-content contexts end with catch-alls branding any `<` that opened
+* no tag illegal -- `<>` first, then every remaining `<`. In an HTML page that
+* only fires on typos, but a cfquery body is SQL, where `<` and `<>` are
+* comparison operators:
+*
+*   WHERE piv.id < 82
+*   AND   date_started <= NOW()
+*
+* lights up white-on-red on every operator. Found by the SQL-tag pl-ii sweep
+* (posts 1424 and 496; fixtures 1424-1.cfm, 1424-2.cfm, 496-1.cfm, 496-3.cfm).
+* The `<>` twin was confirmed by repro, not a fixture: SQL's not-equals hits it
+* the same way. Measured before patching: real tags and cfscript comparisons
+* take other rules and are unaffected.
+*
+* Like comment-hyphens, this DIVERGES from GitHub in spirit -- flagging stray
+* `<` is defensible for a document that is only HTML -- but CFML pages carry
+* query bodies as ordinary content, so the strictness misfires on the
+* archive's most common construct. The trade: a genuinely stray `<` (an
+* unclosed tag typo) now falls through to plain text instead of flagging.
+* That reads as unstyled, which is how the rest of this project treats
+* content it cannot classify.
+*
+* The patch deletes ONLY the two catch-alls. Every real tag form is claimed
+* by earlier rules, so tags keep highlighting; only the leftover `<` and `<>`
+* become unclaimed.
+*/
+function patchBadAngleBracket(grammar, file) {
+	// Both HTML-content contexts carry their own copy of the pair: the general
+	// one, and the twin used inside <cfoutput> blocks.
+	var ENTRIES = [
+		"text-html-cfml",
+		"text-html-cfml-cfoutput"
+	];
+
+	var CATCH_ALLS = new Map([
+		["invalid.illegal.incomplete.html", "<>"],
+		["invalid.illegal.bad-angle-bracket.html", "<"]
+	]);
+
+	for (var entry of ENTRIES) {
+		// Unguarded for the same reason as the patches above: a rename throws a
+		// TypeError that names the expression.
+		var patterns = grammar.repository[entry].patterns;
+
+		for (var [name, match] of CATCH_ALLS) {
+			var index = patterns.findIndex((p) => p.name === name && p.match === match);
+
+			// Anchor check. If upstream drops a catch-all themselves, shrink this
+			// patch rather than leaving it to fail silently against nothing.
+			if (index < 0) {
+				throw new Error(`${file}: ${entry} no longer carries the ${name} catch-all; shrink patchBadAngleBracket`);
+			}
+
+			patterns.splice(index, 1);
+		}
+	}
+
+	// The two entries above must be the ONLY carriers. A third copy appearing
+	// elsewhere in an upstream update would survive this patch and put pl-ii
+	// operators back in some context nobody re-tested -- fail loudly instead.
+	for (var scope of CATCH_ALLS.keys()) {
+		if (JSON.stringify(grammar.repository).includes(scope)) {
+			throw new Error(`${file}: ${scope} now appears outside the two HTML-content entries; extend patchBadAngleBracket to cover it`);
+		}
+	}
+
+	return "bad-angle-bracket";
 }

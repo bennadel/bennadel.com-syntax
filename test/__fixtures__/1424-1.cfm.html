@@ -14,7 +14,7 @@ ON
 		AND
 			j.contact_role_id = #ContactRoles.CEO#
 		AND
-			j.date_started <span class="pl-ii">&lt;</span>= NOW()
+			j.date_started &lt;= NOW()
 		AND
 			(
 					j.date_ended IS NULL

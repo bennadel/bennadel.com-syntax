@@ -683,6 +683,29 @@ if (!UPDATE) {
 	assertEqual("divider comment inside cfoutput is not illegal",
 		dividerInCfoutput.html.includes("pl-ii"), false);
 
+	// -- bad angle bracket ----------------------------------------------------------
+
+	// A `<` that opens no tag rendered invalid.illegal -> pl-ii, which lights up
+	// SQL comparison operators inside cfquery bodies -- `piv.id < 82`,
+	// `date_started <= NOW()`, `id <> 5`. The bad-angle-bracket patch deletes
+	// the `<` and `<>` catch-alls; the operators fall through to plain text.
+	// Both HTML contexts are asserted because each has its own copy of the pair.
+	var angle = highlight("WHERE\n\tid < 82\nAND\n\tstate <> 'x'\nAND\n\tstarted <= NOW()", "cfm");
+	assertEqual("SQL comparison operators are not illegal",
+		angle.html.includes("pl-ii"), false);
+
+	var angleInCfoutput = highlight("<cfoutput>id < #max# AND a <> b</cfoutput>", "cfm");
+	assertEqual("SQL comparison operators inside cfoutput are not illegal",
+		angleInCfoutput.html.includes("pl-ii"), false);
+
+	// The patch must delete ONLY the catch-alls: a `<` that DOES open a tag is
+	// claimed by earlier rules, or the patch has cut too deep.
+	var angleTag = highlight("a < b\n<div class=\"x\">hi</div>", "cfm");
+	assertEqual("bare < before a real tag is not illegal",
+		angleTag.html.includes("pl-ii"), false);
+	assertEqual("real tag after a bare < still highlights",
+		angleTag.html.includes("<span class=\"pl-ent\">div</span>"), true);
+
 	// The same gap in the STOCK html grammar, patched by src/grammars/html.js
 	// (the patch is applied to a clone before createStarryNight, so it must be
 	// visible through an ordinary `htm` fence).
@@ -704,7 +727,7 @@ if (!UPDATE) {
 	// drops a patch from the list.
 	assertEqual("every vendored grammar is patched",
 		[...cfmlPatches.values()].map((names) => names.join(",")).join(" | "),
-		"bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits,function-metadata,comment-hyphens | bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits,function-metadata,comment-hyphens");
+		"bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits,function-metadata,comment-hyphens,bad-angle-bracket | bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits,function-metadata,comment-hyphens,bad-angle-bracket");
 
 	// Same pin for the stock-grammar patch layer (src/grammars/html.js).
 	assertEqual("every stock grammar is patched",

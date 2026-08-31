@@ -23,7 +23,7 @@
 					WHERE
 						p.date_pickup &gt;= @date_from
 					AND
-						p.date_pickup <span class="pl-ii">&lt;</span> @date_to
+						p.date_pickup &lt; @date_to
 					AND
 						p.user_id IN ( #lstAvailableUsers# )
 
@@ -37,7 +37,7 @@
 			<span class="pl-c">&lt;!--- Check for the catch-all weight bucket. ---&gt;</span>
 			&lt;<span class="pl-ent">cfif</span> (<span class="pl-smi">i</span> <span class="pl-k">LT</span> <span class="pl-c1">80</span>)&gt;
 				AND
-					net_weight <span class="pl-ii">&lt;</span> #(i + 5)#
+					net_weight &lt; #(i + 5)#
 			&lt;/<span class="pl-ent">cfif</span>&gt;
 		),
 
