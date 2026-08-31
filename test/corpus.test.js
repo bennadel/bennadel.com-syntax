@@ -382,6 +382,42 @@ if (!UPDATE) {
 		assertEqual(`override: "${flag}" -> ${scope}`, highlight("x", flag).resolvedLanguage, scope);
 	}
 
+	// -------------------------------------------------------------------------
+	// Grammar registry: dependencies missingScopes() cannot see
+	//
+	// source.js reaches source.js.regexp through a raw include WITHOUT
+	// declaring it as a dependency, so boot()'s missingScopes() check is blind
+	// to it -- and vscode-textmate disables the ENTIRE rule whose include
+	// cannot resolve. Unregistered, no JS regex literal is recognized at all:
+	// /[0-9A-F]/ parses as division and array math, and `9A` renders as an
+	// illegal identifier (pl-ii, white on red). init() registers the grammar
+	// manually; these pin that registration.
+	// -------------------------------------------------------------------------
+
+	console.log("");
+	console.log("grammar registry");
+
+	var regex = highlight("var r = /[0-9A-F]/g;", "js");
+	assertEqual("JS regex literal is a regex",
+		regex.html.includes("<span class=\"pl-sr\">"), true);
+	assertEqual("JS regex literal carries no illegal tokens",
+		regex.html.includes("pl-ii"), false);
+
+	// The inverse direction: the regex rule must not over-claim division. Its
+	// lookbehind requires an operator-ish character, and an identifier before
+	// the slash is not one.
+	assertEqual("division is not a regex",
+		highlight("var x = a / b / c;", "js").html.includes("pl-sr"), false);
+
+	// The same literal inside a script block of an HTML fence --
+	// text.html.basic reaches source.js through the registry, so the
+	// registration must hold there too.
+	var scriptBlock = highlight("<script>\nvar r = /[0-9A-F]/g;\n</script>", "htm");
+	assertEqual("regex in an HTML script block is a regex",
+		scriptBlock.html.includes("<span class=\"pl-sr\">"), true);
+	assertEqual("regex in an HTML script block carries no illegal tokens",
+		scriptBlock.html.includes("pl-ii"), false);
+
 	// Case and whitespace are normalized before lookup, so these are the same
 	// tag. Worth pinning because the archive's fence tags were hand-typed.
 	assertEqual("flags are case-insensitive", highlight("x", "CFML").resolvedLanguage, "embedding.cfml");

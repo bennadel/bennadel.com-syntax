@@ -86,7 +86,7 @@
 			<span class="pl-c">// --</span>
 			<span class="pl-c">// READ MORE: https://developer.mozilla.org/en-US/docs/Web/API/WindowBase64/Base64_encoding_and_decoding#The_Unicode_Problem</span>
 			<span class="pl-k">var</span> normalizedInput <span class="pl-k">=</span> <span class="pl-c1">encodeURIComponent</span>( stringInput ).<span class="pl-c1">replace</span>(
-				<span class="pl-k">/%</span>([<span class="pl-c1">0</span><span class="pl-k">-</span><span class="pl-ii">9A</span><span class="pl-k">-</span><span class="pl-c1">F</span>]{<span class="pl-c1">2</span>})<span class="pl-k">/</span>g,
+<span class="pl-s"><span class="pl-sr">				<span class="pl-pds">/</span>%(<span class="pl-c1">[0-9A-F]</span><span class="pl-k">{2}</span>)<span class="pl-pds">/</span>g</span></span>,
 				<span class="pl-k">function</span> <span class="pl-en">toSolidBytes</span>( <span class="pl-smi">$0</span>, <span class="pl-smi">hex</span> ) {
 
 					<span class="pl-k">return</span>( <span class="pl-c1">String</span>.<span class="pl-c1">fromCharCode</span>( <span class="pl-s"><span class="pl-pds">"</span>0x<span class="pl-pds">"</span></span> <span class="pl-k">+</span> hex ) );

@@ -1,4 +1,8 @@
 import {createStarryNight, all} from "@wooorm/starry-night";
+// Resolves into the package's lang/ directory -- its exports map is
+// `"./*": "./lang/*.js"`, so the specifier carries neither prefix nor
+// extension.
+import sourceJsRegexp from "@wooorm/starry-night/source.js.regexp";
 import {toHtml} from "hast-util-to-html";
 
 import {loadCfmlGrammars, CFML_TAG, CFML_SCRIPT} from "../grammars/cfml.js";
@@ -196,7 +200,20 @@ export async function init(config) {
 	// does not, a patch has introduced an include that is not registered.
 	var grammars = await loadCfmlGrammars();
 
-	await starryNight.register(grammars);
+	// source.js.regexp ships in the starry-night package but is absent from
+	// `all` (nothing in Linguist maps a language to it), and source.js reaches
+	// it through a raw include WITHOUT declaring it as a dependency -- so
+	// missingScopes() cannot see the gap and boot() sails past it. The damage
+	// is not a degraded include: vscode-textmate disables the ENTIRE rule whose
+	// include cannot resolve, so with this grammar unregistered no JS regex
+	// literal is recognized at all -- `/[0-9A-F]/` parses as division and
+	// array math, and `9A` lands on invalid.illegal.identifier (pl-ii, white
+	// on red). Measured 2026-08-31 by tokenizing with and without a stub.
+	//
+	// Its `names` and `extensions` ship empty, so registering it cannot make
+	// any fence tag resolve here -- the same isolation the CFML grammars above
+	// get by having their lists emptied at load.
+	await starryNight.register([...grammars, sourceJsRegexp]);
 
 	return starryNight;
 }
