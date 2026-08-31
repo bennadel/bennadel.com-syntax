@@ -80,7 +80,7 @@ export var CFML_SCRIPT = "embedding.cfml.cfs";
 */
 export var applied = new Map();
 
-var PATCHES = [patchBareInclude, patchSafeNavigation, patchTagIsland, patchBadAmpersand, patchCustomTagDigits, patchFunctionMetadata];
+var PATCHES = [patchBareInclude, patchSafeNavigation, patchTagIsland, patchBadAmpersand, patchCustomTagDigits, patchFunctionMetadata, patchCommentHyphens];
 
 export async function loadCfmlGrammars() {
 	return Promise.all([
@@ -505,4 +505,84 @@ function patchFunctionMetadata(grammar, file) {
 	region[0].patterns[0].include = TO;
 
 	return "function-metadata";
+}
+
+/**
+* `--` inside an HTML comment renders as invalid.illegal -> pl-ii.
+*
+* The comment rule in both HTML-content contexts ends with a catch-all that
+* brands every `--` before the closing `-->` illegal. That outlaws the
+* archive's own house style, the hyphen-run divider comment:
+*
+*   <!-- ------- -->
+*
+* which lights up white-on-red in the middle of ordinary markup. HTML5 permits
+* `--` inside comment text -- only `<!--`, `-->`, and `--!>` are reserved --
+* so the strictness is SGML-era pedantry against input that is now legal.
+* Found by the JavaScript-tag pl-ii sweep (post 1740, fixture 1740-1.cfm).
+*
+* Unlike bad-ampersand, this DIVERGES from GitHub rather than restoring it:
+* GitHub's text.html.basic carries the same catch-all (with a lookahead that
+* spares only the closing run), so GitHub renders these dividers as errors
+* too. Do not "fix" this patch to match GitHub -- the divergence is the point,
+* and it is the same trade adopting cfmleditor made: correct beats parity.
+*
+* The patch deletes ONLY the catch-all. The tag include stays, so CFML inside
+* an HTML comment keeps highlighting; an inner `--` is simply unclaimed and
+* falls through to the enclosing comment scope, rendering as comment text.
+*/
+function patchCommentHyphens(grammar, file) {
+	// Both HTML-content contexts carry their own copy of the comment rule: the
+	// general one, and the twin used inside <cfoutput> blocks.
+	var ENTRIES = [
+		"text-html-cfml",
+		"text-html-cfml-cfoutput"
+	];
+
+	var CATCH_ALL = "invalid.illegal.bad-comments-or-CDATA.html";
+
+	for (var entry of ENTRIES) {
+		// Unguarded for the same reason as the patches above: a rename throws a
+		// TypeError that names the expression.
+		var patterns = grammar.repository[entry].patterns;
+
+		var comments = patterns.filter((p) => p.name === "comment.block.html" && p.begin === "<!--");
+
+		if (comments.length !== 1) {
+			throw new Error(`${file}: ${entry} no longer carries exactly one comment.block.html rule; re-derive patchCommentHyphens`);
+		}
+
+		var index = comments[0].patterns.findIndex((p) => p.name === CATCH_ALL && p.match === "--");
+
+		// Anchor check. If upstream drops the catch-all themselves, remove this
+		// patch rather than leaving it to fail silently against nothing.
+		if (index < 0) {
+			throw new Error(`${file}: the ${entry} comment rule no longer carries the ${CATCH_ALL} catch-all; remove patchCommentHyphens`);
+		}
+
+		comments[0].patterns.splice(index, 1);
+	}
+
+	// The two entries above must be the ONLY carriers of the bare-`--` form. The
+	// SGML rule (`<!` ... `>`) legitimately keeps the same scope NAME on a
+	// different match, so full absence cannot be asserted the way bad-ampersand
+	// asserts it; the exact rule shape is counted instead. A third comment
+	// context appearing in an upstream update would survive this patch and put
+	// pl-ii dividers back somewhere nobody re-tested -- fail loudly instead.
+	function count(node) {
+		if (Array.isArray(node)) {
+			return node.reduce((sum, item) => sum + count(item), 0);
+		}
+		if (node && typeof node === "object") {
+			var self = (node.name === CATCH_ALL && node.match === "--") ? 1 : 0;
+			return Object.values(node).reduce((sum, value) => sum + count(value), self);
+		}
+		return 0;
+	}
+
+	if (count(grammar.repository) > 0) {
+		throw new Error(`${file}: a bare-\`--\` ${CATCH_ALL} rule now appears outside the two HTML-content entries; extend patchCommentHyphens to cover it`);
+	}
+
+	return "comment-hyphens";
 }

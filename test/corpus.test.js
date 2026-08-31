@@ -659,6 +659,29 @@ if (!UPDATE) {
 	assertEqual("string metadata value after a call value still highlights",
 		metadata.html.includes("<span class=\"pl-pds\">\"</span>x<span class=\"pl-pds\">\"</span>"), true);
 
+	// -- comment hyphens ----------------------------------------------------------
+
+	// Hyphen-run divider comments -- `<!-- ------- -->`, the archive's house
+	// style -- rendered invalid.illegal -> pl-ii because the comment rule brands
+	// every inner `--` illegal. The comment-hyphens patch deletes that catch-all;
+	// the run falls through to the enclosing comment scope. Deliberately NOT
+	// GitHub's rendering (text.html.basic has the same strictness): correct
+	// beats parity. Both HTML contexts are asserted because each has its own
+	// copy of the comment rule.
+	var divider = highlight("<!-- ------- -->\n<div>x</div>", "cfm");
+	assertEqual("hyphen-run divider comment is not illegal",
+		divider.html.includes("pl-ii"), false);
+	assertEqual("divider renders as one comment",
+		divider.html.includes("<span class=\"pl-c\">&lt;!-- ------- --&gt;</span>"), true);
+	// The comment must still END at `-->` -- the patch removes an inner rule,
+	// not the terminator -- or the markup after it would be swallowed.
+	assertEqual("markup after the divider is still a tag",
+		divider.html.includes("<span class=\"pl-ent\">div</span>"), true);
+
+	var dividerInCfoutput = highlight("<cfoutput><!-- ------- -->#x#</cfoutput>", "cfm");
+	assertEqual("divider comment inside cfoutput is not illegal",
+		dividerInCfoutput.html.includes("pl-ii"), false);
+
 	// ---------------------------------------------------------------------------
 
 	// Every patch must have actually run on both files. A patch that silently
@@ -667,7 +690,7 @@ if (!UPDATE) {
 	// drops a patch from the list.
 	assertEqual("every vendored grammar is patched",
 		[...cfmlPatches.values()].map((names) => names.join(",")).join(" | "),
-		"bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits,function-metadata | bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits,function-metadata");
+		"bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits,function-metadata,comment-hyphens | bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits,function-metadata,comment-hyphens");
 
 	// The vendored files are byte-identical to upstream, and this is what makes
 	// that a fact rather than an intention. Both patches are applied to the
