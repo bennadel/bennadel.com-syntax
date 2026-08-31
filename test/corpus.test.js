@@ -624,6 +624,21 @@ if (!UPDATE) {
 	assertEqual("&rarr; inside cfoutput is still a character reference",
 		ampersandInCfoutput.html.includes("<span class=\"pl-en\">rarr</span>"), true);
 
+	// -- custom tag digits --------------------------------------------------------
+
+	// Custom tag names may contain digits (`<html:h1>` via cfimport, `<cf_h1>`),
+	// but upstream's name classes are `[a-z_-]`, so the digit fell into the
+	// attribute scanner and rendered invalid.illegal -> pl-ii mid-name. The
+	// custom-tag-digits patch widens the name classes. Open and close tags are
+	// separate rules, so both are asserted.
+	var digitTag = highlight("<html:h1 margins=\"none\">x</html:h1> <cf_h1>y</cf_h1>", "cfm");
+	assertEqual("digit in a prefixed custom-tag name is not illegal",
+		digitTag.html.includes("pl-ii"), false);
+	assertEqual("prefixed custom-tag name includes its digit",
+		digitTag.html.includes("<span class=\"pl-ent\">html:h1</span>"), true);
+	assertEqual("cf_ custom-tag name includes its digit",
+		digitTag.html.includes("<span class=\"pl-ent\">cf_h1</span>"), true);
+
 	// ---------------------------------------------------------------------------
 
 	// Every patch must have actually run on both files. A patch that silently
@@ -632,7 +647,7 @@ if (!UPDATE) {
 	// drops a patch from the list.
 	assertEqual("every vendored grammar is patched",
 		[...cfmlPatches.values()].map((names) => names.join(",")).join(" | "),
-		"bare-include,safe-navigation,tag-island,bad-ampersand | bare-include,safe-navigation,tag-island,bad-ampersand");
+		"bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits | bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits");
 
 	// The vendored files are byte-identical to upstream, and this is what makes
 	// that a fact rather than an intention. Both patches are applied to the

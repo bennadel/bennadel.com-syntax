@@ -1,5 +1,5 @@
 /**
-* The CFML grammars this service ships, plus the two token patches they need.
+* The CFML grammars this service ships, plus the token patches they need.
 *
 * SOURCE AND VERSION
 *
@@ -80,7 +80,7 @@ export var CFML_SCRIPT = "embedding.cfml.cfs";
 */
 export var applied = new Map();
 
-var PATCHES = [patchBareInclude, patchSafeNavigation, patchTagIsland, patchBadAmpersand];
+var PATCHES = [patchBareInclude, patchSafeNavigation, patchTagIsland, patchBadAmpersand, patchCustomTagDigits];
 
 export async function loadCfmlGrammars() {
 	return Promise.all([
@@ -393,4 +393,62 @@ function patchBadAmpersand(grammar, file) {
 	}
 
 	return "bad-ampersand";
+}
+
+/**
+* Digits in a custom-tag name render as invalid.illegal -> pl-ii.
+*
+* Custom tag names may contain digits -- `<html:h1>` from a cfimport prefix,
+* or `<cf_h1>` -- but every name class in cfmleditor's `custom-tags` rules is
+* `[a-z_-]`. The begin match stops at the digit (`<html:h` of `<html:h1`),
+* the digit is left for the tag's attribute patterns, and no attribute rule
+* claims a bare digit, so it lands on invalid.illegal.attribute-name.cfml:
+* white on red, in the middle of a tag name. Found by the archive pl-ii sweep
+* (post 3982, fixture 3982-1.cfm).
+*
+* The patch widens each name class to `[a-z0-9_-]`, nothing else. The prefix
+* class (`[a-z]+` before the colon) is left alone: no archive input needs it,
+* and widening an anchor that DECIDES whether the rule matches at all -- rather
+* than where the name ends -- would change what the rule claims.
+*
+* Each rewrite is keyed on the full upstream regex, so any upstream edit to
+* these rules -- including fixing this -- makes the lookup miss and the load
+* throw, rather than silently re-widening a pattern that no longer needs it.
+*/
+function patchCustomTagDigits(grammar, file) {
+	var TARGET = "custom-tags";
+
+	var REWRITES = new Map([
+		["(?i)(<)(cf_[a-z_-]*)", "(?i)(<)(cf_[a-z0-9_-]*)"],
+		["(?i)(</)(cf_[a-z_-]*)(>)", "(?i)(</)(cf_[a-z0-9_-]*)(>)"],
+		["(?i)(<)([a-z]+)(\\:)([a-z_-]*)", "(?i)(<)([a-z]+)(\\:)([a-z0-9_-]*)"],
+		["(?i)(</)([a-z]+\\:[a-z_-]*)(>)", "(?i)(</)([a-z]+\\:[a-z0-9_-]*)(>)"]
+	]);
+
+	// Unguarded for the same reason as the patches above: a rename throws a
+	// TypeError that names the expression.
+	var patterns = grammar.repository[TARGET].patterns;
+	var applied = 0;
+
+	for (var pattern of patterns) {
+		var key = pattern.begin ?? pattern.match;
+
+		if (!REWRITES.has(key)) {
+			continue;
+		}
+
+		if (pattern.begin) {
+			pattern.begin = REWRITES.get(key);
+		} else {
+			pattern.match = REWRITES.get(key);
+		}
+
+		applied++;
+	}
+
+	if (applied !== REWRITES.size) {
+		throw new Error(`${file}: only ${applied} of ${REWRITES.size} ${TARGET} rules matched patchCustomTagDigits; upstream changed them -- re-derive the rewrites or remove the patch`);
+	}
+
+	return "custom-tag-digits";
 }
