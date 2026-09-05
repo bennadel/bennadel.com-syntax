@@ -33,14 +33,14 @@
 	&lt;<span class="pl-ent">script</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/javascript<span class="pl-pds">"</span></span>&gt;
 
 		<span class="pl-c">// Gather our DOM references.</span>
-		<span class="pl-k">var</span> input <span class="pl-k">=</span> <span class="pl-c1">document</span>.<span class="pl-c1">querySelector</span>( <span class="pl-s"><span class="pl-pds">"</span>textarea[ name = 'input' ]<span class="pl-pds">"</span></span> );
-		<span class="pl-k">var</span> download <span class="pl-k">=</span> <span class="pl-c1">document</span>.<span class="pl-c1">querySelector</span>( <span class="pl-s"><span class="pl-pds">"</span>a[ download ]<span class="pl-pds">"</span></span> );
-		<span class="pl-k">var</span> useBase64 <span class="pl-k">=</span> <span class="pl-c1">document</span>.<span class="pl-c1">querySelector</span>( <span class="pl-s"><span class="pl-pds">"</span>input[ name = 'useBase64' ]<span class="pl-pds">"</span></span> );
+		<span class="pl-k">var</span> input <span class="pl-k">=</span> <span class="pl-c1">document</span>.<span class="pl-en">querySelector</span>( <span class="pl-s"><span class="pl-pds">"</span>textarea[ name = 'input' ]<span class="pl-pds">"</span></span> );
+		<span class="pl-k">var</span> download <span class="pl-k">=</span> <span class="pl-c1">document</span>.<span class="pl-en">querySelector</span>( <span class="pl-s"><span class="pl-pds">"</span>a[ download ]<span class="pl-pds">"</span></span> );
+		<span class="pl-k">var</span> useBase64 <span class="pl-k">=</span> <span class="pl-c1">document</span>.<span class="pl-en">querySelector</span>( <span class="pl-s"><span class="pl-pds">"</span>input[ name = 'useBase64' ]<span class="pl-pds">"</span></span> );
 
 		<span class="pl-c">// Listen for relevant form changes so that we can dynamically update the HREF</span>
 		<span class="pl-c">// attribute of our download link to contain the proper Data URI.</span>
-		<span class="pl-smi">input</span>.<span class="pl-c1">addEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>input<span class="pl-pds">"</span></span>, updateDownloadHref, <span class="pl-c1">false</span> );
-		<span class="pl-smi">useBase64</span>.<span class="pl-c1">addEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>change<span class="pl-pds">"</span></span>, updateDownloadHref, <span class="pl-c1">false</span> );
+		<span class="pl-smi">input</span>.<span class="pl-en">addEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>input<span class="pl-pds">"</span></span>, updateDownloadHref, <span class="pl-c1">false</span> );
+		<span class="pl-smi">useBase64</span>.<span class="pl-en">addEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>change<span class="pl-pds">"</span></span>, updateDownloadHref, <span class="pl-c1">false</span> );
 
 		<span class="pl-c">// Initialize the download link.</span>
 		<span class="pl-en">updateDownloadHref</span>();
@@ -59,14 +59,14 @@
 			<span class="pl-c">// only have to worry about standard entity encoding for the URL.</span>
 			<span class="pl-k">if</span> ( <span class="pl-smi">useBase64</span>.<span class="pl-c1">checked</span> ) {
 
-				<span class="pl-smi">download</span>.<span class="pl-c1">setAttribute</span>(
+				<span class="pl-smi">download</span>.<span class="pl-en">setAttribute</span>(
 					<span class="pl-s"><span class="pl-pds">"</span>href<span class="pl-pds">"</span></span>,
 					( <span class="pl-s"><span class="pl-pds">"</span>data:text/plain;charset=utf-8;base64,<span class="pl-pds">"</span></span> <span class="pl-k">+</span> <span class="pl-en">base64Encode</span>( text ) )
 				);
 
 			} <span class="pl-k">else</span> {
 
-				<span class="pl-smi">download</span>.<span class="pl-c1">setAttribute</span>(
+				<span class="pl-smi">download</span>.<span class="pl-en">setAttribute</span>(
 					<span class="pl-s"><span class="pl-pds">"</span>href<span class="pl-pds">"</span></span>,
 					( <span class="pl-s"><span class="pl-pds">"</span>data:text/plain;charset=utf-8,<span class="pl-pds">"</span></span> <span class="pl-k">+</span> <span class="pl-c1">encodeURIComponent</span>( text ) )
 				);
@@ -85,11 +85,11 @@
 			<span class="pl-c">// method. But, we don't need to decode in this demo.</span>
 			<span class="pl-c">// --</span>
 			<span class="pl-c">// READ MORE: https://developer.mozilla.org/en-US/docs/Web/API/WindowBase64/Base64_encoding_and_decoding#The_Unicode_Problem</span>
-			<span class="pl-k">var</span> normalizedInput <span class="pl-k">=</span> <span class="pl-c1">encodeURIComponent</span>( stringInput ).<span class="pl-c1">replace</span>(
+			<span class="pl-k">var</span> normalizedInput <span class="pl-k">=</span> <span class="pl-c1">encodeURIComponent</span>( stringInput ).<span class="pl-en">replace</span>(
 <span class="pl-s"><span class="pl-sr">				<span class="pl-pds">/</span>%(<span class="pl-c1">[0-9A-F]</span><span class="pl-k">{2}</span>)<span class="pl-pds">/</span>g</span></span>,
 				<span class="pl-k">function</span> <span class="pl-en">toSolidBytes</span>( <span class="pl-smi">$0</span>, <span class="pl-smi">hex</span> ) {
 
-					<span class="pl-k">return</span>( <span class="pl-c1">String</span>.<span class="pl-c1">fromCharCode</span>( <span class="pl-s"><span class="pl-pds">"</span>0x<span class="pl-pds">"</span></span> <span class="pl-k">+</span> hex ) );
+					<span class="pl-k">return</span>( <span class="pl-c1">String</span>.<span class="pl-en">fromCharCode</span>( <span class="pl-s"><span class="pl-pds">"</span>0x<span class="pl-pds">"</span></span> <span class="pl-k">+</span> hex ) );
 
 				}
 			);

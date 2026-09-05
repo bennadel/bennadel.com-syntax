@@ -786,6 +786,55 @@ if (!UPDATE) {
 	assertEqual("prefixed template key keeps its plain string value",
 		templatePrefixed.html.includes("pl-ent"), false);
 
+	// -- method name lists ------------------------------------------------------------
+
+	// Both JavaScript grammars guessed a dot-method's meaning from name lists,
+	// so a jQuery chain alternated colors: `.attr(` was a plain function while
+	// `.click(` collided with the DOM roster and rendered as a built-in. The
+	// method-name-lists patch (src/grammars/html.js) deletes the lists so every
+	// dot-method name gets the same entity.name.function scope. This diverges
+	// from GitHub, which keeps the alternating colors.
+	var chainSource = "menuRoot\n\t.attr( \"href\", \"x\" )\n\t.click( handleClick );";
+
+	var chainInJs = highlight(chainSource, "js");
+	assertEqual("js fence resolves to the stock javascript grammar",
+		chainInJs.resolvedLanguage, "source.js");
+	assertEqual("unlisted method in a js chain is a function name",
+		chainInJs.html.includes("<span class=\"pl-en\">attr</span>"), true);
+	assertEqual("DOM-colliding method in a js chain is the same function scope",
+		chainInJs.html.includes("<span class=\"pl-en\">click</span>"), true);
+
+	var chainInTs = highlight(chainSource, "ts");
+	assertEqual("unlisted method in a ts chain is a function name",
+		chainInTs.html.includes("<span class=\"pl-en\">attr</span>"), true);
+	assertEqual("DOM-colliding method in a ts chain is the same function scope",
+		chainInTs.html.includes("<span class=\"pl-en\">click</span>"), true);
+
+	// The DOM property roster in source.js also steals CALLED names -- `.text(`
+	// collides with the `text` property -- so those rules gain a
+	// not-followed-by-a-paren guard. An actual property access keeps its
+	// built-in scope.
+	var propertySteal = highlight("jRow.find( \"td\" ).text( value );\nanchor.href = url;", "js");
+	assertEqual("property-colliding method in a js chain is a function name",
+		propertySteal.html.includes("<span class=\"pl-en\">text</span>"), true);
+	assertEqual("uncalled property access is still a built-in",
+		propertySteal.html.includes("<span class=\"pl-c1\">href</span>"), true);
+
+	// The patch must delete ONLY the dot-method lists. Rules keyed on an actual
+	// global receiver and the bare-global call lists are knowledge, not
+	// guesswork, and stay built-ins.
+	var keptBuiltins = highlight("console.log( \"x\" );\nsetTimeout( run, 100 );", "js");
+	assertEqual("console method is still a built-in",
+		keptBuiltins.html.includes("<span class=\"pl-c1\">log</span>"), true);
+	assertEqual("bare global call is still a built-in",
+		keptBuiltins.html.includes("<span class=\"pl-c1\">setTimeout</span>"), true);
+
+	// A script island in a CFML page uses the vendored grammars' own copy of
+	// the JavaScript rules, patched separately in src/grammars/cfml.js.
+	var chainInCfm = highlight(`<script type="text/javascript">\n${chainSource}\n</script>`, "cfm");
+	assertEqual("DOM-colliding method in an embedded js chain is a function name",
+		chainInCfm.html.includes("<span class=\"pl-en\">click</span>"), true);
+
 	// ---------------------------------------------------------------------------
 
 	// Every patch must have actually run on both files. A patch that silently
@@ -794,12 +843,12 @@ if (!UPDATE) {
 	// drops a patch from the list.
 	assertEqual("every vendored grammar is patched",
 		[...cfmlPatches.values()].map((names) => names.join(",")).join(" | "),
-		"bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits,function-metadata,comment-hyphens,bad-angle-bracket,doctype-capture | bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits,function-metadata,comment-hyphens,bad-angle-bracket,doctype-capture");
+		"bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits,function-metadata,comment-hyphens,bad-angle-bracket,doctype-capture,method-name-lists | bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits,function-metadata,comment-hyphens,bad-angle-bracket,doctype-capture,method-name-lists");
 
 	// Same pin for the stock-grammar patch layer (src/grammars/html.js).
 	assertEqual("every stock grammar is patched",
 		[...stockPatches.entries()].map(([scope, names]) => `${scope}:${names.join(",")}`).join(" | "),
-		"source.ts:template-property | text.html.basic:comment-hyphens,doctype-capture");
+		"source.js:method-name-lists | source.ts:template-property,method-name-lists | text.html.basic:comment-hyphens,doctype-capture");
 
 	// The vendored files are byte-identical to upstream, and this is what makes
 	// that a fact rather than an intention. Both patches are applied to the

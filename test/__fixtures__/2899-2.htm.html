@@ -67,12 +67,12 @@
 				<span class="pl-c">// turn, trigger our URL handler and update our local view-model.</span>
 				<span class="pl-smi">$scope</span>.<span class="pl-en">toggleUploader</span> <span class="pl-k">=</span> <span class="pl-k">function</span>() {
 
-					<span class="pl-k">var</span> newValue <span class="pl-k">=</span> ( <span class="pl-smi">$location</span>.<span class="pl-c1">search</span>().<span class="pl-smi">uploader</span> <span class="pl-k">===</span> <span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span> )
+					<span class="pl-k">var</span> newValue <span class="pl-k">=</span> ( <span class="pl-smi">$location</span>.<span class="pl-en">search</span>().<span class="pl-smi">uploader</span> <span class="pl-k">===</span> <span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span> )
 						<span class="pl-k">?</span> <span class="pl-c1">null</span>
 						<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span>
 					;
 
-					<span class="pl-smi">$location</span>.<span class="pl-c1">search</span>( <span class="pl-s"><span class="pl-pds">"</span>uploader<span class="pl-pds">"</span></span>, newValue );
+					<span class="pl-smi">$location</span>.<span class="pl-en">search</span>( <span class="pl-s"><span class="pl-pds">"</span>uploader<span class="pl-pds">"</span></span>, newValue );
 
 				};
 
@@ -86,7 +86,7 @@
 				<span class="pl-c">// desired uploader state.</span>
 				<span class="pl-k">function</span> <span class="pl-en">handleLocationChange</span>() {
 
-					<span class="pl-smi">$scope</span>.<span class="pl-smi">isShowingUploader</span> <span class="pl-k">=</span> ( <span class="pl-smi">$location</span>.<span class="pl-c1">search</span>().<span class="pl-smi">uploader</span> <span class="pl-k">===</span> <span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span> );
+					<span class="pl-smi">$scope</span>.<span class="pl-smi">isShowingUploader</span> <span class="pl-k">=</span> ( <span class="pl-smi">$location</span>.<span class="pl-en">search</span>().<span class="pl-smi">uploader</span> <span class="pl-k">===</span> <span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span> );
 
 				}
 
@@ -107,7 +107,7 @@
 				<span class="pl-c">// state in which the uploader should be closed. This will demonstrate</span>
 				<span class="pl-c">// the race condition between the uploader initialization and the view</span>
 				<span class="pl-c">// rendering and linking.</span>
-				<span class="pl-smi">$location</span>.<span class="pl-c1">search</span>( <span class="pl-s"><span class="pl-pds">"</span>uploader<span class="pl-pds">"</span></span>, <span class="pl-c1">null</span> );
+				<span class="pl-smi">$location</span>.<span class="pl-en">search</span>( <span class="pl-s"><span class="pl-pds">"</span>uploader<span class="pl-pds">"</span></span>, <span class="pl-c1">null</span> );
 
 			}
 		);

@@ -66,7 +66,7 @@
 		<span class="pl-c">// TEST: Here, I'm looking to sanity check the idea that an event handler that</span>
 		<span class="pl-c">// was bound OUTSIDE of the Angular Zone can be removed from WITHIN the Angular</span>
 		<span class="pl-c">// Zone.</span>
-		<span class="pl-c1">this</span>.<span class="pl-smi">element</span>.<span class="pl-c1">removeEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>mousedown<span class="pl-pds">"</span></span>, <span class="pl-c1">this</span>.<span class="pl-smi">handleMousedown</span>, <span class="pl-c1">false</span> );
+		<span class="pl-c1">this</span>.<span class="pl-smi">element</span>.<span class="pl-en">removeEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>mousedown<span class="pl-pds">"</span></span>, <span class="pl-c1">this</span>.<span class="pl-smi">handleMousedown</span>, <span class="pl-c1">false</span> );
 
 	}
 
@@ -83,7 +83,7 @@
 		<span class="pl-c1">this</span>.<span class="pl-smi">zone</span>.<span class="pl-en">runOutsideAngular</span>(
 			() <span class="pl-k">:</span> <span class="pl-c1">void</span> <span class="pl-k">=&gt;</span> {
 
-				<span class="pl-c1">this</span>.<span class="pl-smi">element</span>.<span class="pl-c1">addEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>mousedown<span class="pl-pds">"</span></span>, <span class="pl-c1">this</span>.<span class="pl-smi">handleMousedown</span>, <span class="pl-c1">false</span> );
+				<span class="pl-c1">this</span>.<span class="pl-smi">element</span>.<span class="pl-en">addEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>mousedown<span class="pl-pds">"</span></span>, <span class="pl-c1">this</span>.<span class="pl-smi">handleMousedown</span>, <span class="pl-c1">false</span> );
 
 			}
 		);
@@ -101,7 +101,7 @@
 		<span class="pl-c">// TEST: The current method is running OUTSIDE of the Angular Zone. As such, I'm</span>
 		<span class="pl-c">// testing to see if subsequent event bindings, configured OUTSIDE of the Angular</span>
 		<span class="pl-c">// Zone, will continue to operate OUTSIDE of the Angular Zone.</span>
-		<span class="pl-c1">this</span>.<span class="pl-smi">element</span>.<span class="pl-c1">addEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>mouseup<span class="pl-pds">"</span></span>, <span class="pl-c1">this</span>.<span class="pl-smi">handleMouseup</span>, <span class="pl-c1">false</span> );
+		<span class="pl-c1">this</span>.<span class="pl-smi">element</span>.<span class="pl-en">addEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>mouseup<span class="pl-pds">"</span></span>, <span class="pl-c1">this</span>.<span class="pl-smi">handleMouseup</span>, <span class="pl-c1">false</span> );
 
 	}
 
@@ -111,7 +111,7 @@
 
 		<span class="pl-c1">console</span>.<span class="pl-c1">log</span>( <span class="pl-s"><span class="pl-pds">"</span>mouseup<span class="pl-pds">"</span></span> );
 
-		<span class="pl-c1">this</span>.<span class="pl-smi">element</span>.<span class="pl-c1">removeEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>mouseup<span class="pl-pds">"</span></span>, <span class="pl-c1">this</span>.<span class="pl-smi">handleMouseup</span>, <span class="pl-c1">false</span> );
+		<span class="pl-c1">this</span>.<span class="pl-smi">element</span>.<span class="pl-en">removeEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>mouseup<span class="pl-pds">"</span></span>, <span class="pl-c1">this</span>.<span class="pl-smi">handleMouseup</span>, <span class="pl-c1">false</span> );
 		<span class="pl-c">// TEST: If the current event handler is running outside of the Angular Zone</span>
 		<span class="pl-c">// (something we're actively testing), this checks to see if a timer that is</span>
 		<span class="pl-c">// initiated here will also operate OUTSIDE of the Angular Zone.</span>

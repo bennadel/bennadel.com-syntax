@@ -101,12 +101,12 @@
 
 			<span class="pl-k">if</span> ( modal ) {
 
-				<span class="pl-smi">modal</span>.<span class="pl-c1">remove</span>();
+				<span class="pl-smi">modal</span>.<span class="pl-en">remove</span>();
 				modal <span class="pl-k">=</span> <span class="pl-c1">null</span>;
 
 			} <span class="pl-k">else</span> {
 
-				modal <span class="pl-k">=</span> <span class="pl-en">$</span>( <span class="pl-smi">template</span>.<span class="pl-en">prop</span>( <span class="pl-s"><span class="pl-pds">"</span>content<span class="pl-pds">"</span></span> ).<span class="pl-smi">firstElementChild</span>.<span class="pl-c1">cloneNode</span>( <span class="pl-c1">true</span> ) )
+				modal <span class="pl-k">=</span> <span class="pl-en">$</span>( <span class="pl-smi">template</span>.<span class="pl-en">prop</span>( <span class="pl-s"><span class="pl-pds">"</span>content<span class="pl-pds">"</span></span> ).<span class="pl-smi">firstElementChild</span>.<span class="pl-en">cloneNode</span>( <span class="pl-c1">true</span> ) )
 					.<span class="pl-en">appendTo</span>( <span class="pl-c1">document</span>.<span class="pl-c1">body</span> )
 				;
 

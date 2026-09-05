@@ -72,7 +72,7 @@
 		<span class="pl-smi">app</span>.<span class="pl-en">config</span>(
 			<span class="pl-k">function</span> <span class="pl-en">simulateHttpLatency</span>( <span class="pl-smi">$httpProvider</span> ) {
 
-				<span class="pl-smi">$httpProvider</span>.<span class="pl-smi">interceptors</span>.<span class="pl-c1">push</span>( slowDownRequest );
+				<span class="pl-smi">$httpProvider</span>.<span class="pl-smi">interceptors</span>.<span class="pl-en">push</span>( slowDownRequest );
 
 
 				<span class="pl-c">// I add a delay to post-HTTP portion of the promise-chain.</span>
@@ -84,7 +84,7 @@
 					<span class="pl-k">return</span>({
 						<span class="pl-en">response</span><span class="pl-k">:</span> <span class="pl-k">function</span>( <span class="pl-smi">response</span> ) {
 
-							<span class="pl-k">var</span> latency <span class="pl-k">=</span> <span class="pl-smi">$q</span>.<span class="pl-c1">defer</span>();
+							<span class="pl-k">var</span> latency <span class="pl-k">=</span> <span class="pl-smi">$q</span>.<span class="pl-en">defer</span>();
 
 							<span class="pl-en">$timeout</span>(
 								<span class="pl-k">function</span> <span class="pl-en">resolver</span>() {
@@ -132,7 +132,7 @@
 				<span class="pl-c">// I bind the JavaScript events to the local scope.</span>
 				<span class="pl-k">function</span> <span class="pl-en">link</span>( <span class="pl-smi">scope</span>, <span class="pl-smi">element</span>, <span class="pl-smi">attributes</span> ) {
 
-					<span class="pl-smi">element</span>.<span class="pl-c1">text</span>( ( <span class="pl-k">new</span> <span class="pl-en">Date</span>() ).<span class="pl-en">toTimeString</span>().<span class="pl-c1">split</span>( <span class="pl-s"><span class="pl-pds">"</span> <span class="pl-pds">"</span></span> ).<span class="pl-c1">shift</span>() );
+					<span class="pl-smi">element</span>.<span class="pl-en">text</span>( ( <span class="pl-k">new</span> <span class="pl-en">Date</span>() ).<span class="pl-en">toTimeString</span>().<span class="pl-en">split</span>( <span class="pl-s"><span class="pl-pds">"</span> <span class="pl-pds">"</span></span> ).<span class="pl-en">shift</span>() );
 
 				}
 

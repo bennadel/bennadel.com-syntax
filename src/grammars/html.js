@@ -21,7 +21,8 @@
 export var applied = new Map();
 
 var PATCHES = new Map([
-	["source.ts", [patchTemplateProperty]],
+	["source.js", [patchMethodNameLists]],
+	["source.ts", [patchTemplateProperty, patchMethodNameLists]],
 	["text.html.basic", [patchCommentHyphens, patchDoctypeCapture]]
 ]);
 
@@ -181,6 +182,153 @@ function patchDoctypeCapture(grammar) {
 	}
 
 	return "doctype-capture";
+}
+
+/**
+* Chained method calls render in different colors.
+*
+* Both JavaScript grammars descend from the same 2004-era javascript.tmbundle
+* name lists: a method name after a dot is checked against hardcoded rosters
+* of DOM and standard-library names, so a jQuery chain alternates colors by
+* accident of naming --
+*
+*   menuRoot
+*       .attr( "href", "..." )   <-- pl-en: "attr" is in no list
+*       .click(                  <-- pl-c1: "click" collides with DOM click()
+*
+* -- even though both names resolve on the same object. The lists are a guess
+* at types the grammar cannot see, and the guess is keyed on nothing but the
+* name. The patch deletes them so every dot-method name falls through to the
+* entity.name.function fallback: one scope, one color (pl-en), matching how
+* the from-scratch grammars (Sublime's, tree-sitter's) scope method calls by
+* position instead of by name. This DIVERGES from GitHub, which keeps the
+* alternating colors -- the divergence is the point.
+*
+* Deliberately KEPT, in both grammars: rules keyed on an actual global
+* receiver (`console.log`, `Math.round`, `Promise.all`), which are knowledge
+* rather than guesswork, and the bare-global call lists (`setTimeout(`,
+* `parseInt(`), which are not dot methods.
+*
+* In source.js the dot-PROPERTY name lists steal methods too: the DOM
+* property roster includes `text`, `link`, `top`, so jQuery's `.text(` kept
+* rendering as a built-in after the method lists were gone. Those rules stay
+* -- `el.href` as a recognized property is fine -- but they get the
+* not-followed-by-a-paren guard that Microsoft's equivalent rules already
+* carry, so a CALLED name always falls through to method_calls.
+*/
+function patchMethodNameLists(grammar) {
+	// Exact-name node counter, used to pin the post-patch state: the deleted
+	// scopes must appear NOWHERE else, or a starry-night upgrade could add a
+	// second name-list rule that survives this patch and puts the alternating
+	// colors back in some context nobody re-tested.
+	function countScope(node, scope) {
+		if (Array.isArray(node)) {
+			return node.reduce((sum, item) => sum + countScope(item, scope), 0);
+		}
+		if (node && typeof node === "object") {
+			var self = (node.name === scope) ? 1 : 0;
+			return Object.values(node).reduce((sum, value) => sum + countScope(value, scope), self);
+		}
+		return 0;
+	}
+
+	if (grammar.scopeName === "source.js") {
+		// The lists live inside the method_calls rule's name capture, tried in
+		// order ahead of the entity.name.function fallback. Pin the whole
+		// roster: anything reordered or renamed means the rule was reworked.
+		var call = grammar.repository.method_calls;
+		var EXPECTED = [
+			"support.function.event-handler.js",
+			"support.function.js",
+			"support.function.dom.js",
+			"entity.name.function.js",
+			"invalid.illegal.identifier.js"
+		];
+
+		if (
+			!call
+			|| call.patterns.length !== 1
+			|| call.patterns[0].begin !== "(\\.)\\s*([\\w$]+)\\s*(?=\\()"
+			|| JSON.stringify(call.patterns[0].beginCaptures[2].patterns.map((p) => p.name)) !== JSON.stringify(EXPECTED)
+		) {
+			throw new Error(`${grammar.scopeName}: method_calls no longer has the expected name-list shape; re-derive patchMethodNameLists`);
+		}
+
+		// Keep only the fallback and the illegal-identifier catch; the three
+		// support lists in front of them are the deletion.
+		call.patterns[0].beginCaptures[2].patterns = call.patterns[0].beginCaptures[2].patterns.slice(3);
+
+		// support.function.js legitimately survives ONCE, in function_calls'
+		// bare-global list; the other two must be gone entirely.
+		if (
+			countScope(grammar, "support.function.event-handler.js") !== 0
+			|| countScope(grammar, "support.function.dom.js") !== 0
+			|| countScope(grammar, "support.function.js") !== 1
+		) {
+			throw new Error(`${grammar.scopeName}: a dot-method name list now appears outside method_calls; extend patchMethodNameLists to cover it`);
+		}
+
+		// The dot-property rules live in the grammar's top-level patterns and
+		// must not claim a name a paren follows. Each property scope has exactly
+		// one carrier, or the rules were reworked.
+		for (var scope of ["support.variable.property.js", "support.variable.property.dom.js"]) {
+			var properties = grammar.patterns.filter((p) => p.captures && Object.values(p.captures).some((c) => c.name === scope));
+
+			if (
+				properties.length !== 1
+				|| !properties[0].match.startsWith("(?x) (\\.)")
+				|| !properties[0].match.endsWith("\\b")
+			) {
+				throw new Error(`${grammar.scopeName}: the ${scope} rule no longer has the expected dot-property shape; re-derive patchMethodNameLists`);
+			}
+
+			properties[0].match += "(?!\\s*\\()";
+		}
+
+		return "method-name-lists";
+	}
+
+	if (grammar.scopeName === "source.ts") {
+		// Microsoft folded the same rosters into ONE support-objects rule: a
+		// single match keyed on a leading `.` or `?.` whose captures assign the
+		// four list scopes. Deleting the whole rule drops the name to the
+		// generic function-call rule -> entity.name.function.ts.
+		var rules = grammar.repository["support-objects"].patterns;
+		var EXPECTED_TS = [
+			"punctuation.accessor.ts",
+			"punctuation.accessor.optional.ts",
+			"support.function.event-handler.ts",
+			"support.function.ts",
+			"support.function.dom.ts",
+			"support.function.promise.ts"
+		];
+		var matches = rules.filter((p) => p.captures && Object.values(p.captures).some((c) => c.name === "support.function.dom.ts"));
+
+		if (
+			matches.length !== 1
+			|| JSON.stringify(Object.values(matches[0].captures).map((c) => c.name)) !== JSON.stringify(EXPECTED_TS)
+			|| !matches[0].match.startsWith("(?x) (?:(\\.)")
+		) {
+			throw new Error(`${grammar.scopeName}: support-objects no longer has the expected dot-method rule shape; re-derive patchMethodNameLists`);
+		}
+
+		rules.splice(rules.indexOf(matches[0]), 1);
+
+		// support.function.ts legitimately survives ONCE, in the bare-global
+		// list (parseInt, setTimeout); the other three must be gone entirely.
+		if (
+			countScope(grammar, "support.function.event-handler.ts") !== 0
+			|| countScope(grammar, "support.function.dom.ts") !== 0
+			|| countScope(grammar, "support.function.promise.ts") !== 0
+			|| countScope(grammar, "support.function.ts") !== 1
+		) {
+			throw new Error(`${grammar.scopeName}: a dot-method name list now appears outside support-objects; extend patchMethodNameLists to cover it`);
+		}
+
+		return "method-name-lists";
+	}
+
+	throw new Error(`${grammar.scopeName}: patchMethodNameLists has no branch for this grammar; re-derive it before listing it in PATCHES`);
 }
 
 /**

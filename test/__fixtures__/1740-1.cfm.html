@@ -130,13 +130,13 @@
 			<span class="pl-c">// Hook up menu root click event.</span>
 			<span class="pl-smi">menuRoot</span>
 				.<span class="pl-en">attr</span>( <span class="pl-s"><span class="pl-pds">"</span>href<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>javascript:void( 0 )<span class="pl-pds">"</span></span> )
-				.<span class="pl-c1">click</span>(
+				.<span class="pl-en">click</span>(
 					<span class="pl-k">function</span>(){
 						<span class="pl-c">// Toggle the menu display.</span>
-						<span class="pl-smi">menu</span>.<span class="pl-c1">toggle</span>();
+						<span class="pl-smi">menu</span>.<span class="pl-en">toggle</span>();
 
 						<span class="pl-c">// Blur the link to remove focus.</span>
-						<span class="pl-smi">menuRoot</span>.<span class="pl-c1">blur</span>();
+						<span class="pl-smi">menuRoot</span>.<span class="pl-en">blur</span>();
 
 						<span class="pl-c">// Cancel event (and its bubbling).</span>
 						<span class="pl-k">return</span>( <span class="pl-c1">false</span> );
@@ -147,12 +147,12 @@
 			<span class="pl-c">// Hook up a click handler on the document so that</span>
 			<span class="pl-c">// we can hide the menu if it is not the target of</span>
 			<span class="pl-c">// the mouse click.</span>
-			<span class="pl-en">$</span>( <span class="pl-c1">document</span> ).<span class="pl-c1">click</span>(
+			<span class="pl-en">$</span>( <span class="pl-c1">document</span> ).<span class="pl-en">click</span>(
 				<span class="pl-k">function</span>( <span class="pl-v">event</span> ){
 					<span class="pl-c">// Check to see if this came from the menu.</span>
 					<span class="pl-k">if</span> (
 						<span class="pl-smi">menu</span>.<span class="pl-en">is</span>( <span class="pl-s"><span class="pl-pds">"</span>:visible<span class="pl-pds">"</span></span> ) <span class="pl-k">&amp;&amp;</span>
-						<span class="pl-k">!</span><span class="pl-en">$</span>( <span class="pl-c1">event</span>.<span class="pl-c1">target</span> ).<span class="pl-c1">closest</span>( <span class="pl-s"><span class="pl-pds">"</span>#menu<span class="pl-pds">"</span></span> ).<span class="pl-en">size</span>()
+						<span class="pl-k">!</span><span class="pl-en">$</span>( <span class="pl-c1">event</span>.<span class="pl-c1">target</span> ).<span class="pl-en">closest</span>( <span class="pl-s"><span class="pl-pds">"</span>#menu<span class="pl-pds">"</span></span> ).<span class="pl-en">size</span>()
 						){
 
 						<span class="pl-c">// The click came outside the menu, so</span>

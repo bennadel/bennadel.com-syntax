@@ -79,7 +79,7 @@
 
 		<span class="pl-k">var</span> <span class="pl-smi">eventPattern</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-sr"><span class="pl-pds">/</span><span class="pl-k">^</span><span class="pl-c1">[a-z]</span><span class="pl-k">+</span>(?:<span class="pl-cce">\.</span>(?:stop<span class="pl-k">|</span>prevent<span class="pl-k">|</span>capture<span class="pl-k">|</span>self<span class="pl-k">|</span>once<span class="pl-k">|</span>passive))<span class="pl-k">+$</span><span class="pl-pds">/</span></span></span>;
 
-		<span class="pl-k">return</span>( <span class="pl-smi">eventPattern</span>.<span class="pl-c1">test</span>( <span class="pl-smi">eventName</span> ) );
+		<span class="pl-k">return</span>( <span class="pl-smi">eventPattern</span>.<span class="pl-en">test</span>( <span class="pl-smi">eventName</span> ) );
 
 	}
 
@@ -107,8 +107,8 @@
 				}
 			};
 
-			<span class="pl-c1">window</span>.<span class="pl-c1">addEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>test<span class="pl-pds">"</span></span>, <span class="pl-smi">handler</span>, <span class="pl-smi">options</span> );
-			<span class="pl-c1">window</span>.<span class="pl-c1">removeEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>test<span class="pl-pds">"</span></span>, <span class="pl-smi">handler</span>, <span class="pl-smi">options</span> );
+			<span class="pl-c1">window</span>.<span class="pl-en">addEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>test<span class="pl-pds">"</span></span>, <span class="pl-smi">handler</span>, <span class="pl-smi">options</span> );
+			<span class="pl-c1">window</span>.<span class="pl-en">removeEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>test<span class="pl-pds">"</span></span>, <span class="pl-smi">handler</span>, <span class="pl-smi">options</span> );
 
 		} <span class="pl-k">catch</span>( <span class="pl-smi">error</span> ) {
 
@@ -146,10 +146,10 @@
 	<span class="pl-c">// used to bind the underlying event handler.</span>
 	<span class="pl-k">private</span> <span class="pl-en">parseHigherOrderEventName</span>( <span class="pl-v">eventName</span><span class="pl-k">:</span> <span class="pl-c1">string</span> ) <span class="pl-k">:</span> <span class="pl-en">EventConfig</span> {
 
-		<span class="pl-k">var</span> <span class="pl-smi">parts</span> <span class="pl-k">=</span> <span class="pl-smi">eventName</span>.<span class="pl-c1">split</span>( <span class="pl-s"><span class="pl-pds">"</span>.<span class="pl-pds">"</span></span> );
+		<span class="pl-k">var</span> <span class="pl-smi">parts</span> <span class="pl-k">=</span> <span class="pl-smi">eventName</span>.<span class="pl-en">split</span>( <span class="pl-s"><span class="pl-pds">"</span>.<span class="pl-pds">"</span></span> );
 
 		<span class="pl-k">var</span> <span class="pl-smi">config</span> <span class="pl-k">=</span> {
-			name: &lt;<span class="pl-c1">string</span>&gt;<span class="pl-smi">parts</span>.<span class="pl-c1">shift</span>(), <span class="pl-c">// Telling TypeScript not to worry.</span>
+			name: &lt;<span class="pl-c1">string</span>&gt;<span class="pl-smi">parts</span>.<span class="pl-en">shift</span>(), <span class="pl-c">// Telling TypeScript not to worry.</span>
 			isStop: <span class="pl-c1">false</span>,
 			isPrevent: <span class="pl-c1">false</span>,
 			isCapture: <span class="pl-c1">false</span>,
@@ -163,7 +163,7 @@
 		<span class="pl-c">// independent flag to be consumed when configuring the subsequent event-handler.</span>
 		<span class="pl-k">while</span> ( <span class="pl-smi">parts</span>.<span class="pl-c1">length</span> ) {
 
-			<span class="pl-k">switch</span> ( <span class="pl-smi">parts</span>.<span class="pl-c1">shift</span>() ) {
+			<span class="pl-k">switch</span> ( <span class="pl-smi">parts</span>.<span class="pl-en">shift</span>() ) {
 				<span class="pl-k">case</span> <span class="pl-s"><span class="pl-pds">"</span>stop<span class="pl-pds">"</span></span>:
 					<span class="pl-smi">config</span>.<span class="pl-smi">isStop</span> <span class="pl-k">=</span> <span class="pl-c1">true</span>;
 				<span class="pl-k">break</span>;
@@ -225,13 +225,13 @@
 
 		<span class="pl-k">function</span> <span class="pl-en">addProxyFunction</span>() {
 
-			<span class="pl-smi">target</span>.<span class="pl-c1">addEventListener</span>( <span class="pl-smi">eventConfig</span>.<span class="pl-c1">name</span>, <span class="pl-smi">proxyFunction</span>, <span class="pl-smi">options</span> );
+			<span class="pl-smi">target</span>.<span class="pl-en">addEventListener</span>( <span class="pl-smi">eventConfig</span>.<span class="pl-c1">name</span>, <span class="pl-smi">proxyFunction</span>, <span class="pl-smi">options</span> );
 
 		}
 
 		<span class="pl-k">function</span> <span class="pl-en">removeProxyFunction</span>() {
 
-			<span class="pl-smi">target</span>.<span class="pl-c1">removeEventListener</span>( <span class="pl-smi">eventConfig</span>.<span class="pl-c1">name</span>, <span class="pl-smi">proxyFunction</span>, <span class="pl-smi">options</span> );
+			<span class="pl-smi">target</span>.<span class="pl-en">removeEventListener</span>( <span class="pl-smi">eventConfig</span>.<span class="pl-c1">name</span>, <span class="pl-smi">proxyFunction</span>, <span class="pl-smi">options</span> );
 
 		}
 
@@ -257,13 +257,13 @@
 
 			<span class="pl-k">if</span> ( <span class="pl-smi">eventConfig</span>.<span class="pl-smi">isStop</span> ) {
 
-				<span class="pl-c1">event</span>.<span class="pl-c1">stopPropagation</span>();
+				<span class="pl-c1">event</span>.<span class="pl-en">stopPropagation</span>();
 
 			}
 
 			<span class="pl-k">if</span> ( <span class="pl-smi">eventConfig</span>.<span class="pl-smi">isPrevent</span> ) {
 
-				<span class="pl-c1">event</span>.<span class="pl-c1">preventDefault</span>();
+				<span class="pl-c1">event</span>.<span class="pl-en">preventDefault</span>();
 
 			}
 

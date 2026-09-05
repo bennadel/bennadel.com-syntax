@@ -128,7 +128,7 @@
 			&lt;<span class="pl-ent">script</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>text/javascript<span class="pl-pds">"</span></span>&gt;
 
 				<span class="pl-k">var</span> <span class="pl-smi">errorResponse</span> <span class="pl-k">=</span> <span class="pl-c1">JSON</span>.<span class="pl-c1">parse</span>( <span class="pl-s"><span class="pl-pds">"</span>#<span class="pl-c1">encodeForJavaScript</span>( <span class="pl-c1">serializeJson</span>( <span class="pl-smi">errorResponse</span> ) )#<span class="pl-pds">"</span></span> );
-				<span class="pl-k">var</span> <span class="pl-smi">formControls</span> <span class="pl-k">=</span> <span class="pl-c1">document</span>.<span class="pl-c1">querySelectorAll</span>( <span class="pl-s"><span class="pl-pds">"</span>[data-error-types]<span class="pl-pds">"</span></span> );
+				<span class="pl-k">var</span> <span class="pl-smi">formControls</span> <span class="pl-k">=</span> <span class="pl-c1">document</span>.<span class="pl-en">querySelectorAll</span>( <span class="pl-s"><span class="pl-pds">"</span>[data-error-types]<span class="pl-pds">"</span></span> );
 
 				<span class="pl-k">for</span> ( <span class="pl-k">var</span> <span class="pl-smi">control</span> <span class="pl-k">of</span> <span class="pl-smi">formControls</span> ) {
 
@@ -138,7 +138,7 @@
 
 						<span class="pl-k">if</span> ( <span class="pl-smi">errorResponse</span>.<span class="pl-c1">type</span>.<span class="pl-en">startsWith</span>( <span class="pl-smi">prefix</span> ) ) {
 
-							<span class="pl-smi">control</span>.<span class="pl-smi">classList</span>.<span class="pl-c1">add</span>( <span class="pl-s"><span class="pl-pds">"</span>is-error<span class="pl-pds">"</span></span> );
+							<span class="pl-smi">control</span>.<span class="pl-smi">classList</span>.<span class="pl-en">add</span>( <span class="pl-s"><span class="pl-pds">"</span>is-error<span class="pl-pds">"</span></span> );
 							<span class="pl-k">break</span>;
 
 						}
@@ -153,7 +153,7 @@
 <span class="pl-c">				*/</span>
 				<span class="pl-k">function</span> <span class="pl-en">extractPrefixes</span>( <span class="pl-v">dataAttribute</span> ) {
 
-					<span class="pl-k">return</span> <span class="pl-smi">dataAttribute</span>.<span class="pl-c1">split</span>(<span class="pl-s"><span class="pl-sr"> <span class="pl-pds">/</span><span class="pl-c1">[,\s]</span><span class="pl-k">+</span><span class="pl-pds">/</span><span class="pl-k">g</span></span></span> )
+					<span class="pl-k">return</span> <span class="pl-smi">dataAttribute</span>.<span class="pl-en">split</span>(<span class="pl-s"><span class="pl-sr"> <span class="pl-pds">/</span><span class="pl-c1">[,\s]</span><span class="pl-k">+</span><span class="pl-pds">/</span><span class="pl-k">g</span></span></span> )
 						.<span class="pl-en">filter</span>( <span class="pl-v">match</span> <span class="pl-k">=&gt;</span> <span class="pl-smi">match</span> )
 					;
 

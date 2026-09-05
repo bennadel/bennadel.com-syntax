@@ -153,11 +153,11 @@
 					initials: <span class="pl-smi">membership</span>.<span class="pl-smi">userInitials</span>,
 					memberships: []
 				};
-				<span class="pl-smi">users</span>.<span class="pl-c1">push</span>( <span class="pl-smi">user</span> );
+				<span class="pl-smi">users</span>.<span class="pl-en">push</span>( <span class="pl-smi">user</span> );
 
 			}
 
-			<span class="pl-smi">user</span>.<span class="pl-smi">memberships</span>.<span class="pl-c1">push</span>({
+			<span class="pl-smi">user</span>.<span class="pl-smi">memberships</span>.<span class="pl-en">push</span>({
 				startedAt: <span class="pl-smi">membership</span>.<span class="pl-smi">startedAt</span>,
 				endedAt: <span class="pl-smi">membership</span>.<span class="pl-smi">endedAt</span>
 			});
@@ -167,7 +167,7 @@
 		<span class="pl-c">// Our raw data was sorted by User (so that we could more easily group</span>
 		<span class="pl-c">// memberships next to each other). However, now that we've parsed the raw data,</span>
 		<span class="pl-c">// let's re-sorted with the oldest memberships first.</span>
-		<span class="pl-smi">users</span>.<span class="pl-c1">sort</span>(
+		<span class="pl-smi">users</span>.<span class="pl-en">sort</span>(
 			( <span class="pl-v">a</span>, <span class="pl-v">b</span> ) <span class="pl-k">=&gt;</span> {
 
 				<span class="pl-c">// NOTE: We know that ever use has at least one membership. As such, we</span>

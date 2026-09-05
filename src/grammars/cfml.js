@@ -80,7 +80,7 @@ export var CFML_SCRIPT = "embedding.cfml.cfs";
 */
 export var applied = new Map();
 
-var PATCHES = [patchBareInclude, patchSafeNavigation, patchTagIsland, patchBadAmpersand, patchCustomTagDigits, patchFunctionMetadata, patchCommentHyphens, patchBadAngleBracket, patchDoctypeCapture];
+var PATCHES = [patchBareInclude, patchSafeNavigation, patchTagIsland, patchBadAmpersand, patchCustomTagDigits, patchFunctionMetadata, patchCommentHyphens, patchBadAngleBracket, patchDoctypeCapture, patchMethodNameLists];
 
 export async function loadCfmlGrammars() {
 	return Promise.all([
@@ -734,4 +734,85 @@ function patchDoctypeCapture(grammar, file) {
 	}
 
 	return "doctype-capture";
+}
+
+/**
+* Chained method calls in a script island render in different colors.
+*
+* The vendored grammars carry their own copy of Microsoft's JavaScript rules
+* for <script> bodies, name lists included: a method name after a dot is
+* checked against hardcoded rosters of DOM and standard-library names, so a
+* jQuery chain alternates colors by accident of naming -- `.attr(` is a plain
+* function while `.click(` collides with DOM click() and renders as a
+* built-in, even though both resolve on the same object. The twin of
+* patchMethodNameLists in html.js, which carries the full rationale; deleting
+* the rule here drops every dot-method name to the generic function-call rule
+* -> entity.name.function. This DIVERGES from GitHub, which keeps the
+* alternating colors.
+*
+* Unlike the stock source.js patched in html.js, the vendored copy's
+* dot-PROPERTY rosters already carry Microsoft's not-followed-by-a-paren
+* guard, so a called name they list (`.text(`) cannot be stolen and no
+* property rule needs touching.
+*/
+function patchMethodNameLists(grammar, file) {
+	// Both script-island contexts carry their own copy of the rule: the general
+	// one, and the twin used inside <cfoutput> blocks.
+	var ENTRIES = [
+		"source-js-support-objects",
+		"source-js-cfoutput-support-objects"
+	];
+
+	var EXPECTED = [
+		"punctuation.accessor.js",
+		"support.function.event-handler.js",
+		"support.function.js",
+		"support.function.dom.js"
+	];
+
+	for (var entry of ENTRIES) {
+		// Unguarded for the same reason as the patches above: a rename throws a
+		// TypeError that names the expression.
+		var patterns = grammar.repository[entry].patterns;
+
+		var matches = patterns.filter((p) => p.captures && Object.values(p.captures).some((c) => c.name === "support.function.dom.js"));
+
+		// Anchor check on the exact roster shape. Anything else means the rule
+		// was reworked -- re-derive rather than deleting a stranger.
+		if (
+			matches.length !== 1
+			|| JSON.stringify(Object.values(matches[0].captures).map((c) => c.name)) !== JSON.stringify(EXPECTED)
+			|| !matches[0].match.startsWith("(?x) (\\.)")
+		) {
+			throw new Error(`${file}: ${entry} no longer has the expected dot-method rule shape; re-derive patchMethodNameLists`);
+		}
+
+		patterns.splice(patterns.indexOf(matches[0]), 1);
+	}
+
+	// The deleted scopes must be gone entirely, except support.function.js,
+	// which legitimately survives ONCE per entry in the bare-global call list
+	// (parseInt, setTimeout -- not dot methods). A third carrier appearing in
+	// an upstream update would survive this patch and put the alternating
+	// colors back in some context nobody re-tested -- fail loudly instead.
+	function count(node, scope) {
+		if (Array.isArray(node)) {
+			return node.reduce((sum, item) => sum + count(item, scope), 0);
+		}
+		if (node && typeof node === "object") {
+			var self = (node.name === scope) ? 1 : 0;
+			return Object.values(node).reduce((sum, value) => sum + count(value, scope), self);
+		}
+		return 0;
+	}
+
+	if (
+		count(grammar, "support.function.event-handler.js") !== 0
+		|| count(grammar, "support.function.dom.js") !== 0
+		|| count(grammar, "support.function.js") !== ENTRIES.length
+	) {
+		throw new Error(`${file}: a dot-method name list now appears outside the two support-objects entries; extend patchMethodNameLists to cover it`);
+	}
+
+	return "method-name-lists";
 }

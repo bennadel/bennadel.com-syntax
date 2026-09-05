@@ -30,7 +30,7 @@
 
 		<span class="pl-k">for</span> ( <span class="pl-k">var</span> <span class="pl-smi">i</span> <span class="pl-k">=</span> <span class="pl-c1">0</span> ; <span class="pl-smi">i</span> <span class="pl-k">&lt;</span> <span class="pl-c1">10000</span> ; <span class="pl-smi">i</span><span class="pl-k">++</span> ) {
 
-			<span class="pl-smi">asciiValues</span>.<span class="pl-c1">push</span>( <span class="pl-smi">i</span> );
+			<span class="pl-smi">asciiValues</span>.<span class="pl-en">push</span>( <span class="pl-smi">i</span> );
 
 		}
 
@@ -43,7 +43,7 @@
 			<span class="pl-c">// Remove the charCode from the error log.</span>
 			<span class="pl-smi">errorLog</span>.<span class="pl-en">val</span>(
 				<span class="pl-smi">errorLog</span>.<span class="pl-en">val</span>()
-					.<span class="pl-c1">replace</span>( <span class="pl-k">new</span> <span class="pl-en">RegExp</span>( <span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\\</span>b<span class="pl-pds">"</span></span> <span class="pl-k">+</span> <span class="pl-smi">charCode</span> <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\\</span>b<span class="pl-cce">\\</span>s*<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">""</span></span> ), <span class="pl-s"><span class="pl-pds">""</span></span> )
+					.<span class="pl-en">replace</span>( <span class="pl-k">new</span> <span class="pl-en">RegExp</span>( <span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\\</span>b<span class="pl-pds">"</span></span> <span class="pl-k">+</span> <span class="pl-smi">charCode</span> <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\\</span>b<span class="pl-cce">\\</span>s*<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">""</span></span> ), <span class="pl-s"><span class="pl-pds">""</span></span> )
 			);
 
 		}
@@ -62,7 +62,7 @@
 			}
 
 			<span class="pl-c">// Get the next value off the array (pop from front).</span>
-			<span class="pl-k">var</span> <span class="pl-smi">charCode</span> <span class="pl-k">=</span> <span class="pl-smi">asciiValues</span>.<span class="pl-c1">shift</span>();
+			<span class="pl-k">var</span> <span class="pl-smi">charCode</span> <span class="pl-k">=</span> <span class="pl-smi">asciiValues</span>.<span class="pl-en">shift</span>();
 
 			<span class="pl-c">// Assume that this charCode will fail and append it to</span>
 			<span class="pl-c">// the error log. This way, the charCode will only be</span>
@@ -78,10 +78,10 @@
 
 			<span class="pl-c">// When the IFrame has loaded, we can assume this single</span>
 			<span class="pl-c">// test is complete.</span>
-			<span class="pl-smi">frame</span>.<span class="pl-c1">load</span>(
+			<span class="pl-smi">frame</span>.<span class="pl-en">load</span>(
 				<span class="pl-k">function</span>( <span class="pl-v">event</span> ) {
 
-					<span class="pl-smi">frame</span>.<span class="pl-c1">remove</span>();
+					<span class="pl-smi">frame</span>.<span class="pl-en">remove</span>();
 
 					<span class="pl-en">testNextValue</span>();
 
@@ -89,7 +89,7 @@
 			);
 
 			<span class="pl-c">// Append to the body so the IFrame loads.</span>
-			<span class="pl-smi">body</span>.<span class="pl-c1">append</span>( <span class="pl-smi">frame</span> );
+			<span class="pl-smi">body</span>.<span class="pl-en">append</span>( <span class="pl-smi">frame</span> );
 
 		})(); <span class="pl-c">// NOTE: Self-invokcation to kick-it-off!</span>
 
