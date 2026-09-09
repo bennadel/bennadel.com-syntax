@@ -90,8 +90,8 @@
 					<span class="pl-c">// the user mouses-into a tooltip element, a new instance of the</span>
 					<span class="pl-c">// tooltip element is created (and the previous one destroyed).</span>
 					<span class="pl-k">var</span> instance <span class="pl-k">=</span> {
-						scope<span class="pl-k">:</span> <span class="pl-c1">null</span>,
-						element<span class="pl-k">:</span> <span class="pl-c1">null</span>
+						<span class="pl-c1">scope</span><span class="pl-k">:</span> <span class="pl-c1">null</span>,
+						<span class="pl-c1">element</span><span class="pl-k">:</span> <span class="pl-c1">null</span>
 					};
 
 					<span class="pl-c">// I hold the transclusion functions for the tooltip element. In</span>
@@ -99,14 +99,14 @@
 					<span class="pl-c">// be exposed using ngTemplate (and the tooltip-template attribute).</span>
 					<span class="pl-c">// The $compile()'d functions will be cached here.</span>
 					<span class="pl-k">var</span> transcluders <span class="pl-k">=</span> {
-						internal<span class="pl-k">:</span> <span class="pl-en">$compile</span>( <span class="pl-s"><span class="pl-pds">"</span>&lt;div class='m-tooltip'&gt;{{ content }}&lt;/div&gt;<span class="pl-pds">"</span></span> )
+						<span class="pl-c1">internal</span><span class="pl-k">:</span> <span class="pl-en">$compile</span>( <span class="pl-s"><span class="pl-pds">"</span>&lt;div class='m-tooltip'&gt;{{ content }}&lt;/div&gt;<span class="pl-pds">"</span></span> )
 					}
 
 					<span class="pl-c">// Return the public API (used by the link function).</span>
 					<span class="pl-k">return</span>({
-						hide<span class="pl-k">:</span> hide,
-						position<span class="pl-k">:</span> position,
-						show<span class="pl-k">:</span> show
+						<span class="pl-c1">hide</span><span class="pl-k">:</span> hide,
+						<span class="pl-c1">position</span><span class="pl-k">:</span> position,
+						<span class="pl-c1">show</span><span class="pl-k">:</span> show
 					});
 
 
@@ -131,8 +131,8 @@
 					<span class="pl-k">function</span> <span class="pl-en">position</span>( <span class="pl-smi">x</span>, <span class="pl-smi">y</span> ) {
 
 						<span class="pl-smi">instance</span>.<span class="pl-smi">element</span>.<span class="pl-en">css</span>({
-							left<span class="pl-k">:</span> ( x <span class="pl-k">+</span> <span class="pl-c1">25</span> <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span>px<span class="pl-pds">"</span></span> ),
-							top<span class="pl-k">:</span> ( y <span class="pl-k">-</span> <span class="pl-c1">10</span> <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span>px<span class="pl-pds">"</span></span> )
+							<span class="pl-c1">left</span><span class="pl-k">:</span> ( x <span class="pl-k">+</span> <span class="pl-c1">25</span> <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span>px<span class="pl-pds">"</span></span> ),
+							<span class="pl-c1">top</span><span class="pl-k">:</span> ( y <span class="pl-k">-</span> <span class="pl-c1">10</span> <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span>px<span class="pl-pds">"</span></span> )
 						});
 
 					}
@@ -233,7 +233,7 @@
 
 				<span class="pl-c">// Return the directive configuration.</span>
 				<span class="pl-k">return</span>({
-					link<span class="pl-k">:</span> link
+					<span class="pl-c1">link</span><span class="pl-k">:</span> link
 				});
 
 

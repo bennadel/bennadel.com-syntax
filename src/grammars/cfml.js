@@ -80,7 +80,7 @@ export var CFML_SCRIPT = "embedding.cfml.cfs";
 */
 export var applied = new Map();
 
-var PATCHES = [patchBareInclude, patchSafeNavigation, patchTagIsland, patchBadAmpersand, patchCustomTagDigits, patchFunctionMetadata, patchCommentHyphens, patchBadAngleBracket, patchDoctypeCapture, patchMethodNameLists];
+var PATCHES = [patchBareInclude, patchSafeNavigation, patchTagIsland, patchBadAmpersand, patchCustomTagDigits, patchFunctionMetadata, patchCommentHyphens, patchBadAngleBracket, patchDoctypeCapture, patchMethodNameLists, patchObjectKeys];
 
 export async function loadCfmlGrammars() {
 	return Promise.all([
@@ -815,4 +815,78 @@ function patchMethodNameLists(grammar, file) {
 	}
 
 	return "method-name-lists";
+}
+
+/**
+* Object-literal keys in a script island render as plain text.
+*
+* The twin of patchObjectKeys in html.js, which carries the full rationale:
+* GitHub's own JS/TS rendering moved to a tree-sitter pipeline that colors
+* keys (pl-c1), while the TextMate lineage assigns them only a meta scope the
+* theme maps to nothing. The vendored copy of Microsoft's JavaScript rules has
+* the same bare-identifier key rule as stock source.ts -- one per script-island
+* context -- so the identifier gains the same constant.other.object.key
+* capture. No added heuristic rule is needed here, unlike the stock source.js
+* patched in html.js: the Microsoft lineage matches keys inside real
+* object-literal regions.
+*/
+function patchObjectKeys(grammar, file) {
+	// Both script-island contexts carry their own copy of the rule: the general
+	// one, and the twin used inside <cfoutput> blocks.
+	var ENTRIES = [
+		"source-js-object-member",
+		"source-js-cfoutput-object-member"
+	];
+
+	// The bare-identifier key rule is the one whose ONLY capture assigns the
+	// meta key scope to the whole match.
+	function isCarrier(node) {
+		return (
+			node.captures
+			&& Object.keys(node.captures).length === 1
+			&& node.captures[0]
+			&& node.captures[0].name === "meta.object-literal.key.js"
+		);
+	}
+
+	for (var entry of ENTRIES) {
+		// Unguarded for the same reason as the patches above: a rename throws a
+		// TypeError that names the expression.
+		var matches = grammar.repository[entry].patterns.filter(isCarrier);
+
+		// Anchor check: exactly one such rule per entry, with the identifier
+		// still spelled the way the rewrap below expects.
+		if (
+			matches.length !== 1
+			|| !matches[0].match.startsWith("(?:[_$[:alpha:]][_$[:alnum:]]*)")
+		) {
+			throw new Error(`${file}: ${entry} no longer has the expected object-key rule shape; re-derive patchObjectKeys`);
+		}
+
+		// Promote the identifier's non-capturing group to group 1 and scope it.
+		// The whole-match meta scope stays, mirroring upstream's own numeric-key
+		// and function-key siblings.
+		matches[0].match = `(${matches[0].match.slice("(?:".length)}`;
+		matches[0].captures[1] = {name: "constant.other.object.key.js"};
+	}
+
+	// The two entries must be the ONLY carriers of the bare-key shape. A third
+	// appearing in an upstream update would survive this patch and keep plain
+	// keys in some context nobody re-tested -- fail loudly instead.
+	function count(node) {
+		if (Array.isArray(node)) {
+			return node.reduce((sum, item) => sum + count(item), 0);
+		}
+		if (node && typeof node === "object") {
+			var self = isCarrier(node) ? 1 : 0;
+			return Object.values(node).reduce((sum, value) => sum + count(value), self);
+		}
+		return 0;
+	}
+
+	if (count(grammar) !== 0) {
+		throw new Error(`${file}: a bare object-key rule now appears outside the two object-member entries; extend patchObjectKeys to cover it`);
+	}
+
+	return "object-keys";
 }

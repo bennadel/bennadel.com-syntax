@@ -55,9 +55,9 @@
 <span class="pl-k">var</span> <span class="pl-c1">YEAR_MILLISECONDS</span> <span class="pl-k">=</span> ( <span class="pl-c1">DAY_MILLISECONDS</span> <span class="pl-k">*</span> <span class="pl-c1">365</span> );
 
 @<span class="pl-en">Component</span>({
-	selector: <span class="pl-s"><span class="pl-pds">"</span>app-root<span class="pl-pds">"</span></span>,
-	styleUrls: [ <span class="pl-s"><span class="pl-pds">"</span>./app.component.less<span class="pl-pds">"</span></span> ],
-	templateUrl: <span class="pl-s"><span class="pl-pds">"</span>./app.component.html<span class="pl-pds">"</span></span>
+	<span class="pl-c1">selector</span>: <span class="pl-s"><span class="pl-pds">"</span>app-root<span class="pl-pds">"</span></span>,
+	<span class="pl-c1">styleUrls</span>: [ <span class="pl-s"><span class="pl-pds">"</span>./app.component.less<span class="pl-pds">"</span></span> ],
+	<span class="pl-c1">templateUrl</span>: <span class="pl-s"><span class="pl-pds">"</span>./app.component.html<span class="pl-pds">"</span></span>
 })
 <span class="pl-k">export</span> <span class="pl-k">class</span> <span class="pl-en">AppComponent</span> {
 
@@ -88,11 +88,11 @@
 		];
 
 		<span class="pl-c1">this</span>.<span class="pl-smi">timeline</span> <span class="pl-k">=</span> {
-			startedAt: <span class="pl-c1">0</span>,
-			endedAt: <span class="pl-c1">0</span>,
-			duration: <span class="pl-c1">0</span>,
-			durationInPixels: <span class="pl-c1">0</span>,
-			tracks: []
+			<span class="pl-c1">startedAt</span>: <span class="pl-c1">0</span>,
+			<span class="pl-c1">endedAt</span>: <span class="pl-c1">0</span>,
+			<span class="pl-c1">duration</span>: <span class="pl-c1">0</span>,
+			<span class="pl-c1">durationInPixels</span>: <span class="pl-c1">0</span>,
+			<span class="pl-c1">tracks</span>: []
 		};
 		
 		<span class="pl-c1">this</span>.<span class="pl-en">setDateLabels</span>();
@@ -148,18 +148,18 @@
 			<span class="pl-k">if</span> ( <span class="pl-k">!</span> <span class="pl-smi">user</span> <span class="pl-k">||</span> ( <span class="pl-smi">user</span>.<span class="pl-c1">id</span> <span class="pl-k">!==</span> <span class="pl-smi">membership</span>.<span class="pl-smi">userID</span> ) ) {
 
 				<span class="pl-smi">user</span> <span class="pl-k">=</span> {
-					id: <span class="pl-smi">membership</span>.<span class="pl-smi">userID</span>,
-					name: <span class="pl-smi">membership</span>.<span class="pl-smi">userName</span>,
-					initials: <span class="pl-smi">membership</span>.<span class="pl-smi">userInitials</span>,
-					memberships: []
+					<span class="pl-c1">id</span>: <span class="pl-smi">membership</span>.<span class="pl-smi">userID</span>,
+					<span class="pl-c1">name</span>: <span class="pl-smi">membership</span>.<span class="pl-smi">userName</span>,
+					<span class="pl-c1">initials</span>: <span class="pl-smi">membership</span>.<span class="pl-smi">userInitials</span>,
+					<span class="pl-c1">memberships</span>: []
 				};
 				<span class="pl-smi">users</span>.<span class="pl-en">push</span>( <span class="pl-smi">user</span> );
 
 			}
 
 			<span class="pl-smi">user</span>.<span class="pl-smi">memberships</span>.<span class="pl-en">push</span>({
-				startedAt: <span class="pl-smi">membership</span>.<span class="pl-smi">startedAt</span>,
-				endedAt: <span class="pl-smi">membership</span>.<span class="pl-smi">endedAt</span>
+				<span class="pl-c1">startedAt</span>: <span class="pl-smi">membership</span>.<span class="pl-smi">startedAt</span>,
+				<span class="pl-c1">endedAt</span>: <span class="pl-smi">membership</span>.<span class="pl-smi">endedAt</span>
 			});
 
 		}
@@ -240,21 +240,21 @@
 						<span class="pl-k">var</span> <span class="pl-smi">duration</span> <span class="pl-k">=</span> ( ( <span class="pl-smi">membership</span>.<span class="pl-smi">endedAt</span> <span class="pl-k">||</span> <span class="pl-smi">tickCount</span> ) <span class="pl-k">-</span> <span class="pl-smi">membership</span>.<span class="pl-smi">startedAt</span> );
 
 						<span class="pl-k">return</span>({
-							membership: <span class="pl-smi">membership</span>,
-							duration: <span class="pl-smi">duration</span>,
-							durationInPixels: <span class="pl-c1">this</span>.<span class="pl-en">scaleMilliseconds</span>( <span class="pl-smi">duration</span> ),
-							durationInPercent: ( <span class="pl-smi">duration</span> <span class="pl-k">/</span> <span class="pl-c1">this</span>.<span class="pl-smi">timeline</span>.<span class="pl-smi">duration</span> <span class="pl-k">*</span> <span class="pl-c1">100</span> ),
-							offset: <span class="pl-smi">offset</span>,
-							offsetInPixels: <span class="pl-c1">this</span>.<span class="pl-en">scaleMilliseconds</span>( <span class="pl-smi">offset</span> ),
-							offsetInPercent: ( <span class="pl-smi">offset</span> <span class="pl-k">/</span> <span class="pl-c1">this</span>.<span class="pl-smi">timeline</span>.<span class="pl-smi">duration</span> <span class="pl-k">*</span> <span class="pl-c1">100</span> )
+							<span class="pl-c1">membership</span>: <span class="pl-smi">membership</span>,
+							<span class="pl-c1">duration</span>: <span class="pl-smi">duration</span>,
+							<span class="pl-c1">durationInPixels</span>: <span class="pl-c1">this</span>.<span class="pl-en">scaleMilliseconds</span>( <span class="pl-smi">duration</span> ),
+							<span class="pl-c1">durationInPercent</span>: ( <span class="pl-smi">duration</span> <span class="pl-k">/</span> <span class="pl-c1">this</span>.<span class="pl-smi">timeline</span>.<span class="pl-smi">duration</span> <span class="pl-k">*</span> <span class="pl-c1">100</span> ),
+							<span class="pl-c1">offset</span>: <span class="pl-smi">offset</span>,
+							<span class="pl-c1">offsetInPixels</span>: <span class="pl-c1">this</span>.<span class="pl-en">scaleMilliseconds</span>( <span class="pl-smi">offset</span> ),
+							<span class="pl-c1">offsetInPercent</span>: ( <span class="pl-smi">offset</span> <span class="pl-k">/</span> <span class="pl-c1">this</span>.<span class="pl-smi">timeline</span>.<span class="pl-smi">duration</span> <span class="pl-k">*</span> <span class="pl-c1">100</span> )
 						});
 
 					}
 				);
 
 				<span class="pl-k">return</span>({
-					user: <span class="pl-smi">user</span>,
-					segments: <span class="pl-smi">segments</span>
+					<span class="pl-c1">user</span>: <span class="pl-smi">user</span>,
+					<span class="pl-c1">segments</span>: <span class="pl-smi">segments</span>
 				});
 
 			}

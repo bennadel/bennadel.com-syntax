@@ -120,9 +120,9 @@
 
 				<span class="pl-c">// Return the directive configuration object.</span>
 				<span class="pl-k">return</span>({
-					controller<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>UploadController<span class="pl-pds">"</span></span>,
-					link<span class="pl-k">:</span> link,
-					restrict<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>A<span class="pl-pds">"</span></span>
+					<span class="pl-c1">controller</span><span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>UploadController<span class="pl-pds">"</span></span>,
+					<span class="pl-c1">link</span><span class="pl-k">:</span> link,
+					<span class="pl-c1">restrict</span><span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>A<span class="pl-pds">"</span></span>
 				});
 
 
@@ -143,11 +143,11 @@
 
 					<span class="pl-c">// Create our Plupload uploader instance.</span>
 					<span class="pl-k">var</span> uploader <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">plupload.Uploader</span>({
-						runtimes<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>html5<span class="pl-pds">"</span></span>,
-						browse_button <span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>uploader-button<span class="pl-pds">'</span></span>,
-						container<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>uploader-container<span class="pl-pds">"</span></span>,
-						drop_element<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>uploader-container<span class="pl-pds">"</span></span>,
-						url <span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>./this-isnt-relevant-to-the-demo/<span class="pl-pds">"</span></span>
+						<span class="pl-c1">runtimes</span><span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>html5<span class="pl-pds">"</span></span>,
+						<span class="pl-c1">browse_button</span> <span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>uploader-button<span class="pl-pds">'</span></span>,
+						<span class="pl-c1">container</span><span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>uploader-container<span class="pl-pds">"</span></span>,
+						<span class="pl-c1">drop_element</span><span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>uploader-container<span class="pl-pds">"</span></span>,
+						<span class="pl-c1">url</span> <span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>./this-isnt-relevant-to-the-demo/<span class="pl-pds">"</span></span>
 					});
 
 					<span class="pl-c">// Due to a race condition in the Plupload initialization, we want to</span>

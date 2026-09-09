@@ -835,6 +835,54 @@ if (!UPDATE) {
 	assertEqual("DOM-colliding method in an embedded js chain is a function name",
 		chainInCfm.html.includes("<span class=\"pl-en\">click</span>"), true);
 
+	// -- object keys ------------------------------------------------------------------
+
+	// Object-literal keys rendered as plain text: the TextMate lineage assigns
+	// them only a meta scope, while GitHub's own rendering (now tree-sitter)
+	// colors them pl-c1. The object-keys patch (src/grammars/html.js, and its
+	// twin in src/grammars/cfml.js for script islands) gives bare keys
+	// constant.other.object.key.
+	var keysSource = "var options = {\n\tduration: 500,\n\tqueue: fastQueue\n};";
+
+	var keysInJs = highlight(keysSource, "js");
+	assertEqual("object key in js is a constant",
+		keysInJs.html.includes("<span class=\"pl-c1\">duration</span>"), true);
+	assertEqual("second js key is a constant",
+		keysInJs.html.includes("<span class=\"pl-c1\">queue</span>"), true);
+
+	var keysInTs = highlight(keysSource, "ts");
+	assertEqual("object key in ts is a constant",
+		keysInTs.html.includes("<span class=\"pl-c1\">duration</span>"), true);
+
+	// The template-property rule claims `template:` before the object-member
+	// dispatch ever sees it, so it carries the key scope itself.
+	assertEqual("template key colors like its sibling keys",
+		templateNextLine.html.includes("<span class=\"pl-c1\">template</span>"), true);
+
+	// The source.js rule is a heuristic -- the grammar has no object-literal
+	// context -- anchored to line start or a preceding `{`/`,` so that ternary
+	// branches and switch labels stay unclaimed.
+	var notKeys = highlight(
+		"var y = test ? aaa : bbb;\nswitch ( x ) {\n\tcase 1:\n\t\tbreak;\n\tdefault:\n\t\tbreak;\n}",
+		"js"
+	);
+	assertEqual("ternary branch is not a key",
+		notKeys.html.includes("<span class=\"pl-c1\">aaa</span>"), false);
+	assertEqual("switch default is still a keyword",
+		notKeys.html.includes("<span class=\"pl-k\">default</span>"), true);
+
+	// A key whose value is a `function` belongs to the grammar's own
+	// function-in-object rule (pl-en, matching source.ts); the heuristic must
+	// lose that tie on purpose.
+	var functionKey = highlight("var api = {\n\tsuccess: function( response ) {}\n};", "js");
+	assertEqual("function-valued key is still a function name",
+		functionKey.html.includes("<span class=\"pl-en\">success</span>"), true);
+
+	// Script islands in a CFML page carry the vendored copy of the key rule.
+	var keysInCfm = highlight(`<script type="text/javascript">\n${keysSource}\n</script>`, "cfm");
+	assertEqual("object key in an embedded js island is a constant",
+		keysInCfm.html.includes("<span class=\"pl-c1\">duration</span>"), true);
+
 	// ---------------------------------------------------------------------------
 
 	// Every patch must have actually run on both files. A patch that silently
@@ -843,12 +891,12 @@ if (!UPDATE) {
 	// drops a patch from the list.
 	assertEqual("every vendored grammar is patched",
 		[...cfmlPatches.values()].map((names) => names.join(",")).join(" | "),
-		"bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits,function-metadata,comment-hyphens,bad-angle-bracket,doctype-capture,method-name-lists | bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits,function-metadata,comment-hyphens,bad-angle-bracket,doctype-capture,method-name-lists");
+		"bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits,function-metadata,comment-hyphens,bad-angle-bracket,doctype-capture,method-name-lists,object-keys | bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits,function-metadata,comment-hyphens,bad-angle-bracket,doctype-capture,method-name-lists,object-keys");
 
 	// Same pin for the stock-grammar patch layer (src/grammars/html.js).
 	assertEqual("every stock grammar is patched",
 		[...stockPatches.entries()].map(([scope, names]) => `${scope}:${names.join(",")}`).join(" | "),
-		"source.js:method-name-lists | source.ts:template-property,method-name-lists | text.html.basic:comment-hyphens,doctype-capture");
+		"source.js:method-name-lists,object-keys | source.ts:template-property,method-name-lists,object-keys | text.html.basic:comment-hyphens,doctype-capture");
 
 	// The vendored files are byte-identical to upstream, and this is what makes
 	// that a fact rather than an intention. Both patches are applied to the

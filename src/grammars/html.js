@@ -21,8 +21,8 @@
 export var applied = new Map();
 
 var PATCHES = new Map([
-	["source.js", [patchMethodNameLists]],
-	["source.ts", [patchTemplateProperty, patchMethodNameLists]],
+	["source.js", [patchMethodNameLists, patchObjectKeys]],
+	["source.ts", [patchTemplateProperty, patchMethodNameLists, patchObjectKeys]],
 	["text.html.basic", [patchCommentHyphens, patchDoctypeCapture]]
 ]);
 
@@ -332,6 +332,114 @@ function patchMethodNameLists(grammar) {
 }
 
 /**
+* Object-literal keys render as plain text.
+*
+* GitHub itself no longer renders JavaScript or TypeScript with these TextMate
+* grammars: file views and gists moved to a tree-sitter pipeline that scopes
+* keys by position, so a gist shows `duration:` as a constant (pl-c1) while
+* the same code here left it bare. The patch adopts that coloring --
+* constant.other.object.key, the scope Atom's later grammars used, which the
+* theme maps to pl-c1. Quoted keys stay strings, numeric keys stay numbers,
+* and a key whose value is a `function` keeps entity.name.function; those all
+* match the tree-sitter output already. (An arrow-valued key in source.js is
+* the one divergence: tree-sitter scopes it as a function name, but Atom's
+* grammar has no rule for that shape, so it takes the constant scope here.)
+*
+* The two grammars need different surgery. Microsoft's TS grammar already
+* MATCHES bare keys -- inside object-literal regions, with a rule that assigns
+* only a meta scope, which the theme maps to nothing -- so the identifier
+* there just gains a capture. Atom's JS grammar has no object-literal context
+* at all (`{` is just punctuation), so the patch ADDS a rule: an identifier
+* before a colon, at line start or after `{` or `,`. That anchor is what
+* keeps ternary branches (`a ? b : c` -- `b` follows `?`) and `case foo:`
+* (`foo` follows a space) unclaimed; `default:`/`case:` are excluded by name
+* because a match from the leading whitespace would start EARLIER in the line
+* than the switch rules' own keyword match, and vscode-textmate awards ties
+* like that to the earliest start. The one known false positive is a
+* statement label (`outer: for`), which is indistinguishable from a key
+* without a parser.
+*/
+function patchObjectKeys(grammar) {
+	// Exact-shape carrier finder: the bare-identifier key rule is the one whose
+	// ONLY capture assigns the meta key scope to the whole match.
+	function findCarriers(node, scope, found) {
+		if (Array.isArray(node)) {
+			node.forEach((item) => findCarriers(item, scope, found));
+		} else if (node && typeof node === "object") {
+			if (
+				node.captures
+				&& Object.keys(node.captures).length === 1
+				&& node.captures[0]
+				&& node.captures[0].name === scope
+			) {
+				found.push(node);
+			}
+			Object.values(node).forEach((value) => findCarriers(value, scope, found));
+		}
+		return found;
+	}
+
+	if (grammar.scopeName === "source.ts") {
+		var carriers = findCarriers(grammar, "meta.object-literal.key.ts", []);
+
+		// Anchor check: exactly one such rule, with the identifier still spelled
+		// the way the rewrap below expects. More carriers, or a reshaped match,
+		// means object members were reworked -- re-derive rather than guessing
+		// which one is the key rule.
+		if (
+			carriers.length !== 1
+			|| !carriers[0].match.startsWith("(?:[_$[:alpha:]][_$[:alnum:]]*)")
+		) {
+			throw new Error(`${grammar.scopeName}: the object-key rule no longer has the expected shape; re-derive patchObjectKeys`);
+		}
+
+		// Promote the identifier's non-capturing group to group 1 and scope it.
+		// The whole-match meta scope stays, mirroring upstream's own numeric-key
+		// and function-key siblings.
+		carriers[0].match = `(${carriers[0].match.slice("(?:".length)}`;
+		carriers[0].captures[1] = {name: "constant.other.object.key.ts"};
+
+		return "object-keys";
+	}
+
+	if (grammar.scopeName === "source.js") {
+		// Nothing in the grammar may already assign the scope this rule adds --
+		// a second claimant appearing in a starry-night upgrade would mean keys
+		// are now scoped twice, each in contexts nobody re-tested.
+		function countScope(node) {
+			if (Array.isArray(node)) {
+				return node.reduce((sum, item) => sum + countScope(item), 0);
+			}
+			if (node && typeof node === "object") {
+				var self = (node.name === "constant.other.object.key.js") ? 1 : 0;
+				return Object.values(node).reduce((sum, value) => sum + countScope(value), self);
+			}
+			return 0;
+		}
+
+		if (countScope(grammar) !== 0) {
+			throw new Error(`${grammar.scopeName}: upstream now scopes object keys itself; remove or re-derive patchObjectKeys`);
+		}
+
+		// Appended, not unshifted: everything the grammar claims today it must
+		// keep claiming; this rule only picks up identifiers that fell through.
+		// The `function` exclusion is load-bearing for the same claims-first
+		// reason as default/case: the grammar's own function-in-object rule
+		// scopes `success: function( ... )` keys entity.name.function (pl-en,
+		// matching source.ts and the tree-sitter output), but it would lose the
+		// earliest-start tie to this rule.
+		grammar.patterns.push({
+			match: "(?:^|(?<=[{,]))\\s*(?!default\\b|case\\b)([\\w$]+)(?=\\s*:)(?!\\s*:\\s*function\\b)",
+			captures: {1: {name: "constant.other.object.key.js"}}
+		});
+
+		return "object-keys";
+	}
+
+	throw new Error(`${grammar.scopeName}: patchObjectKeys has no branch for this grammar; re-derive it before listing it in PATCHES`);
+}
+
+/**
 * An inline component template renders as one flat string.
 *
 * Angular (and AngularJS, and Vue) components carry their markup as the
@@ -414,11 +522,12 @@ function patchTemplateProperty(grammar) {
 	// The lookbehind stops `x_template:` from matching; `myTemplate:` already
 	// cannot (the match is case-sensitive on purpose -- Angular's API name is
 	// exactly `template`). A method named template() never matches: the rule
-	// requires the colon.
+	// requires the colon. The key carries the same constant scope
+	// patchObjectKeys assigns, so `template:` colors like its sibling keys.
 	literal.patterns.unshift({
 		begin: "(?<![_$[:alnum:]])(template)\\s*(:)",
 		beginCaptures: {
-			1: {name: "meta.object-literal.key.ts"},
+			1: {name: "meta.object-literal.key.ts constant.other.object.key.ts"},
 			2: {name: "meta.object-literal.key.ts punctuation.separator.key-value.ts"}
 		},
 		end: "(?=,|\\})",

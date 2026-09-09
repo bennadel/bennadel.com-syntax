@@ -149,13 +149,13 @@
 		<span class="pl-k">var</span> <span class="pl-smi">parts</span> <span class="pl-k">=</span> <span class="pl-smi">eventName</span>.<span class="pl-en">split</span>( <span class="pl-s"><span class="pl-pds">"</span>.<span class="pl-pds">"</span></span> );
 
 		<span class="pl-k">var</span> <span class="pl-smi">config</span> <span class="pl-k">=</span> {
-			name: &lt;<span class="pl-c1">string</span>&gt;<span class="pl-smi">parts</span>.<span class="pl-en">shift</span>(), <span class="pl-c">// Telling TypeScript not to worry.</span>
-			isStop: <span class="pl-c1">false</span>,
-			isPrevent: <span class="pl-c1">false</span>,
-			isCapture: <span class="pl-c1">false</span>,
-			isSelf: <span class="pl-c1">false</span>,
-			isOnce: <span class="pl-c1">false</span>,
-			isPassive: <span class="pl-c1">false</span>
+			<span class="pl-c1">name</span>: &lt;<span class="pl-c1">string</span>&gt;<span class="pl-smi">parts</span>.<span class="pl-en">shift</span>(), <span class="pl-c">// Telling TypeScript not to worry.</span>
+			<span class="pl-c1">isStop</span>: <span class="pl-c1">false</span>,
+			<span class="pl-c1">isPrevent</span>: <span class="pl-c1">false</span>,
+			<span class="pl-c1">isCapture</span>: <span class="pl-c1">false</span>,
+			<span class="pl-c1">isSelf</span>: <span class="pl-c1">false</span>,
+			<span class="pl-c1">isOnce</span>: <span class="pl-c1">false</span>,
+			<span class="pl-c1">isPassive</span>: <span class="pl-c1">false</span>
 		};
 
 		<span class="pl-c">// While this is different in Vue.js, we're not going to care about the order in</span>
@@ -210,8 +210,8 @@
 		<span class="pl-k">if</span> ( <span class="pl-c1">this</span>.<span class="pl-smi">supportsPassive</span> <span class="pl-k">&amp;&amp;</span> <span class="pl-smi">eventConfig</span>.<span class="pl-smi">isPassive</span> ) {
 
 			<span class="pl-smi">options</span> <span class="pl-k">=</span> {
-				passive: <span class="pl-c1">true</span>,
-				capture: <span class="pl-smi">eventConfig</span>.<span class="pl-smi">isCapture</span>
+				<span class="pl-c1">passive</span>: <span class="pl-c1">true</span>,
+				<span class="pl-c1">capture</span>: <span class="pl-smi">eventConfig</span>.<span class="pl-smi">isCapture</span>
 			};
 
 		}
