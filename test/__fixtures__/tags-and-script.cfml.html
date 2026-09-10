@@ -3,7 +3,7 @@
 
 	<span class="pl-k">public</span> <span class="pl-c1">struct</span> <span class="pl-k">function</span> <span class="pl-en">buildReport</span>( <span class="pl-k">required</span> <span class="pl-c1">date</span> <span class="pl-smi">since</span>, <span class="pl-c1">numeric</span> <span class="pl-smi">limit</span> <span class="pl-k">=</span> <span class="pl-c1">50</span> ) {
 		<span class="pl-k">var</span> <span class="pl-smi">rows</span> <span class="pl-k">=</span> <span class="pl-c1">queryExecute</span>(
-			<span class="pl-s"><span class="pl-pds">"</span></span><span class="pl-k">SELECT</span> id, <span class="pl-k">name</span> <span class="pl-k">FROM</span> users <span class="pl-k">WHERE</span> created <span class="pl-k">&gt;</span> <span class="pl-v">:since</span><span class="pl-s"><span class="pl-pds">"</span></span>,
+			<span class="pl-s"><span class="pl-pds">"</span></span><span class="pl-k">SELECT</span> id, name <span class="pl-k">FROM</span> users <span class="pl-k">WHERE</span> created <span class="pl-k">&gt;</span> <span class="pl-v">:since</span><span class="pl-s"><span class="pl-pds">"</span></span>,
 			{ <span class="pl-v">since</span>: { <span class="pl-v">value</span>: <span class="pl-smi">since</span>, <span class="pl-v">cfsqltype</span>: <span class="pl-s"><span class="pl-pds">"</span>cf_sql_timestamp<span class="pl-pds">"</span></span> } },
 			{ <span class="pl-v">maxrows</span>: <span class="pl-smi">limit</span> }
 		);
@@ -16,7 +16,7 @@
 &lt;/<span class="pl-ent">cfscript</span>&gt;
 
 &lt;<span class="pl-ent">cfquery</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>data<span class="pl-pds">"</span></span> <span class="pl-e">datasource</span>=<span class="pl-s"><span class="pl-pds">"</span>app<span class="pl-pds">"</span></span>&gt;
-	<span class="pl-k">SELECT</span>   id, <span class="pl-k">name</span>, created
+	<span class="pl-k">SELECT</span>   id, name, created
 	<span class="pl-k">FROM</span>     users
 	<span class="pl-k">WHERE</span>    id <span class="pl-k">=</span> &lt;<span class="pl-ent">cfqueryparam</span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>#<span class="pl-c1">url</span>.<span class="pl-smi">id</span>#<span class="pl-pds">"</span></span> <span class="pl-e">cfsqltype</span>=<span class="pl-s"><span class="pl-pds">"</span>cf_sql_integer<span class="pl-pds">"</span></span> /&gt;
 	<span class="pl-k">ORDER BY</span> created <span class="pl-k">DESC</span>

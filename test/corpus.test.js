@@ -921,7 +921,7 @@ if (!UPDATE) {
 	// drops a patch from the list.
 	assertEqual("every vendored grammar is patched",
 		[...cfmlPatches.values()].map((names) => names.join(",")).join(" | "),
-		"bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits,function-metadata,comment-hyphens,bad-angle-bracket,doctype-capture,method-name-lists,object-keys | bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits,function-metadata,comment-hyphens,bad-angle-bracket,doctype-capture,method-name-lists,object-keys");
+		"bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits,function-metadata,comment-hyphens,bad-angle-bracket,doctype-capture,method-name-lists,object-keys,sql-column-words | bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits,function-metadata,comment-hyphens,bad-angle-bracket,doctype-capture,method-name-lists,object-keys,sql-column-words");
 
 	// Same pin for the stock-grammar patch layer (src/grammars/html.js).
 	assertEqual("every stock grammar is patched",

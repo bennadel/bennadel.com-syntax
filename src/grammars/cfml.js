@@ -80,7 +80,7 @@ export var CFML_SCRIPT = "embedding.cfml.cfs";
 */
 export var applied = new Map();
 
-var PATCHES = [patchBareInclude, patchSafeNavigation, patchTagIsland, patchBadAmpersand, patchCustomTagDigits, patchFunctionMetadata, patchCommentHyphens, patchBadAngleBracket, patchDoctypeCapture, patchMethodNameLists, patchObjectKeys];
+var PATCHES = [patchBareInclude, patchSafeNavigation, patchTagIsland, patchBadAmpersand, patchCustomTagDigits, patchFunctionMetadata, patchCommentHyphens, patchBadAngleBracket, patchDoctypeCapture, patchMethodNameLists, patchObjectKeys, patchSqlColumnWords];
 
 export async function loadCfmlGrammars() {
 	return Promise.all([
@@ -889,4 +889,95 @@ function patchObjectKeys(grammar, file) {
 	}
 
 	return "object-keys";
+}
+
+/**
+* Column names render as SQL keywords: `SELECT id, name, created` puts `name`
+* in the same pl-k as SELECT.
+*
+* cfmleditor's inlined `source-sql` is Microsoft's vscode-mssql grammar, whose
+* generic keyword rule is one ~830-word alternation copied from SQL Server
+* Management Studio's coloring list. That list was assembled for SSMS parity,
+* not correctness: `name`, `type`, `value`, `status`, `date`, `data` are all
+* in it, none is a reserved word in any SQL dialect, and all six are among the
+* most common column names there are. Upstream has only ever added to the
+* list, and the SSMS behaviour it mirrors is a two-decade-old known quirk, so
+* this is not going to be fixed by an update.
+*
+* Removing the six costs their T-SQL keyword uses -- `WITH (NAME = ...)`,
+* `sp_rename ... 'COLUMN'`, `CREATE TYPE`. Those are admin and DDL statements
+* that almost never appear in a cfquery body, whereas a SELECT list with one
+* of these columns appears in nearly every one. A keyword-list grammar cannot
+* tell the two apart, so the roster is a judgment about which usage dominates
+* in this archive, not a claim about SQL.
+*
+* Do not add `key` to the roster, column name though it is. This list matches
+* `PRIMARY` before the `primary key` storage-modifier rule further down the
+* entry gets a look, so `KEY` in `PRIMARY KEY` is colored by this list alone
+* and removing it leaves half the phrase plain in every CREATE TABLE.
+*
+* Top-level ```sql fences are unaffected: those route to starry-night's stock
+* `source.sql` (the old TextMate bundle), whose keyword list has none of these
+* words. Only cfquery bodies and queryExecute strings reach this rule.
+*/
+function patchSqlColumnWords(grammar, file) {
+	var WORDS = ["name", "type", "value", "status", "date", "data"];
+
+	var HEAD = "\\b(?i)(";
+	var TAIL = ")\\b";
+
+	// The generic keyword rule is the only `keyword.other.sql` rule whose match
+	// is a bare word alternation -- the DML/DDL siblings carry dotted suffixes
+	// (keyword.other.DML.sql) and are not what is being edited here.
+	function isCarrier(node) {
+		return (
+			node.name === "keyword.other.sql"
+			&& typeof node.match === "string"
+			&& node.match.startsWith(HEAD)
+			&& node.match.endsWith(TAIL)
+		);
+	}
+
+	// Unguarded for the same reason as the patches above: a rename throws a
+	// TypeError that names the expression.
+	var matches = grammar.repository["source-sql"].patterns.filter(isCarrier);
+
+	if (matches.length !== 1) {
+		throw new Error(`${file}: source-sql no longer has exactly one generic keyword alternation; re-derive patchSqlColumnWords`);
+	}
+
+	var rule = matches[0];
+	var words = rule.match.slice(HEAD.length, -TAIL.length).split("|");
+
+	// Anchor check: every word to remove must be present exactly once, spelled
+	// bare. A word already gone means upstream pruned it and this roster should
+	// shrink; a word present twice or wrapped in regex means the list changed
+	// shape and a plain string removal is no longer sound.
+	for (var word of WORDS) {
+		if (words.filter((w) => w === word).length !== 1) {
+			throw new Error(`${file}: source-sql keyword list no longer contains "${word}" exactly once; re-derive patchSqlColumnWords`);
+		}
+	}
+
+	rule.match = HEAD + words.filter((w) => !WORDS.includes(w)).join("|") + TAIL;
+
+	// The entry must be the ONLY carrier of the alternation. A second copy in an
+	// upstream update would keep coloring column names in some context nobody
+	// re-tested -- fail loudly instead.
+	function count(node) {
+		if (Array.isArray(node)) {
+			return node.reduce((sum, item) => sum + count(item), 0);
+		}
+		if (node && typeof node === "object") {
+			var self = isCarrier(node) ? 1 : 0;
+			return Object.values(node).reduce((sum, value) => sum + count(value), self);
+		}
+		return 0;
+	}
+
+	if (count(grammar) !== 1) {
+		throw new Error(`${file}: a generic SQL keyword alternation now appears outside source-sql; extend patchSqlColumnWords to cover it`);
+	}
+
+	return "sql-column-words";
 }
