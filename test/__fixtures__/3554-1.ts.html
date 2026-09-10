@@ -7,13 +7,13 @@
 <span class="pl-k">type</span> <span class="pl-en">EventTarget</span> <span class="pl-k">=</span> <span class="pl-en">Window</span> <span class="pl-k">|</span> <span class="pl-en">Document</span> <span class="pl-k">|</span> <span class="pl-en">HTMLElement</span>;
 
 <span class="pl-k">interface</span> <span class="pl-en">EventConfig</span> {
-	<span class="pl-v">name</span><span class="pl-k">:</span> <span class="pl-c1">string</span>;
-	<span class="pl-v">isStop</span><span class="pl-k">:</span> <span class="pl-c1">boolean</span>;
-	<span class="pl-v">isPrevent</span><span class="pl-k">:</span> <span class="pl-c1">boolean</span>;
-	<span class="pl-v">isCapture</span><span class="pl-k">:</span> <span class="pl-c1">boolean</span>;
-	<span class="pl-v">isSelf</span><span class="pl-k">:</span> <span class="pl-c1">boolean</span>;
-	<span class="pl-v">isOnce</span><span class="pl-k">:</span> <span class="pl-c1">boolean</span>;
-	<span class="pl-v">isPassive</span><span class="pl-k">:</span> <span class="pl-c1">boolean</span>;
+	<span class="pl-c1">name</span><span class="pl-k">:</span> <span class="pl-c1">string</span>;
+	<span class="pl-c1">isStop</span><span class="pl-k">:</span> <span class="pl-c1">boolean</span>;
+	<span class="pl-c1">isPrevent</span><span class="pl-k">:</span> <span class="pl-c1">boolean</span>;
+	<span class="pl-c1">isCapture</span><span class="pl-k">:</span> <span class="pl-c1">boolean</span>;
+	<span class="pl-c1">isSelf</span><span class="pl-k">:</span> <span class="pl-c1">boolean</span>;
+	<span class="pl-c1">isOnce</span><span class="pl-k">:</span> <span class="pl-c1">boolean</span>;
+	<span class="pl-c1">isPassive</span><span class="pl-k">:</span> <span class="pl-c1">boolean</span>;
 }
 
 <span class="pl-c">// I provide support for DOM event-modifiers that are inspired by Vue.js. These allow</span>
@@ -28,12 +28,12 @@
 <span class="pl-c">// --</span>
 <span class="pl-k">export</span> <span class="pl-k">class</span> <span class="pl-en">VueEventModifiersPlugin</span> {
 
-	<span class="pl-k">private</span> <span class="pl-v">supportsPassive</span><span class="pl-k">:</span> <span class="pl-c1">boolean</span>;
+	<span class="pl-k">private</span> <span class="pl-c1">supportsPassive</span><span class="pl-k">:</span> <span class="pl-c1">boolean</span>;
 
 	<span class="pl-c">// I initialize the event plug-in.</span>
 	<span class="pl-k">constructor</span>() {
 
-		<span class="pl-c1">this</span>.<span class="pl-smi">supportsPassive</span> <span class="pl-k">=</span> <span class="pl-c1">this</span>.<span class="pl-en">detectPassiveSupport</span>();
+		<span class="pl-c1">this</span>.<span class="pl-c1">supportsPassive</span> <span class="pl-k">=</span> <span class="pl-c1">this</span>.<span class="pl-en">detectPassiveSupport</span>();
 
 	}
 
@@ -165,22 +165,22 @@
 
 			<span class="pl-k">switch</span> ( <span class="pl-smi">parts</span>.<span class="pl-en">shift</span>() ) {
 				<span class="pl-k">case</span> <span class="pl-s"><span class="pl-pds">"</span>stop<span class="pl-pds">"</span></span>:
-					<span class="pl-smi">config</span>.<span class="pl-smi">isStop</span> <span class="pl-k">=</span> <span class="pl-c1">true</span>;
+					<span class="pl-smi">config</span>.<span class="pl-c1">isStop</span> <span class="pl-k">=</span> <span class="pl-c1">true</span>;
 				<span class="pl-k">break</span>;
 				<span class="pl-k">case</span> <span class="pl-s"><span class="pl-pds">"</span>prevent<span class="pl-pds">"</span></span>:
-					<span class="pl-smi">config</span>.<span class="pl-smi">isPrevent</span> <span class="pl-k">=</span> <span class="pl-c1">true</span>;
+					<span class="pl-smi">config</span>.<span class="pl-c1">isPrevent</span> <span class="pl-k">=</span> <span class="pl-c1">true</span>;
 				<span class="pl-k">break</span>;
 				<span class="pl-k">case</span> <span class="pl-s"><span class="pl-pds">"</span>capture<span class="pl-pds">"</span></span>:
-					<span class="pl-smi">config</span>.<span class="pl-smi">isCapture</span> <span class="pl-k">=</span> <span class="pl-c1">true</span>;
+					<span class="pl-smi">config</span>.<span class="pl-c1">isCapture</span> <span class="pl-k">=</span> <span class="pl-c1">true</span>;
 				<span class="pl-k">break</span>;
 				<span class="pl-k">case</span> <span class="pl-s"><span class="pl-pds">"</span>self<span class="pl-pds">"</span></span>:
-					<span class="pl-smi">config</span>.<span class="pl-smi">isSelf</span> <span class="pl-k">=</span> <span class="pl-c1">true</span>;
+					<span class="pl-smi">config</span>.<span class="pl-c1">isSelf</span> <span class="pl-k">=</span> <span class="pl-c1">true</span>;
 				<span class="pl-k">break</span>;
 				<span class="pl-k">case</span> <span class="pl-s"><span class="pl-pds">"</span>once<span class="pl-pds">"</span></span>:
-					<span class="pl-smi">config</span>.<span class="pl-smi">isOnce</span> <span class="pl-k">=</span> <span class="pl-c1">true</span>;
+					<span class="pl-smi">config</span>.<span class="pl-c1">isOnce</span> <span class="pl-k">=</span> <span class="pl-c1">true</span>;
 				<span class="pl-k">break</span>;
 				<span class="pl-k">case</span> <span class="pl-s"><span class="pl-pds">"</span>passive<span class="pl-pds">"</span></span>:
-					<span class="pl-smi">config</span>.<span class="pl-smi">isPassive</span> <span class="pl-k">=</span> <span class="pl-c1">true</span>;
+					<span class="pl-smi">config</span>.<span class="pl-c1">isPassive</span> <span class="pl-k">=</span> <span class="pl-c1">true</span>;
 				<span class="pl-k">break</span>;
 				<span class="pl-k">default</span>:
 					<span class="pl-k">throw</span>( <span class="pl-k">new</span> <span class="pl-c1">Error</span>( <span class="pl-s"><span class="pl-pds">`</span>Event config [${ <span class="pl-smi">eventName</span> }] not supported.<span class="pl-pds">`</span></span> ) );
@@ -203,15 +203,15 @@
 		<span class="pl-en">handler</span><span class="pl-k">:</span> <span class="pl-en">Function</span>
 		) <span class="pl-k">:</span> <span class="pl-en">Function</span> {
 
-		<span class="pl-k">var</span> <span class="pl-smi">options</span><span class="pl-k">:</span> <span class="pl-c1">any</span> <span class="pl-k">=</span> <span class="pl-smi">eventConfig</span>.<span class="pl-smi">isCapture</span>;
+		<span class="pl-k">var</span> <span class="pl-smi">options</span><span class="pl-k">:</span> <span class="pl-c1">any</span> <span class="pl-k">=</span> <span class="pl-smi">eventConfig</span>.<span class="pl-c1">isCapture</span>;
 		<span class="pl-c">// If the event requires a "passive" modifier, then we have to change the way</span>
 		<span class="pl-c">// that we define the event-phase. Passive mode requires an EventListerOptions</span>
 		<span class="pl-c">// object that is only supported in some browsers.</span>
-		<span class="pl-k">if</span> ( <span class="pl-c1">this</span>.<span class="pl-smi">supportsPassive</span> <span class="pl-k">&amp;&amp;</span> <span class="pl-smi">eventConfig</span>.<span class="pl-smi">isPassive</span> ) {
+		<span class="pl-k">if</span> ( <span class="pl-c1">this</span>.<span class="pl-c1">supportsPassive</span> <span class="pl-k">&amp;&amp;</span> <span class="pl-smi">eventConfig</span>.<span class="pl-c1">isPassive</span> ) {
 
 			<span class="pl-smi">options</span> <span class="pl-k">=</span> {
 				<span class="pl-c1">passive</span>: <span class="pl-c1">true</span>,
-				<span class="pl-c1">capture</span>: <span class="pl-smi">eventConfig</span>.<span class="pl-smi">isCapture</span>
+				<span class="pl-c1">capture</span>: <span class="pl-smi">eventConfig</span>.<span class="pl-c1">isCapture</span>
 			};
 
 		}
@@ -241,7 +241,7 @@
 			<span class="pl-c">// change-digest will still be triggered. This is because we're not bothering</span>
 			<span class="pl-c">// to bind the handler outside of the Angular Zone (since most cases will be</span>
 			<span class="pl-c">// a one-to-one mapping of event-to-handler invocation).</span>
-			<span class="pl-k">if</span> ( <span class="pl-smi">eventConfig</span>.<span class="pl-smi">isSelf</span> <span class="pl-k">&amp;&amp;</span> ( <span class="pl-c1">event</span>.<span class="pl-c1">target</span> <span class="pl-k">!==</span> <span class="pl-smi">target</span> ) ) {
+			<span class="pl-k">if</span> ( <span class="pl-smi">eventConfig</span>.<span class="pl-c1">isSelf</span> <span class="pl-k">&amp;&amp;</span> ( <span class="pl-c1">event</span>.<span class="pl-c1">target</span> <span class="pl-k">!==</span> <span class="pl-smi">target</span> ) ) {
 
 				<span class="pl-k">return</span>;
 
@@ -249,19 +249,19 @@
 
 			<span class="pl-c">// If the handler is only intended to be invoked once, let's unbind before</span>
 			<span class="pl-c">// we call the underlying handler.</span>
-			<span class="pl-k">if</span> ( <span class="pl-smi">eventConfig</span>.<span class="pl-smi">isOnce</span> ) {
+			<span class="pl-k">if</span> ( <span class="pl-smi">eventConfig</span>.<span class="pl-c1">isOnce</span> ) {
 
 				<span class="pl-en">removeProxyFunction</span>();
 
 			}
 
-			<span class="pl-k">if</span> ( <span class="pl-smi">eventConfig</span>.<span class="pl-smi">isStop</span> ) {
+			<span class="pl-k">if</span> ( <span class="pl-smi">eventConfig</span>.<span class="pl-c1">isStop</span> ) {
 
 				<span class="pl-c1">event</span>.<span class="pl-en">stopPropagation</span>();
 
 			}
 
-			<span class="pl-k">if</span> ( <span class="pl-smi">eventConfig</span>.<span class="pl-smi">isPrevent</span> ) {
+			<span class="pl-k">if</span> ( <span class="pl-smi">eventConfig</span>.<span class="pl-c1">isPrevent</span> ) {
 
 				<span class="pl-c1">event</span>.<span class="pl-en">preventDefault</span>();
 

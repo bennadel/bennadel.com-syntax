@@ -883,6 +883,36 @@ if (!UPDATE) {
 	assertEqual("object key in an embedded js island is a constant",
 		keysInCfm.html.includes("<span class=\"pl-c1\">duration</span>"), true);
 
+	// -- property names ---------------------------------------------------------------
+
+	// The same property name rendered three ways: a class-field declaration
+	// took pl-v, a dot-access pl-smi, an object key pl-c1. GitHub's renderer
+	// colors every property identifier pl-c1; the property-names patch
+	// (src/grammars/html.js) appends constant.other.property.ts to each
+	// carrier so the four positions below agree with it and with each other.
+	var props = highlight(
+		"class A {\n\tpublic alpha: string[];\n\tconstructor() {\n\t\tthis.beta = this.gamma.delta;\n\t\tvar { epsilon: e } = this;\n\t\tvar plain = other;\n\t}\n}\ninterface I { member: number; }",
+		"ts"
+	);
+	assertEqual("ts field declaration is a constant",
+		props.html.includes("<span class=\"pl-c1\">alpha</span>"), true);
+	assertEqual("ts dot-access property is a constant",
+		props.html.includes("<span class=\"pl-c1\">beta</span>"), true);
+	assertEqual("ts chained object property is a constant",
+		props.html.includes("<span class=\"pl-c1\">gamma</span>"), true);
+	assertEqual("ts chained final property is a constant",
+		props.html.includes("<span class=\"pl-c1\">delta</span>"), true);
+	assertEqual("ts destructuring key is a constant",
+		props.html.includes("<span class=\"pl-c1\">epsilon</span>"), true);
+	assertEqual("ts interface member is a constant",
+		props.html.includes("<span class=\"pl-c1\">member</span>"), true);
+
+	// Plain identifiers are not properties and keep the grammar's own scope.
+	assertEqual("ts destructuring target is still a variable",
+		props.html.includes("<span class=\"pl-smi\">e</span>"), true);
+	assertEqual("ts local variable is still a variable",
+		props.html.includes("<span class=\"pl-smi\">plain</span>"), true);
+
 	// ---------------------------------------------------------------------------
 
 	// Every patch must have actually run on both files. A patch that silently
@@ -896,7 +926,7 @@ if (!UPDATE) {
 	// Same pin for the stock-grammar patch layer (src/grammars/html.js).
 	assertEqual("every stock grammar is patched",
 		[...stockPatches.entries()].map(([scope, names]) => `${scope}:${names.join(",")}`).join(" | "),
-		"source.js:method-name-lists,object-keys | source.ts:template-property,method-name-lists,object-keys | text.html.basic:comment-hyphens,doctype-capture");
+		"source.js:method-name-lists,object-keys | source.ts:template-property,method-name-lists,object-keys,property-names | text.html.basic:comment-hyphens,doctype-capture");
 
 	// The vendored files are byte-identical to upstream, and this is what makes
 	// that a fact rather than an intention. Both patches are applied to the

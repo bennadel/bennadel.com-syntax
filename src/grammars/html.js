@@ -22,7 +22,7 @@ export var applied = new Map();
 
 var PATCHES = new Map([
 	["source.js", [patchMethodNameLists, patchObjectKeys]],
-	["source.ts", [patchTemplateProperty, patchMethodNameLists, patchObjectKeys]],
+	["source.ts", [patchTemplateProperty, patchMethodNameLists, patchObjectKeys, patchPropertyNames]],
 	["text.html.basic", [patchCommentHyphens, patchDoctypeCapture]]
 ]);
 
@@ -437,6 +437,91 @@ function patchObjectKeys(grammar) {
 	}
 
 	throw new Error(`${grammar.scopeName}: patchObjectKeys has no branch for this grammar; re-derive it before listing it in PATCHES`);
+}
+
+/**
+* One property name renders in three colors.
+*
+* Microsoft's grammar scopes a property by the position it appears in, and the
+* theme maps each position differently:
+*
+*   public projects: string[];     <-- variable.object.property -> pl-v, orange
+*   this.projects = [];            <-- variable.other.property  -> pl-smi, plain
+*   { projects: [] }               <-- pl-c1, blue, via patchObjectKeys
+*
+* A reader sees one thing -- the name of a property -- in three colors, with
+* the DECLARATION the odd one out in orange, a color the theme otherwise
+* reserves for variables in string interpolation. GitHub's tree-sitter
+* pipeline scopes every property identifier alike and renders all three
+* pl-c1, and the patch adopts that, as patchObjectKeys did for keys.
+*
+* Each carrier's name gains a trailing constant.other.property.ts. A rule
+* name may list several space-separated scopes, and the LAST is the innermost,
+* which is the one the theme lookup resolves first -- so appending is enough,
+* and upstream's own scope stays in place ahead of it for anything that keys
+* on the original name. The carriers are the field declaration (one rule
+* serves class fields and interface and type-literal members alike, so all
+* three render pl-c1 -- as tree-sitter's property_signature does), the
+* destructuring key (`{ projects: p }` -- a key by another syntax), the
+* dot-access identifier, and the dot-access identifier that is itself followed
+* by another accessor (`this.a.b`, where `a` takes the object.property scope).
+* Upstream's UPPER_CASE property scopes already carry variable.other.constant
+* and were pl-c1 all along, so they are not carriers here. Parameter
+* properties (`constructor( private a: string )`) are parameters to the
+* grammar and stay pl-v.
+*/
+function patchPropertyNames(grammar) {
+	var ADDED = "constant.other.property.ts";
+
+	// scope -> how many carriers upstream ships. Pinned exactly rather than
+	// "at least one": a new carrier in a starry-night upgrade is a context
+	// nobody re-tested -- an enum member, a parameter property -- where pl-c1
+	// may be the wrong answer, so it should fail here and be looked at.
+	var EXPECTED = new Map([
+		["variable.object.property.ts", 2],
+		["variable.other.property.ts", 1],
+		["variable.other.object.property.ts", 1]
+	]);
+
+	var found = new Map([...EXPECTED.keys()].map((scope) => [scope, 0]));
+
+	// Every scope-bearing `name` in the grammar, rule names and capture names
+	// alike -- both are objects with a string `name`, and nothing else in a
+	// grammar carries that key.
+	function walk(node) {
+		if (Array.isArray(node)) {
+			node.forEach(walk);
+		} else if (node && typeof node === "object") {
+			if (typeof node.name === "string") {
+				var scopes = node.name.split(" ");
+
+				// If upstream starts assigning this scope themselves, remove
+				// this patch rather than stacking a second copy on theirs.
+				if (scopes.includes(ADDED)) {
+					throw new Error(`${grammar.scopeName}: upstream now scopes ${ADDED} itself; remove or re-derive patchPropertyNames`);
+				}
+
+				for (var scope of scopes) {
+					if (found.has(scope)) {
+						found.set(scope, found.get(scope) + 1);
+						node.name = `${node.name} ${ADDED}`;
+					}
+				}
+			}
+
+			Object.values(node).forEach(walk);
+		}
+	}
+
+	walk(grammar);
+
+	for (var [scope, expected] of EXPECTED) {
+		if (found.get(scope) !== expected) {
+			throw new Error(`${grammar.scopeName}: ${scope} now has ${found.get(scope)} carriers, expected ${expected}; re-derive patchPropertyNames`);
+		}
+	}
+
+	return "property-names";
 }
 
 /**
