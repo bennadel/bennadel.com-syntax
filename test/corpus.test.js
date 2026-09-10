@@ -45,7 +45,7 @@ import {promisify} from "node:util";
 import {loadConfig} from "../src/core/config.js";
 import {init, highlight, normalize, longestLine} from "../src/core/highlight.js";
 import {applied as cfmlPatches} from "../src/grammars/cfml.js";
-import {applied as stockPatches} from "../src/grammars/html.js";
+import {applied as stockPatches} from "../src/grammars/stock.js";
 
 var DIR = new URL("./__fixtures__/", import.meta.url);
 var GRAMMARS = new URL("../src/grammars/", import.meta.url);
@@ -729,7 +729,7 @@ if (!UPDATE) {
 	assertEqual("lowercase html5 doctype is a tag name",
 		doctypeInHtm.html.includes("<span class=\"pl-ent\">doctype</span>"), true);
 
-	// The same gap in the STOCK html grammar, patched by src/grammars/html.js
+	// The same gap in the STOCK html grammar, patched by src/grammars/stock.js
 	// (the patch is applied to a clone before createStarryNight, so it must be
 	// visible through an ordinary `htm` fence).
 	var dividerInHtm = highlight("<!-- ------- -->\n<div>x</div>", "htm");
@@ -747,7 +747,7 @@ if (!UPDATE) {
 	// An inline component template -- the `template:` property of an object
 	// literal -- rendered as one flat string because Microsoft's grammar has no
 	// embedded-language support in template literals. The template-property
-	// patch (src/grammars/html.js) hands a string value's content to
+	// patch (src/grammars/stock.js) hands a string value's content to
 	// text.html.basic. The archive writes the delimiter both on the same line
 	// as the key and on the next line, so both are asserted.
 	var templateNextLine = highlight(
@@ -791,7 +791,7 @@ if (!UPDATE) {
 	// Both JavaScript grammars guessed a dot-method's meaning from name lists,
 	// so a jQuery chain alternated colors: `.attr(` was a plain function while
 	// `.click(` collided with the DOM roster and rendered as a built-in. The
-	// method-name-lists patch (src/grammars/html.js) deletes the lists so every
+	// method-name-lists patch (src/grammars/stock.js) deletes the lists so every
 	// dot-method name gets the same entity.name.function scope. This diverges
 	// from GitHub, which keeps the alternating colors.
 	var chainSource = "menuRoot\n\t.attr( \"href\", \"x\" )\n\t.click( handleClick );";
@@ -839,7 +839,7 @@ if (!UPDATE) {
 
 	// Object-literal keys rendered as plain text: the TextMate lineage assigns
 	// them only a meta scope, while GitHub's own rendering (now tree-sitter)
-	// colors them pl-c1. The object-keys patch (src/grammars/html.js, and its
+	// colors them pl-c1. The object-keys patch (src/grammars/stock.js, and its
 	// twin in src/grammars/cfml.js for script islands) gives bare keys
 	// constant.other.object.key.
 	var keysSource = "var options = {\n\tduration: 500,\n\tqueue: fastQueue\n};";
@@ -888,7 +888,7 @@ if (!UPDATE) {
 	// The same property name rendered three ways: a class-field declaration
 	// took pl-v, a dot-access pl-smi, an object key pl-c1. GitHub's renderer
 	// colors every property identifier pl-c1; the property-names patch
-	// (src/grammars/html.js) appends constant.other.property.ts to each
+	// (src/grammars/stock.js) appends constant.other.property.ts to each
 	// carrier so the four positions below agree with it and with each other.
 	var props = highlight(
 		"class A {\n\tpublic alpha: string[];\n\tconstructor() {\n\t\tthis.beta = this.gamma.delta;\n\t\tvar { epsilon: e } = this;\n\t\tvar plain = other;\n\t}\n}\ninterface I { member: number; }",
@@ -923,7 +923,7 @@ if (!UPDATE) {
 		[...cfmlPatches.values()].map((names) => names.join(",")).join(" | "),
 		"bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits,function-metadata,comment-hyphens,bad-angle-bracket,doctype-capture,method-name-lists,object-keys,sql-column-words | bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits,function-metadata,comment-hyphens,bad-angle-bracket,doctype-capture,method-name-lists,object-keys,sql-column-words");
 
-	// Same pin for the stock-grammar patch layer (src/grammars/html.js).
+	// Same pin for the stock-grammar patch layer (src/grammars/stock.js).
 	assertEqual("every stock grammar is patched",
 		[...stockPatches.entries()].map(([scope, names]) => `${scope}:${names.join(",")}`).join(" | "),
 		"source.js:method-name-lists,object-keys | source.ts:template-property,method-name-lists,object-keys,property-names | text.html.basic:comment-hyphens,doctype-capture");

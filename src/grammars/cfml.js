@@ -674,7 +674,7 @@ function patchBadAngleBracket(grammar, file) {
 * This is not a new claim, it is the rule's stated intent completed.
 *
 * GitHub renders the keyword plain too -- its text.html.basic carries the
-* SAME dead rule, patched by the twin of this function in html.js -- so the
+* SAME dead rule, patched by the twin of this function in stock.js -- so the
 * output diverges from GitHub the way comment-hyphens does: correct beats
 * parity.
 */
@@ -745,12 +745,12 @@ function patchDoctypeCapture(grammar, file) {
 * jQuery chain alternates colors by accident of naming -- `.attr(` is a plain
 * function while `.click(` collides with DOM click() and renders as a
 * built-in, even though both resolve on the same object. The twin of
-* patchMethodNameLists in html.js, which carries the full rationale; deleting
+* patchMethodNameLists in stock.js, which carries the full rationale; deleting
 * the rule here drops every dot-method name to the generic function-call rule
 * -> entity.name.function. This DIVERGES from GitHub, which keeps the
 * alternating colors.
 *
-* Unlike the stock source.js patched in html.js, the vendored copy's
+* Unlike the stock source.js patched in stock.js, the vendored copy's
 * dot-PROPERTY rosters already carry Microsoft's not-followed-by-a-paren
 * guard, so a called name they list (`.text(`) cannot be stolen and no
 * property rule needs touching.
@@ -820,14 +820,14 @@ function patchMethodNameLists(grammar, file) {
 /**
 * Object-literal keys in a script island render as plain text.
 *
-* The twin of patchObjectKeys in html.js, which carries the full rationale:
+* The twin of patchObjectKeys in stock.js, which carries the full rationale:
 * GitHub's own JS/TS rendering moved to a tree-sitter pipeline that colors
 * keys (pl-c1), while the TextMate lineage assigns them only a meta scope the
 * theme maps to nothing. The vendored copy of Microsoft's JavaScript rules has
 * the same bare-identifier key rule as stock source.ts -- one per script-island
 * context -- so the identifier gains the same constant.other.object.key
 * capture. No added heuristic rule is needed here, unlike the stock source.js
-* patched in html.js: the Microsoft lineage matches keys inside real
+* patched in stock.js: the Microsoft lineage matches keys inside real
 * object-literal regions.
 */
 function patchObjectKeys(grammar, file) {
