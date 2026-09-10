@@ -14,7 +14,7 @@
 		"lockfile": "npm install --package-lock-only --ignore-scripts"
 	},
 	"dependencies": {
-		"@wooorm/starry-night": "^3.10.0",
+		"@wooorm/starry-night": "^3.11.0",
 		"hast-util-to-html": "^9.0.5"
 	}
 }
