@@ -25,7 +25,7 @@
 			<span class="pl-c1">animation-duration</span>: <span class="pl-c1">1</span><span class="pl-k">s</span> ; <span class="pl-c">/* NOTE: Absurdly SLOW for demo purposes. */</span>
 			<span class="pl-c1">animation-fill-mode</span>: <span class="pl-c1">both</span> ;
 			<span class="pl-c1">animation-iteration-count</span>: <span class="pl-c1">1</span> ;
-			<span class="pl-c1">animation-name</span>: modal-enter-reduced-motion ; <span class="pl-c">/* Start with reduced motion. */</span>
+			<span class="pl-c1">animation-name</span>: <span class="pl-c1">modal-enter-reduced-motion</span> ; <span class="pl-c">/* Start with reduced motion. */</span>
 			<span class="pl-c1">animation-timing-function</span>: <span class="pl-c1">ease-out</span> ;
 		}
 
@@ -36,8 +36,8 @@
 		<span class="pl-k">@media</span> ( <span class="pl-c1">prefers-reduced-motion</span>: <span class="pl-c1">no-preference</span> ) {
 			<span class="pl-e">.modal</span> {
 				<span class="pl-c1">animation-name</span>:
-					modal-enter-reduced-motion,
-					modal-enter-full-motion
+					<span class="pl-c1">modal-enter-reduced-motion</span>,
+					<span class="pl-c1">modal-enter-full-motion</span>
 				;
 			}
 		}

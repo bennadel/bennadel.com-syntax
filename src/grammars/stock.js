@@ -21,7 +21,7 @@
 export var applied = new Map();
 
 var PATCHES = new Map([
-	["source.css", [patchNesting, patchMediaFeatures]],
+	["source.css", [patchNesting, patchMediaFeatures, patchValueIdentifiers]],
 	["source.js", [patchMethodNameLists, patchConsoleGlobal, patchObjectKeys]],
 	["source.ts", [patchTemplateProperty, patchMethodNameLists, patchConsoleGlobal, patchObjectKeys, patchPropertyNames]],
 	["source.sql", [patchStatementKeywords]],
@@ -1298,4 +1298,107 @@ function patchMediaFeatures(grammar) {
 	});
 
 	return "media-features";
+}
+
+/**
+* An author-defined name in a declaration value renders as plain text.
+*
+* The stock grammar colors a value only from lists: property keywords, color
+* names, a short list of common font names, numbers, strings, functions. A
+* name the author invented -- an animation name, a grid area, a counter, a
+* transition-property target, a font the list lacks -- matches nothing, so
+* `animation-name: modal-enter` colors the property and leaves the value
+* plain between a colored `fixed` and a colored `ease-out`, and the name that
+* `@keyframes` defines in one color is referenced in none. Found via fixture
+* 4132-1.css. Upstream (atom/language-css) is archived, the vscode fork has
+* the same value patterns, and GitHub renders the same gap.
+*
+* The grammars that model a value as a POSITION rather than a list (Sublime,
+* Lezer/CodeMirror, starry-night's own Less) color every identifier there,
+* and Sublime gives an unknown one the same scope as a known keyword. This
+* patch does the same: a bare identifier in value position that no other
+* rule claimed -> support.constant.property-value.css, the scope the keyword
+* list uses, so `modal-enter` renders like `ease-out` beside it. Appended
+* LAST in #property-values so every existing rule keeps winning on a tie.
+*
+* The identifier must not be followed by `(`, so an unknown function name
+* stays as it was (plain, with colored arguments) rather than coloring as a
+* value with its parens dangling. The negative lookahead has to cover the
+* identifier characters too, or the regex backtracks one character to escape
+* the paren test and colors `my-f` of `my-fn(`.
+*
+* Every context that includes #property-values inherits this: function
+* arguments, `:dir()`, `@supports` conditions, and the value of a custom
+* property, which the declaration rule does not distinguish. All of those
+* are value positions, so the outcome is the same one -- with ONE exception.
+* The misc-function rule (attr, blur, clamp, counter, ...) follows its
+* #property-values include with a catch-all that scopes any leftover argument
+* variable.parameter.misc.css -> pl-v, so `attr(data-x)` and `counter(item)`
+* color as variables. The generic rule would preempt that catch-all. So the
+* stock pattern list moves to a new repository entry, #property-values-listed,
+* which that one rule is repointed at; #property-values becomes the listed
+* set plus the generic rule for everyone else.
+*/
+function patchValueIdentifiers(grammar) {
+	var values = grammar.repository["property-values"];
+	var SCOPE = "support.constant.property-value.css";
+	var IMPORTANT = "!\\s*important(?![\\w-])";
+
+	if (
+		!values
+		|| !Array.isArray(values.patterns)
+		|| values.patterns.at(-1).match !== IMPORTANT
+		|| !["#functions", "#property-keywords", "#numeric-values", "#color-keywords", "#string"].every((include) => values.patterns.some((p) => p.include === include))
+	) {
+		throw new Error(`${grammar.scopeName}: property-values no longer ends with the !important rule after the expected includes; re-derive patchValueIdentifiers`);
+	}
+
+	// The keyword rules carry this scope; the generic rule must render the
+	// same way they do, so it borrows the name rather than inventing one.
+	if (!grammar.repository["property-keywords"].patterns.some((p) => p.name === SCOPE)) {
+		throw new Error(`${grammar.scopeName}: property-keywords no longer scopes ${SCOPE}; re-derive patchValueIdentifiers`);
+	}
+
+	// Identifier per css-syntax: optional leading dashes, a letter, underscore
+	// or non-ASCII start, then letters, digits, dashes, underscores or
+	// non-ASCII. Not preceded by an identifier character, `#` (hex color) or
+	// `.` (a class in a functional pseudo-class argument).
+	var START = "(?:[a-zA-Z_]|[^\\x00-\\x7F])";
+	var REST = "(?:[-\\w]|[^\\x00-\\x7F])";
+
+	var LISTED = "#property-values-listed";
+	var MISC = "variable.parameter.misc.css";
+
+	// The one include that must keep the stock list: the rule whose patterns
+	// end with the misc catch-all. Exactly one, and the include must precede
+	// the catch-all, or the repointing below fixes the wrong thing.
+	var misc = grammar.repository.functions.patterns.filter((p) => {
+		var patterns = p.patterns || [];
+		var last = patterns.at(-1);
+
+		return (last && last.name === MISC && last.match === "[^'\"),\\s]+")
+			&& patterns.some((q) => q.include === "#property-values");
+	});
+
+	if (misc.length !== 1 || grammar.repository[LISTED.slice(1)]) {
+		throw new Error(`${grammar.scopeName}: functions no longer has exactly one rule ending in the ${MISC} catch-all, or ${LISTED} already exists; re-derive patchValueIdentifiers`);
+	}
+
+	for (var pattern of misc[0].patterns) {
+		if (pattern.include === "#property-values") {
+			pattern.include = LISTED;
+		}
+	}
+
+	grammar.repository[LISTED.slice(1)] = {patterns: values.patterns};
+
+	values.patterns = [
+		{include: LISTED},
+		{
+			match: `(?<![\\w#.-])-{0,2}${START}${REST}*(?!${REST}|\\s*\\()`,
+			name: SCOPE
+		}
+	];
+
+	return "value-identifiers";
 }

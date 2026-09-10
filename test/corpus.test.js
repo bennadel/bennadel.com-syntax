@@ -862,6 +862,65 @@ if (!UPDATE) {
 	assertEqual("media header carries no illegal tokens",
 		media.html.includes("pl-ii"), false);
 
+	// -- value identifiers ----------------------------------------------------------
+
+	// The stock CSS grammar colors a declaration value only from keyword lists,
+	// so an author-defined name (`animation-name: modal-enter`) renders plain
+	// between colored keywords. The value-identifiers patch
+	// (src/grammars/stock.js) gives any unclaimed identifier in value position
+	// the keyword scope, the way Sublime and Lezer do.
+	var values = highlight([
+		".a {",
+		"\tanimation-name: modal-enter ;",
+		"\tanimation: modal-enter 1s ease-out;",
+		"\tgrid-area: sidebar;",
+		"\tfont-family: Inter, sans-serif;",
+		"\ttransform: my-fn(1) translateX(2px);",
+		"\tcolor: #fff;",
+		"\twidth: calc(100% - 2rem);",
+		"\tcolor: var(--brand, rebeccapurple);",
+		"\tcontent: attr(data-x);",
+		"\tbackground: url(img/a.png) no-repeat;",
+		"\tfont: 1em/1.5 Foo Bar, serif;",
+		"\tgrid-template-areas: \"a b\";",
+		"\tmargin: 0 auto !important;",
+		"}",
+		"p:dir(ltr) { color: red; }",
+		"li::before { content: counter(item) attr(title); }"
+	].join("\n"), "css");
+	assertEqual("animation name value is a property value",
+		values.html.includes("<span class=\"pl-c1\">animation-name</span>: <span class=\"pl-c1\">modal-enter</span> ;"), true);
+	assertEqual("animation name in a shorthand is a property value",
+		values.html.includes("<span class=\"pl-c1\">animation</span>: <span class=\"pl-c1\">modal-enter</span> <span class=\"pl-c1\">1</span><span class=\"pl-k\">s</span> <span class=\"pl-c1\">ease-out</span>;"), true);
+	assertEqual("grid area name is a property value",
+		values.html.includes("<span class=\"pl-c1\">grid-area</span>: <span class=\"pl-c1\">sidebar</span>;"), true);
+	assertEqual("unlisted font name colors like a listed one",
+		values.html.includes("<span class=\"pl-c1\">Inter</span>, <span class=\"pl-c1\">sans-serif</span>;"), true);
+	assertEqual("multi-word font name colors per word",
+		values.html.includes("<span class=\"pl-c1\">Foo</span> <span class=\"pl-c1\">Bar</span>, <span class=\"pl-c1\">serif</span>;"), true);
+	assertEqual("unknown function name is left as it was",
+		values.html.includes(": my-fn(<span class=\"pl-c1\">1</span>)"), true);
+	assertEqual("hex color is unchanged",
+		values.html.includes("<span class=\"pl-c1\">#fff</span>;"), true);
+	assertEqual("calc operator is unchanged",
+		values.html.includes("<span class=\"pl-k\">-</span> <span class=\"pl-c1\">2</span><span class=\"pl-k\">rem</span>)"), true);
+	assertEqual("var argument is still a variable",
+		values.html.includes("(<span class=\"pl-v\">--brand</span>, <span class=\"pl-c1\">rebeccapurple</span>)"), true);
+	assertEqual("attr argument is still a variable",
+		values.html.includes("(<span class=\"pl-v\">data-x</span>)"), true);
+	assertEqual("url argument is still a variable",
+		values.html.includes("(<span class=\"pl-v\">img/a.png</span>) <span class=\"pl-c1\">no-repeat</span>;"), true);
+	assertEqual("string value is still a string",
+		values.html.includes("<span class=\"pl-s\"><span class=\"pl-pds\">\"</span>a b<span class=\"pl-pds\">\"</span></span>;"), true);
+	assertEqual("important is unchanged",
+		values.html.includes("<span class=\"pl-c1\">auto</span> <span class=\"pl-k\">!important</span>;"), true);
+	assertEqual("counter argument is still a variable",
+		values.html.includes("<span class=\"pl-c1\">counter</span>(<span class=\"pl-v\">item</span>) <span class=\"pl-c1\">attr</span>(<span class=\"pl-v\">title</span>);"), true);
+	assertEqual("dir pseudo-class argument is unchanged",
+		values.html.includes("<span class=\"pl-c1\">ltr</span>"), true);
+	assertEqual("value identifiers carry no illegal tokens",
+		values.html.includes("pl-ii"), false);
+
 	// -- template property ----------------------------------------------------------
 
 	// An inline component template -- the `template:` property of an object
@@ -1073,7 +1132,7 @@ if (!UPDATE) {
 	// Same pin for the stock-grammar patch layer (src/grammars/stock.js).
 	assertEqual("every stock grammar is patched",
 		[...stockPatches.entries()].map(([scope, names]) => `${scope}:${names.join(",")}`).join(" | "),
-		"source.css:nesting,media-features | source.js:method-name-lists,console-global,object-keys | source.sql:statement-keywords | source.ts:template-property,method-name-lists,console-global,object-keys,property-names | text.html.basic:comment-hyphens,doctype-capture");
+		"source.css:nesting,media-features,value-identifiers | source.js:method-name-lists,console-global,object-keys | source.sql:statement-keywords | source.ts:template-property,method-name-lists,console-global,object-keys,property-names | text.html.basic:comment-hyphens,doctype-capture");
 
 	// The vendored files are byte-identical to upstream, and this is what makes
 	// that a fact rather than an intention. Both patches are applied to the
