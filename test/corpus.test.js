@@ -742,21 +742,35 @@ if (!UPDATE) {
 	assertEqual("markup after the html divider is still a tag",
 		dividerInHtm.html.includes("<span class=\"pl-ent\">div</span>"), true);
 
-	// -- explain keyword ------------------------------------------------------------
+	// -- statement keywords ---------------------------------------------------------
 
-	// The stock SQL grammar's statement alternation has no EXPLAIN, so the word
-	// opening a query-plan post renders plain above a highlighted SELECT. The
-	// explain-keyword patch (src/grammars/stock.js) adds it, folding ANALYZE in
-	// so `EXPLAIN ANALYZE` colors as one keyword rather than half of one.
-	var explain = highlight("EXPLAIN SELECT 1;\nEXPLAIN ANALYZE SELECT 1;\nexplain select 1;", "sql");
+	// The stock SQL grammar's statement alternation has neither EXPLAIN nor WITH,
+	// so the word opening a query-plan post or a CTE renders plain above a
+	// highlighted SELECT. The statement-keywords patch (src/grammars/stock.js)
+	// adds both, folding ANALYZE and RECURSIVE in so `EXPLAIN ANALYZE` and
+	// `WITH RECURSIVE` color as one keyword rather than half of one.
+	var statements = highlight("EXPLAIN SELECT 1;\nEXPLAIN ANALYZE SELECT 1;\nexplain select 1;\nWITH t AS (SELECT 1) SELECT 1;\nWITH RECURSIVE t AS (SELECT 1) SELECT 1;\nwith t as (select 1) select 1;", "sql");
 	assertEqual("sql fence resolves to the stock sql grammar",
-		explain.resolvedLanguage, "source.sql");
+		statements.resolvedLanguage, "source.sql");
 	assertEqual("explain is a keyword",
-		explain.html.includes("<span class=\"pl-k\">EXPLAIN</span> <span class=\"pl-k\">SELECT</span>"), true);
+		statements.html.includes("<span class=\"pl-k\">EXPLAIN</span> <span class=\"pl-k\">SELECT</span>"), true);
 	assertEqual("explain analyze is one keyword",
-		explain.html.includes("<span class=\"pl-k\">EXPLAIN ANALYZE</span>"), true);
+		statements.html.includes("<span class=\"pl-k\">EXPLAIN ANALYZE</span>"), true);
 	assertEqual("explain is matched case-insensitively",
-		explain.html.includes("<span class=\"pl-k\">explain</span>"), true);
+		statements.html.includes("<span class=\"pl-k\">explain</span>"), true);
+	assertEqual("with is a keyword",
+		statements.html.includes("<span class=\"pl-k\">WITH</span> t <span class=\"pl-k\">AS</span>"), true);
+	assertEqual("with recursive is one keyword",
+		statements.html.includes("<span class=\"pl-k\">WITH RECURSIVE</span>"), true);
+	assertEqual("with is matched case-insensitively",
+		statements.html.includes("<span class=\"pl-k\">with</span> t <span class=\"pl-k\">as</span>"), true);
+
+	// The cfquery side needs no patch: cfmleditor's embedded mssql keyword list
+	// already carries `with`. Asserted so a grammar re-vendor that drops it fails
+	// here rather than by a reader noticing.
+	var cte = highlight("<cfquery name=\"q\">\n\tWITH t AS ( SELECT 1 )\n\tSELECT 1\n</cfquery>", "cfm");
+	assertEqual("with is a keyword inside a cfquery body",
+		cte.html.includes("<span class=\"pl-k\">WITH</span> t <span class=\"pl-k\">AS</span>"), true);
 
 	// -- template property ----------------------------------------------------------
 
@@ -942,7 +956,7 @@ if (!UPDATE) {
 	// Same pin for the stock-grammar patch layer (src/grammars/stock.js).
 	assertEqual("every stock grammar is patched",
 		[...stockPatches.entries()].map(([scope, names]) => `${scope}:${names.join(",")}`).join(" | "),
-		"source.js:method-name-lists,object-keys | source.sql:explain-keyword | source.ts:template-property,method-name-lists,object-keys,property-names | text.html.basic:comment-hyphens,doctype-capture");
+		"source.js:method-name-lists,object-keys | source.sql:statement-keywords | source.ts:template-property,method-name-lists,object-keys,property-names | text.html.basic:comment-hyphens,doctype-capture");
 
 	// The vendored files are byte-identical to upstream, and this is what makes
 	// that a fact rather than an intention. Both patches are applied to the

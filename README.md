@@ -193,7 +193,7 @@ Where this service renders differently from the published grammars, the differen
 - **JavaScript**: regex literals highlight instead of parsing as division.
 - **TypeScript**: template strings in `@Component` metadata parse as HTML.
 - **TypeScript**: a property name renders in one color whether declared, accessed via `this.`, or used as a literal key.
-- **SQL**: `EXPLAIN` and `EXPLAIN ANALYZE` color as keywords.
+- **SQL**: `EXPLAIN`, `EXPLAIN ANALYZE`, `WITH` and `WITH RECURSIVE` color as keywords.
 
 **Fence tags**
 

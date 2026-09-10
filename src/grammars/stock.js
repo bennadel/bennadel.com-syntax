@@ -23,7 +23,7 @@ export var applied = new Map();
 var PATCHES = new Map([
 	["source.js", [patchMethodNameLists, patchObjectKeys]],
 	["source.ts", [patchTemplateProperty, patchMethodNameLists, patchObjectKeys, patchPropertyNames]],
-	["source.sql", [patchExplainKeyword]],
+	["source.sql", [patchStatementKeywords]],
 	["text.html.basic", [patchCommentHyphens, patchDoctypeCapture]]
 ]);
 
@@ -630,21 +630,29 @@ function patchTemplateProperty(grammar) {
 }
 
 /**
-* `EXPLAIN` renders as plain text in a `sql` fence.
+* `EXPLAIN` and `WITH` render as plain text in a `sql` fence.
 *
 * The stock grammar is the old TextMate sql.tmbundle, whose statement
 * keywords are one short DML alternation -- select, insert into, update,
-* delete, the joins. EXPLAIN is not in it: the bundle predates its spread
-* beyond MySQL and Postgres, and GitHub ships the same rule, so it leaves
-* the word plain too. In the archive it opens whole posts about query plans,
-* and an unhighlighted first word above a highlighted SELECT reads as a typo.
+* delete, the joins. Neither word is in it: the bundle predates EXPLAIN's
+* spread beyond MySQL and Postgres and predates common table expressions
+* altogether, and GitHub ships the same rule, so it leaves both plain too. In
+* the archive EXPLAIN opens whole posts about query plans and WITH opens
+* every CTE, and an unhighlighted first word above a highlighted SELECT reads
+* as a typo.
 *
-* The patch prepends the word to that alternation, with `ANALYZE` folded in
-* the way the rule already folds `union(\s+all)?`: a bare `explain` entry
-* would color half of `EXPLAIN ANALYZE` and leave the other half plain. This
-* DIVERGES from GitHub the way comment-hyphens does: correct beats parity.
+* The patch prepends both to that alternation, with `ANALYZE` and `RECURSIVE`
+* folded in the way the rule already folds `union(\s+all)?`: a bare `explain`
+* entry would color half of `EXPLAIN ANALYZE` and leave the other half plain,
+* and likewise `WITH RECURSIVE`. This DIVERGES from GitHub the way
+* comment-hyphens does: correct beats parity.
+*
+* Only the stock grammar needs this. cfquery bodies and queryExecute strings
+* route to cfmleditor's inlined vscode-mssql grammar, whose generic keyword
+* list already carries `with` and `recursive` (patchSqlColumnWords in
+* cfml.js edits that list).
 */
-function patchExplainKeyword(grammar) {
+function patchStatementKeywords(grammar) {
 	var SCOPE = "keyword.other.DML.sql";
 	var HEAD = "(?i:\\b(select(\\s+distinct)?|";
 
@@ -653,20 +661,21 @@ function patchExplainKeyword(grammar) {
 
 	// Anchor check on the alternation's opening. Anything else means upstream
 	// reworked the rule -- re-derive rather than splicing into a stranger. An
-	// `explain` already present means upstream added it; remove this patch.
+	// `explain` or `with` already present means upstream added it; drop that
+	// word from this patch.
 	if (
 		rules.length !== 1
 		|| !rules[0].match.startsWith(HEAD)
-		|| /\bexplain\b/i.test(rules[0].match)
+		|| /\b(explain|with)\b/i.test(rules[0].match)
 	) {
-		throw new Error(`${grammar.scopeName}: the ${SCOPE} rule no longer has the expected alternation; re-derive patchExplainKeyword`);
+		throw new Error(`${grammar.scopeName}: the ${SCOPE} rule no longer has the expected alternation; re-derive patchStatementKeywords`);
 	}
 
-	rules[0].match = `${HEAD}explain(\\s+analyze)?|${rules[0].match.slice(HEAD.length)}`;
+	rules[0].match = `${HEAD}explain(\\s+analyze)?|with(\\s+recursive)?|${rules[0].match.slice(HEAD.length)}`;
 
 	// The top-level rule must be the ONLY carrier of the scope. A second one
-	// appearing in a starry-night upgrade would leave EXPLAIN plain in some
-	// context nobody re-tested -- fail loudly instead.
+	// appearing in a starry-night upgrade would leave EXPLAIN and WITH plain in
+	// some context nobody re-tested -- fail loudly instead.
 	function count(node) {
 		if (Array.isArray(node)) {
 			return node.reduce((sum, item) => sum + count(item), 0);
@@ -679,8 +688,8 @@ function patchExplainKeyword(grammar) {
 	}
 
 	if (count(grammar) !== 1) {
-		throw new Error(`${grammar.scopeName}: a ${SCOPE} rule now appears outside the top-level patterns; extend patchExplainKeyword to cover it`);
+		throw new Error(`${grammar.scopeName}: a ${SCOPE} rule now appears outside the top-level patterns; extend patchStatementKeywords to cover it`);
 	}
 
-	return "explain-keyword";
+	return "statement-keywords";
 }
