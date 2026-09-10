@@ -23,6 +23,7 @@ export var applied = new Map();
 var PATCHES = new Map([
 	["source.js", [patchMethodNameLists, patchObjectKeys]],
 	["source.ts", [patchTemplateProperty, patchMethodNameLists, patchObjectKeys, patchPropertyNames]],
+	["source.sql", [patchExplainKeyword]],
 	["text.html.basic", [patchCommentHyphens, patchDoctypeCapture]]
 ]);
 
@@ -626,4 +627,60 @@ function patchTemplateProperty(grammar) {
 	});
 
 	return "template-property";
+}
+
+/**
+* `EXPLAIN` renders as plain text in a `sql` fence.
+*
+* The stock grammar is the old TextMate sql.tmbundle, whose statement
+* keywords are one short DML alternation -- select, insert into, update,
+* delete, the joins. EXPLAIN is not in it: the bundle predates its spread
+* beyond MySQL and Postgres, and GitHub ships the same rule, so it leaves
+* the word plain too. In the archive it opens whole posts about query plans,
+* and an unhighlighted first word above a highlighted SELECT reads as a typo.
+*
+* The patch prepends the word to that alternation, with `ANALYZE` folded in
+* the way the rule already folds `union(\s+all)?`: a bare `explain` entry
+* would color half of `EXPLAIN ANALYZE` and leave the other half plain. This
+* DIVERGES from GitHub the way comment-hyphens does: correct beats parity.
+*/
+function patchExplainKeyword(grammar) {
+	var SCOPE = "keyword.other.DML.sql";
+	var HEAD = "(?i:\\b(select(\\s+distinct)?|";
+
+	// The DML rule lives in the grammar's top-level patterns, not the repository.
+	var rules = grammar.patterns.filter((p) => p.name === SCOPE);
+
+	// Anchor check on the alternation's opening. Anything else means upstream
+	// reworked the rule -- re-derive rather than splicing into a stranger. An
+	// `explain` already present means upstream added it; remove this patch.
+	if (
+		rules.length !== 1
+		|| !rules[0].match.startsWith(HEAD)
+		|| /\bexplain\b/i.test(rules[0].match)
+	) {
+		throw new Error(`${grammar.scopeName}: the ${SCOPE} rule no longer has the expected alternation; re-derive patchExplainKeyword`);
+	}
+
+	rules[0].match = `${HEAD}explain(\\s+analyze)?|${rules[0].match.slice(HEAD.length)}`;
+
+	// The top-level rule must be the ONLY carrier of the scope. A second one
+	// appearing in a starry-night upgrade would leave EXPLAIN plain in some
+	// context nobody re-tested -- fail loudly instead.
+	function count(node) {
+		if (Array.isArray(node)) {
+			return node.reduce((sum, item) => sum + count(item), 0);
+		}
+		if (node && typeof node === "object") {
+			var self = (node.name === SCOPE) ? 1 : 0;
+			return Object.values(node).reduce((sum, value) => sum + count(value), self);
+		}
+		return 0;
+	}
+
+	if (count(grammar) !== 1) {
+		throw new Error(`${grammar.scopeName}: a ${SCOPE} rule now appears outside the top-level patterns; extend patchExplainKeyword to cover it`);
+	}
+
+	return "explain-keyword";
 }

@@ -742,6 +742,22 @@ if (!UPDATE) {
 	assertEqual("markup after the html divider is still a tag",
 		dividerInHtm.html.includes("<span class=\"pl-ent\">div</span>"), true);
 
+	// -- explain keyword ------------------------------------------------------------
+
+	// The stock SQL grammar's statement alternation has no EXPLAIN, so the word
+	// opening a query-plan post renders plain above a highlighted SELECT. The
+	// explain-keyword patch (src/grammars/stock.js) adds it, folding ANALYZE in
+	// so `EXPLAIN ANALYZE` colors as one keyword rather than half of one.
+	var explain = highlight("EXPLAIN SELECT 1;\nEXPLAIN ANALYZE SELECT 1;\nexplain select 1;", "sql");
+	assertEqual("sql fence resolves to the stock sql grammar",
+		explain.resolvedLanguage, "source.sql");
+	assertEqual("explain is a keyword",
+		explain.html.includes("<span class=\"pl-k\">EXPLAIN</span> <span class=\"pl-k\">SELECT</span>"), true);
+	assertEqual("explain analyze is one keyword",
+		explain.html.includes("<span class=\"pl-k\">EXPLAIN ANALYZE</span>"), true);
+	assertEqual("explain is matched case-insensitively",
+		explain.html.includes("<span class=\"pl-k\">explain</span>"), true);
+
 	// -- template property ----------------------------------------------------------
 
 	// An inline component template -- the `template:` property of an object
@@ -926,7 +942,7 @@ if (!UPDATE) {
 	// Same pin for the stock-grammar patch layer (src/grammars/stock.js).
 	assertEqual("every stock grammar is patched",
 		[...stockPatches.entries()].map(([scope, names]) => `${scope}:${names.join(",")}`).join(" | "),
-		"source.js:method-name-lists,object-keys | source.ts:template-property,method-name-lists,object-keys,property-names | text.html.basic:comment-hyphens,doctype-capture");
+		"source.js:method-name-lists,object-keys | source.sql:explain-keyword | source.ts:template-property,method-name-lists,object-keys,property-names | text.html.basic:comment-hyphens,doctype-capture");
 
 	// The vendored files are byte-identical to upstream, and this is what makes
 	// that a fact rather than an intention. Both patches are applied to the
