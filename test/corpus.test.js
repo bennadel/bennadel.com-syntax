@@ -772,6 +772,62 @@ if (!UPDATE) {
 	assertEqual("with is a keyword inside a cfquery body",
 		cte.html.includes("<span class=\"pl-k\">WITH</span> t <span class=\"pl-k\">AS</span>"), true);
 
+	// -- nesting ----------------------------------------------------------------------
+
+	// The stock CSS grammar parses a block's contents as declarations only, so a
+	// nested rule reads as a broken declaration: `&:focus,` opens a property
+	// value that swallows the next line, and a nested `.b { ... }` closes the
+	// OUTER block early. The nesting patch (src/grammars/stock.js) ports the
+	// vscode fork's nesting support: `&` colors as a tag, a nested selector as a
+	// selector, and the declarations inside color as declarations.
+	var nested = highlight([
+		".a {",
+		"\t&:focus,",
+		"\t&:focus-visible {",
+		"\t\tanimation-name: none;",
+		"\t}",
+		"\t.b { color: red; }",
+		"\tspan { color: red; }",
+		"\tspan:hover { color: red; }",
+		"\tfont: bold;",
+		"\tfilter:blur(1px);",
+		"\t@media (min-width: 600px) {",
+		"\t\tcolor: blue;",
+		"\t}",
+		"\t.e&f { }",
+		"\toutline: none;",
+		"}",
+		"p { color: red; }"
+	].join("\n"), "css");
+	assertEqual("css fence resolves to the stock css grammar",
+		nested.resolvedLanguage, "source.css");
+	assertEqual("nesting selector is a tag",
+		nested.html.includes("<span class=\"pl-ent\">&amp;</span><span class=\"pl-e\">:focus</span>,"), true);
+	assertEqual("declaration inside a nested block is a property",
+		nested.html.includes("<span class=\"pl-c1\">animation-name</span>: <span class=\"pl-c1\">none</span>;"), true);
+	assertEqual("nested class selector is a class",
+		nested.html.includes("<span class=\"pl-e\">.b</span> {"), true);
+	// span, font and filter are both element names and property names.
+	assertEqual("one-line nested rule on a shared name is a tag",
+		nested.html.includes("<span class=\"pl-ent\">span</span> { <span class=\"pl-c1\">color</span>"), true);
+	assertEqual("nested shared-name selector with a pseudo-class is a tag",
+		nested.html.includes("<span class=\"pl-ent\">span</span><span class=\"pl-e\">:hover</span> {"), true);
+	assertEqual("shared name followed by a colon and space is a property",
+		nested.html.includes("<span class=\"pl-c1\">font</span>: <span class=\"pl-c1\">bold</span>;"), true);
+	assertEqual("shared name followed by a colon and a value is a property",
+		nested.html.includes("<span class=\"pl-c1\">filter</span>:<span class=\"pl-c1\">blur</span>("), true);
+	assertEqual("declaration directly inside a nested media block is a property",
+		nested.html.includes("<span class=\"pl-c1\">color</span>: <span class=\"pl-c1\">blue</span>;\n\t}"), true);
+	assertEqual("nesting selector before an identifier is invalid",
+		nested.html.includes("<span class=\"pl-ii\">.e&amp;f</span>"), true);
+	// The one-line nested rules above must not have closed the outer block:
+	// a declaration after them is still a property, and the rule after the
+	// block still opens at the top level.
+	assertEqual("declaration after nested rules is still a property",
+		nested.html.includes("<span class=\"pl-c1\">outline</span>: <span class=\"pl-c1\">none</span>;\n}"), true);
+	assertEqual("top-level rule after the block is still a selector",
+		nested.html.endsWith("<span class=\"pl-ent\">p</span> { <span class=\"pl-c1\">color</span>: <span class=\"pl-c1\">red</span>; }"), true);
+
 	// -- template property ----------------------------------------------------------
 
 	// An inline component template -- the `template:` property of an object
@@ -956,7 +1012,7 @@ if (!UPDATE) {
 	// Same pin for the stock-grammar patch layer (src/grammars/stock.js).
 	assertEqual("every stock grammar is patched",
 		[...stockPatches.entries()].map(([scope, names]) => `${scope}:${names.join(",")}`).join(" | "),
-		"source.js:method-name-lists,object-keys | source.sql:statement-keywords | source.ts:template-property,method-name-lists,object-keys,property-names | text.html.basic:comment-hyphens,doctype-capture");
+		"source.css:nesting | source.js:method-name-lists,object-keys | source.sql:statement-keywords | source.ts:template-property,method-name-lists,object-keys,property-names | text.html.basic:comment-hyphens,doctype-capture");
 
 	// The vendored files are byte-identical to upstream, and this is what makes
 	// that a fact rather than an intention. Both patches are applied to the
