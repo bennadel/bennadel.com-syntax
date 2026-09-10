@@ -828,6 +828,40 @@ if (!UPDATE) {
 	assertEqual("top-level rule after the block is still a selector",
 		nested.html.endsWith("<span class=\"pl-ent\">p</span> { <span class=\"pl-c1\">color</span>: <span class=\"pl-c1\">red</span>; }"), true);
 
+	// -- media features -------------------------------------------------------------
+
+	// The stock CSS grammar colors media features from a fixed list that stops
+	// at Media Queries Level 4, so `prefers-reduced-motion: no-preference`
+	// renders plain beside a colored `min-width: 600px`. The media-features
+	// patch (src/grammars/stock.js) reads any `(name: value)` as a property
+	// name and a property value, the way the maintained grammars do.
+	var media = highlight([
+		"@media ( prefers-reduced-motion: no-preference ) { }",
+		"@media (prefers-color-scheme: dark) and (min-width: 600px) { }",
+		"@media screen and (hover: hover), (pointer) { }",
+		"@media (400px <= width <= 700px) { }",
+		"@media (-webkit-min-device-pixel-ratio: 2) { }",
+		"@media (aspect-ratio: 16 / 9) { }"
+	].join("\n"), "css");
+	assertEqual("unlisted media feature is a property name",
+		media.html.includes("( <span class=\"pl-c1\">prefers-reduced-motion</span>: <span class=\"pl-c1\">no-preference</span> )"), true);
+	assertEqual("unlisted media feature value is a property value",
+		media.html.includes("(<span class=\"pl-c1\">prefers-color-scheme</span>: <span class=\"pl-c1\">dark</span>)"), true);
+	assertEqual("listed media feature still colors",
+		media.html.includes("(<span class=\"pl-c1\">min-width</span>: <span class=\"pl-c1\">600</span><span class=\"pl-k\">px</span>)"), true);
+	assertEqual("boolean-context feature is a property name",
+		media.html.includes("(<span class=\"pl-c1\">pointer</span>)"), true);
+	assertEqual("media type and operator are unchanged",
+		media.html.includes("<span class=\"pl-c1\">screen</span> <span class=\"pl-k\">and</span> (<span class=\"pl-c1\">hover</span>: <span class=\"pl-c1\">hover</span>)"), true);
+	assertEqual("range syntax feature is a property name",
+		media.html.includes("<span class=\"pl-k\">&lt;=</span> <span class=\"pl-c1\">width</span> <span class=\"pl-k\">&lt;=</span>"), true);
+	assertEqual("vendored media feature still colors",
+		media.html.includes("(<span class=\"pl-c1\">-webkit-min-device-pixel-ratio</span>: <span class=\"pl-c1\">2</span>)"), true);
+	assertEqual("ratio value still colors as numbers",
+		media.html.includes("(<span class=\"pl-c1\">aspect-ratio</span>: <span class=\"pl-c1\">16</span> <span class=\"pl-k\">/</span> <span class=\"pl-c1\">9</span>)"), true);
+	assertEqual("media header carries no illegal tokens",
+		media.html.includes("pl-ii"), false);
+
 	// -- template property ----------------------------------------------------------
 
 	// An inline component template -- the `template:` property of an object
@@ -1039,7 +1073,7 @@ if (!UPDATE) {
 	// Same pin for the stock-grammar patch layer (src/grammars/stock.js).
 	assertEqual("every stock grammar is patched",
 		[...stockPatches.entries()].map(([scope, names]) => `${scope}:${names.join(",")}`).join(" | "),
-		"source.css:nesting | source.js:method-name-lists,console-global,object-keys | source.sql:statement-keywords | source.ts:template-property,method-name-lists,console-global,object-keys,property-names | text.html.basic:comment-hyphens,doctype-capture");
+		"source.css:nesting,media-features | source.js:method-name-lists,console-global,object-keys | source.sql:statement-keywords | source.ts:template-property,method-name-lists,console-global,object-keys,property-names | text.html.basic:comment-hyphens,doctype-capture");
 
 	// The vendored files are byte-identical to upstream, and this is what makes
 	// that a fact rather than an intention. Both patches are applied to the

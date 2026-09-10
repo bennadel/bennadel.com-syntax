@@ -21,7 +21,7 @@
 export var applied = new Map();
 
 var PATCHES = new Map([
-	["source.css", [patchNesting]],
+	["source.css", [patchNesting, patchMediaFeatures]],
 	["source.js", [patchMethodNameLists, patchConsoleGlobal, patchObjectKeys]],
 	["source.ts", [patchTemplateProperty, patchMethodNameLists, patchConsoleGlobal, patchObjectKeys, patchPropertyNames]],
 	["source.sql", [patchStatementKeywords]],
@@ -1191,4 +1191,111 @@ function patchNesting(grammar) {
 	}
 
 	return "nesting";
+}
+
+/**
+* A media feature the grammar has never heard of renders as plain text.
+*
+* The stock grammar colors the inside of `@media (...)` from a fixed list of
+* feature names (width, height, color, resolution, grid, hover, ...) and a
+* fixed list of value keywords (portrait, landscape, fullscreen, ...). Both
+* stop at Media Queries Level 4: `prefers-reduced-motion`, `prefers-color-
+* scheme`, `pointer`, `update`, `forced-colors` and their values match
+* nothing, so in one file `(min-width: 600px)` colors both halves and
+* `(prefers-reduced-motion: no-preference)` colors neither. Found via fixture
+* 4132-1.css. Upstream (atom/language-css) is archived, the vscode fork
+* carries the same list, and GitHub renders the same gap.
+*
+* Every actively maintained CSS grammar (highlight.js, Prism, tree-sitter,
+* Sublime) reads `(name: value)` as a generic key/value pair -- the name colors
+* like a property name whether or not it is on a list. This patch does the
+* same, in two parts inside the paren rule of #media-query:
+*
+* - The `:` becomes a begin/end rule whose content runs to the closing paren,
+*   so everything after the colon is known to be a value. Its patterns are
+*   the paren rule's own value patterns plus a generic identifier ->
+*   support.constant.property-value.css, the scope the keyword list uses.
+* - A generic identifier followed by `:`, `)` or a comparison operator ->
+*   support.type.property-name.media.css, the scope the feature list uses.
+*   Appended LAST so the stock rules keep winning on the names they know
+*   (including the vendored scope), and `(hover)` in boolean context still
+*   reads as a feature. Range syntax `(400px <= width <= 700px)` reaches it
+*   through the comparison-operator lookahead.
+*
+* Consuming the value in a sub-rule is what makes the name rule safe: without
+* it, `no-preference` sits before `)` and would read as a feature name.
+*/
+function patchMediaFeatures(grammar) {
+	var query = grammar.repository["media-query"];
+	var KEY_VALUE = "punctuation.separator.key-value.css";
+
+	var parens = (query && query.patterns || []).filter((p) => p.begin === "\\(" && p.end === "\\)");
+
+	if (
+		!query
+		|| query.begin !== "\\G"
+		|| query.end !== "(?=\\s*[{;])"
+		|| parens.length !== 1
+	) {
+		throw new Error(`${grammar.scopeName}: media-query no longer has one \\( ... \\) rule; re-derive patchMediaFeatures`);
+	}
+
+	var patterns = parens[0].patterns;
+	var colons = patterns.filter((p) => p.match === ":" && p.name === KEY_VALUE);
+
+	// The value patterns are looked up by identity so the sub-rule reuses the
+	// grammar's own objects. Each must be present exactly once.
+	function one(test, label) {
+		var found = patterns.filter(test);
+
+		if (found.length !== 1) {
+			throw new Error(`${grammar.scopeName}: media-query's paren rule no longer has exactly one ${label}; re-derive patchMediaFeatures`);
+		}
+
+		return found[0];
+	}
+
+	if (colons.length !== 1) {
+		throw new Error(`${grammar.scopeName}: media-query's paren rule no longer has exactly one ${KEY_VALUE} match; re-derive patchMediaFeatures`);
+	}
+
+	// Asserted only: the known-name rule must still be there, ahead of the
+	// generic one appended below.
+	one((p) => p.include === "#media-features", "#media-features include");
+
+	var keywords = one((p) => p.include === "#media-feature-keywords", "#media-feature-keywords include");
+	var ratio = one((p) => p.name === "meta.ratio.css", "meta.ratio.css rule");
+	var numbers = one((p) => p.include === "#numeric-values", "#numeric-values include");
+	var comments = one((p) => p.include === "#comment-block", "#comment-block include");
+
+	// Same identifier shape and same neighbors as the stock feature regex: it
+	// must be preceded by whitespace, the open paren or a comment, and it must
+	// end cleanly. The name lookahead is what distinguishes a name from a
+	// stray word, and the value rule only ever runs after a colon.
+	var IDENT = "[-a-zA-Z_][-\\w]*";
+
+	patterns[patterns.indexOf(colons[0])] = {
+		begin: ":",
+		beginCaptures: {
+			"0": {name: KEY_VALUE}
+		},
+		end: "(?=\\))",
+		patterns: [
+			comments,
+			keywords,
+			ratio,
+			numbers,
+			{
+				match: `(?i)(?<=^|\\s|:|\\*/)${IDENT}(?=\\s|\\)|$|/\\*)`,
+				name: "support.constant.property-value.css"
+			}
+		]
+	};
+
+	patterns.push({
+		match: `(?i)(?<=^|\\s|\\(|\\*/)${IDENT}(?=\\s*(?:[:)<>=]|/\\*))`,
+		name: "support.type.property-name.media.css"
+	});
+
+	return "media-features";
 }
