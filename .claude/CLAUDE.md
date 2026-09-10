@@ -61,11 +61,16 @@
   for that reason; put anything that must not ship outside `src/` rather than
   adding an exclusion rule.
 * **Never hand-edit `src/grammars/*.tmLanguage.json`.** They are vendored from
-  cfmleditor byte-identical. The two patches we need are applied to the parsed
-  JSON at load time in `src/grammars/cfml.js`, never to the files on disk.
-  `test/corpus.test.js` hashes both files and fails on any change - a single
-  added space is enough. Updating them upstream is a deliberate procedure:
-  `LICENSES/README.md`.
+  cfmleditor byte-identical. Patches are applied to the parsed JSON at load
+  time in `src/grammars/cfml.js`, never to the files on disk. Stock
+  starry-night grammars are patched the same way in `src/grammars/stock.js`.
+  `test/corpus.test.js` hashes both vendored files and fails on any change - a
+  single added space is enough. Updating them upstream is a deliberate
+  procedure: `LICENSES/README.md`.
+* **Every grammar patch, fence-tag override, or scope refinement gets one line
+  in the README's "Local Grammar Changes" list.** State the experiential
+  outcome as a reader of the rendered page sees it, not the technique. Add the
+  line in the same change that adds the patch; remove it when the patch goes.
 * **`npm` never runs on the host.** Everything routine is a script in
   `scripts/`, each a single `docker compose` invocation. Use those rather than
   retyping the command - `package.sh` and `test-update.sh` in particular carry

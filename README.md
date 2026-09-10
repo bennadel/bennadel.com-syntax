@@ -171,6 +171,38 @@ docker buildx imagetools inspect node:24-alpine --format '{{println .Manifest.Di
 
 Every Linguist grammar is registered, plus 2 vendored CFML grammars. Individual fence tags are corrected by the `flagOverrides` map in `src/core/highlight.js`, which is commented with what each override repairs.
 
+## Local Grammar Changes
+
+Where this service renders differently from the published grammars, the difference is a deliberate preference. Each line states what a reader of the rendered page sees. How it is done is in the source (`src/grammars/cfml.js`, `src/grammars/stock.js`, `src/core/highlight.js`); this list stays current with it.
+
+**Rendering**
+
+- **CFML**: `include "path";` colors as a tag statement, not plain text.
+- **CFML**: the `?.` safe-navigation operator colors as an operator.
+- **CFML**: Lucee tag islands inside cfscript highlight as tags anywhere in the script, including function bodies and script-based components.
+- **CFML**: a bare `&` in URLs and attribute values is not flagged as an error.
+- **CFML**: digits in custom tag names (`<cf_h1>`, `<html:h1>`) are not flagged as errors.
+- **CFML**: call expressions in function metadata (`cachedWithin = createTimeSpan(...)`) highlight as expressions, not errors.
+- **CFML**: `<`, `<=` and `<>` in cfquery SQL bodies are not flagged as errors.
+- **CFML**: common column names (`name`, `type`, `value`, `status`, `date`, `data`) are not colored as SQL keywords inside cfquery bodies.
+- **CFML**: a block written with tags highlights as tags even when the fence says script (`cfc`, `cfs`, `cfscript`).
+- **CFML, HTML**: `--` inside an HTML comment (hyphen-divider comments) is not flagged as an error.
+- **CFML, HTML**: the `<!DOCTYPE` keyword is highlighted.
+- **CFML, JavaScript, TypeScript**: every chained method call renders in one color, whether or not the name collides with a DOM or standard-library method.
+- **CFML, JavaScript, TypeScript**: object-literal keys color as constants.
+- **JavaScript**: regex literals highlight instead of parsing as division.
+- **TypeScript**: template strings in `@Component` metadata parse as HTML.
+- **TypeScript**: a property name renders in one color whether declared, accessed via `this.`, or used as a literal key.
+- **SQL**: `EXPLAIN` and `EXPLAIN ANALYZE` color as keywords.
+
+**Fence tags**
+
+- `cf`, `cfm`, `cfml`, `coldfusion` highlight as tag-based CFML; `cfs`, `cfscript`, `cfc`, `coldfusion-cfc` as script-based CFML. All use the cfmleditor grammars, not Linguist's.
+- `dockerignore` highlights as gitignore syntax.
+- `ndjson` highlights as JSON.
+- `conf` highlights as nginx config, not INI.
+- `txt` renders as plain text with no highlighting.
+
 ## Deployment steps
 
 Target is AWS Lambda: zip package, uploaded through the console. No container registry, no AWS credentials on this machine, no IAM to author.
