@@ -13,7 +13,7 @@
 	<span class="pl-c1">port</span><span class="pl-k">:</span> <span class="pl-c1">process</span>.<span class="pl-smi">env</span>.<span class="pl-c1">DOGSTATSD_PORT</span>,
 	<span class="pl-en">errorHandler</span><span class="pl-k">:</span> <span class="pl-k">function</span> ( <span class="pl-smi">error</span> ) {
 
-		<span class="pl-en">console</span>.<span class="pl-c1">log</span>(
+		<span class="pl-c1">console</span>.<span class="pl-en">log</span>(
 			<span class="pl-c1">JSON</span>.<span class="pl-en">stringify</span>({
 				<span class="pl-c1">log_level</span><span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>error<span class="pl-pds">"</span></span>,
 				<span class="pl-c1">error</span><span class="pl-k">:</span> error
@@ -38,7 +38,7 @@
 
 		<span class="pl-smi">statsd</span>.<span class="pl-en">increment</span>( <span class="pl-s"><span class="pl-pds">"</span>page_request<span class="pl-pds">"</span></span> );
 
-		<span class="pl-en">console</span>.<span class="pl-c1">log</span>(
+		<span class="pl-c1">console</span>.<span class="pl-en">log</span>(
 			<span class="pl-c1">JSON</span>.<span class="pl-en">stringify</span>({
 				<span class="pl-c1">log_level</span><span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>trace<span class="pl-pds">"</span></span>,
 				<span class="pl-c1">message</span><span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">`</span>Handling request on web host <span class="pl-pse"><span class="pl-s1">${</span></span><span class="pl-s1"> </span><span class="pl-smi">os</span><span class="pl-s1">.</span><span class="pl-en">hostname</span><span class="pl-s1">() </span><span class="pl-pse"><span class="pl-s1">}</span></span>.<span class="pl-pds">`</span></span>
@@ -65,7 +65,7 @@
 	port,
 	<span class="pl-k">function</span> () {
 
-		<span class="pl-en">console</span>.<span class="pl-c1">log</span>( <span class="pl-s"><span class="pl-pds">"</span>Express server has bootstrapped on port:<span class="pl-pds">"</span></span>, port );
+		<span class="pl-c1">console</span>.<span class="pl-en">log</span>( <span class="pl-s"><span class="pl-pds">"</span>Express server has bootstrapped on port:<span class="pl-pds">"</span></span>, port );
 
 	}
 );

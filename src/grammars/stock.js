@@ -22,8 +22,8 @@ export var applied = new Map();
 
 var PATCHES = new Map([
 	["source.css", [patchNesting]],
-	["source.js", [patchMethodNameLists, patchObjectKeys]],
-	["source.ts", [patchTemplateProperty, patchMethodNameLists, patchObjectKeys, patchPropertyNames]],
+	["source.js", [patchMethodNameLists, patchConsoleGlobal, patchObjectKeys]],
+	["source.ts", [patchTemplateProperty, patchMethodNameLists, patchConsoleGlobal, patchObjectKeys, patchPropertyNames]],
 	["source.sql", [patchStatementKeywords]],
 	["text.html.basic", [patchCommentHyphens, patchDoctypeCapture]]
 ]);
@@ -207,9 +207,10 @@ function patchDoctypeCapture(grammar) {
 * alternating colors -- the divergence is the point.
 *
 * Deliberately KEPT, in both grammars: rules keyed on an actual global
-* receiver (`console.log`, `Math.round`, `Promise.all`), which are knowledge
-* rather than guesswork, and the bare-global call lists (`setTimeout(`,
-* `parseInt(`), which are not dot methods.
+* receiver (`Math.round`, `Promise.all`), which are knowledge rather than
+* guesswork, and the bare-global call lists (`setTimeout(`, `parseInt(`),
+* which are not dot methods. The one receiver rule that does go is
+* `console`'s -- patchConsoleGlobal, for a different reason.
 *
 * In source.js the dot-PROPERTY name lists steal methods too: the DOM
 * property roster includes `text`, `link`, `top`, so jQuery's `.text(` kept
@@ -331,6 +332,122 @@ function patchMethodNameLists(grammar) {
 	}
 
 	throw new Error(`${grammar.scopeName}: patchMethodNameLists has no branch for this grammar; re-derive it before listing it in PATCHES`);
+}
+
+/**
+* `console` renders as a type name, and its methods as built-ins.
+*
+* Both grammars give `console` a rule of its own, keyed on the receiver and
+* carrying a roster of its methods, and neither treats any other global that
+* way: `document`, `window`, `navigator` are one entry in a list scoped
+* support.variable.dom, and the method after them is whatever the method-call
+* rule says. So two adjacent lines render with their colors swapped --
+*
+*   console.info( "Setup" );                    <-- pl-en . pl-c1 (js)
+*                                                   pl-c1 . pl-c1 (ts)
+*   document.addEventListener( "mousedown", f ); <-- pl-c1 . pl-en (both)
+*
+* -- and a reader has no reason to expect the two globals to differ. The
+* patch reduces each console rule to a bare receiver match carrying the same
+* support.variable.dom scope the other globals have, so `console` colors like
+* `document` and the method after it falls through to the ordinary method-call
+* rule like any other. The method roster goes with the rule: `console.table(`
+* and `console.log(` are the same kind of thing, and the roster made them
+* differ. This DIVERGES from GitHub, which keeps the special rule.
+*/
+function patchConsoleGlobal(grammar) {
+	// Exact-name node counter, used to pin the post-patch state: the console
+	// scopes must appear NOWHERE else, or a starry-night upgrade could add a
+	// second console rule that survives this patch and puts the type-name color
+	// back in some context nobody re-tested.
+	function countScope(node, scope) {
+		if (Array.isArray(node)) {
+			return node.reduce((sum, item) => sum + countScope(item, scope), 0);
+		}
+		if (node && typeof node === "object") {
+			var self = (node.name === scope) ? 1 : 0;
+			return Object.values(node).reduce((sum, value) => sum + countScope(value, scope), self);
+		}
+		return 0;
+	}
+
+	if (grammar.scopeName === "source.js") {
+		// A begin/end rule in the top-level patterns: `console` opens it, the
+		// nested rule scopes the method, and the end matches after the call's
+		// closing paren. Pin the begin regex and the receiver scope: anything
+		// else means the rule was reworked.
+		var BEGIN = "(?<![\\w$])console(?![\\w$]|\\s*:)";
+		var rules = grammar.patterns.filter((p) => p.begin === BEGIN);
+
+		if (
+			rules.length !== 1
+			|| typeof rules[0].end !== "string"
+			|| !rules[0].beginCaptures
+			|| !rules[0].beginCaptures["0"]
+			|| rules[0].beginCaptures["0"].name !== "entity.name.type.object.console.js"
+		) {
+			throw new Error(`${grammar.scopeName}: the console rule no longer has the expected begin/end shape; re-derive patchConsoleGlobal`);
+		}
+
+		// Same position, same regex, no body: the receiver alone, scoped like
+		// `document`. The `.method(` after it is method_calls' business.
+		grammar.patterns[grammar.patterns.indexOf(rules[0])] = {
+			match: BEGIN,
+			name: "support.variable.dom.js"
+		};
+
+		if (
+			countScope(grammar, "entity.name.type.object.console.js") !== 0
+			|| countScope(grammar, "support.function.console.js") !== 0
+		) {
+			throw new Error(`${grammar.scopeName}: a console scope now appears outside the top-level console rule; extend patchConsoleGlobal to cover it`);
+		}
+
+		return "console-global";
+	}
+
+	if (grammar.scopeName === "source.ts") {
+		// Microsoft's version is one match in support-objects: the receiver,
+		// then an optional accessor and method roster. Cut the match after the
+		// receiver group and drop the accessor and method captures with it.
+		var HEAD = "(?x)(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))(console)";
+		var TAIL = "\\b(?!\\$)";
+		var EXPECTED_TS = [
+			"support.class.console.ts",
+			"punctuation.accessor.ts",
+			"punctuation.accessor.optional.ts",
+			"support.function.console.ts"
+		];
+		var objects = grammar.repository["support-objects"].patterns;
+		var matches = objects.filter((p) => p.captures && Object.values(p.captures).some((c) => c.name === "support.class.console.ts"));
+
+		if (
+			matches.length !== 1
+			|| JSON.stringify(Object.values(matches[0].captures).map((c) => c.name)) !== JSON.stringify(EXPECTED_TS)
+			|| !matches[0].match.startsWith(HEAD)
+			|| !matches[0].match.endsWith(TAIL)
+		) {
+			throw new Error(`${grammar.scopeName}: the support-objects console rule no longer has the expected shape; re-derive patchConsoleGlobal`);
+		}
+
+		matches[0].match = `${HEAD}${TAIL}`;
+		matches[0].captures = {
+			"1": {
+				name: "support.variable.dom.ts"
+			}
+		};
+
+		if (
+			countScope(grammar, "support.class.console.ts") !== 0
+			|| countScope(grammar, "support.function.console.ts") !== 0
+		) {
+			throw new Error(`${grammar.scopeName}: a console scope now appears outside support-objects; extend patchConsoleGlobal to cover it`);
+		}
+
+		return "console-global";
+	}
+
+	throw new Error(`${grammar.scopeName}: patchConsoleGlobal has no branch for this grammar; re-derive it before listing it in PATCHES`);
 }
 
 /**

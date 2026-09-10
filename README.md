@@ -190,6 +190,7 @@ Where this service renders differently from the published grammars, the differen
 - **CFML, HTML**: the `<!DOCTYPE` keyword is highlighted.
 - **CFML, JavaScript, TypeScript**: every chained method call renders in one color, whether or not the name collides with a DOM or standard-library method.
 - **CFML, JavaScript, TypeScript**: object-literal keys color as constants.
+- **CFML, JavaScript, TypeScript**: `console` colors as a global like `document` and `window`, and `console.log(` colors like any other method call rather than as a built-in.
 - **CSS**: nested rules highlight as rules: the `&` nesting selector colors like an element name, a nested selector colors as a selector, and the declarations inside a nested block color as declarations rather than plain text.
 - **JavaScript**: regex literals highlight instead of parsing as division.
 - **TypeScript**: template strings in `@Component` metadata parse as HTML.

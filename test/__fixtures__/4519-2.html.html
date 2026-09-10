@@ -21,14 +21,14 @@
 
 		<span class="pl-k">function</span> <span class="pl-en">default_setup</span>() {
 
-			<span class="pl-en">console</span>.<span class="pl-c1">info</span>( <span class="pl-s"><span class="pl-pds">"</span>Default: Setup<span class="pl-pds">"</span></span> );
+			<span class="pl-c1">console</span>.<span class="pl-en">info</span>( <span class="pl-s"><span class="pl-pds">"</span>Default: Setup<span class="pl-pds">"</span></span> );
 			<span class="pl-c1">document</span>.<span class="pl-en">addEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>mousedown<span class="pl-pds">"</span></span>, default_handleMousedown );
 
 		}
 
 		<span class="pl-k">function</span> <span class="pl-en">default_teardown</span>() {
 
-			<span class="pl-en">console</span>.<span class="pl-c1">info</span>( <span class="pl-s"><span class="pl-pds">"</span>Default: Teardown<span class="pl-pds">"</span></span> );
+			<span class="pl-c1">console</span>.<span class="pl-en">info</span>( <span class="pl-s"><span class="pl-pds">"</span>Default: Teardown<span class="pl-pds">"</span></span> );
 			<span class="pl-c1">document</span>.<span class="pl-en">removeEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>mousedown<span class="pl-pds">"</span></span>, default_handleMousedown );
 
 		}
@@ -50,7 +50,7 @@
 
 		<span class="pl-k">function</span> <span class="pl-en">pending_setup</span>( <span class="pl-smi">clientY</span> ) {
 
-			<span class="pl-en">console</span>.<span class="pl-c1">info</span>( <span class="pl-s"><span class="pl-pds">"</span>Pending: Setup<span class="pl-pds">"</span></span> );
+			<span class="pl-c1">console</span>.<span class="pl-en">info</span>( <span class="pl-s"><span class="pl-pds">"</span>Pending: Setup<span class="pl-pds">"</span></span> );
 			<span class="pl-c1">document</span>.<span class="pl-en">addEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>mouseup<span class="pl-pds">"</span></span>, pending_handleMouseup );
 			<span class="pl-c1">document</span>.<span class="pl-en">addEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>mousemove<span class="pl-pds">"</span></span>, pending_handleMousemove );
 
@@ -60,7 +60,7 @@
 
 		<span class="pl-k">function</span> <span class="pl-en">pending_teardown</span>() {
 
-			<span class="pl-en">console</span>.<span class="pl-c1">info</span>( <span class="pl-s"><span class="pl-pds">"</span>Pending: Teardown<span class="pl-pds">"</span></span> );
+			<span class="pl-c1">console</span>.<span class="pl-en">info</span>( <span class="pl-s"><span class="pl-pds">"</span>Pending: Teardown<span class="pl-pds">"</span></span> );
 			<span class="pl-c1">document</span>.<span class="pl-en">removeEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>mouseup<span class="pl-pds">"</span></span>, pending_handleMouseup );
 			<span class="pl-c1">document</span>.<span class="pl-en">removeEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>mousemove<span class="pl-pds">"</span></span>, pending_handleMousemove );
 
@@ -95,7 +95,7 @@
 
 		<span class="pl-k">function</span> <span class="pl-en">dragging_setup</span>( <span class="pl-smi">clientY</span> ) {
 
-			<span class="pl-en">console</span>.<span class="pl-c1">info</span>( <span class="pl-s"><span class="pl-pds">"</span>Dragging: Setup<span class="pl-pds">"</span></span> );
+			<span class="pl-c1">console</span>.<span class="pl-en">info</span>( <span class="pl-s"><span class="pl-pds">"</span>Dragging: Setup<span class="pl-pds">"</span></span> );
 			<span class="pl-c1">document</span>.<span class="pl-en">addEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>mousemove<span class="pl-pds">"</span></span>, dragging_handleMousemove );
 			<span class="pl-c1">document</span>.<span class="pl-en">addEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>mouseup<span class="pl-pds">"</span></span>, dragging_handleMouseup );
 
@@ -107,7 +107,7 @@
 
 		<span class="pl-k">function</span> <span class="pl-en">dragging_teardown</span>() {
 
-			<span class="pl-en">console</span>.<span class="pl-c1">info</span>( <span class="pl-s"><span class="pl-pds">"</span>Dragging: Teardown<span class="pl-pds">"</span></span> );
+			<span class="pl-c1">console</span>.<span class="pl-en">info</span>( <span class="pl-s"><span class="pl-pds">"</span>Dragging: Teardown<span class="pl-pds">"</span></span> );
 			<span class="pl-c1">document</span>.<span class="pl-en">removeEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>mousemove<span class="pl-pds">"</span></span>, dragging_handleMousemove );
 			<span class="pl-c1">document</span>.<span class="pl-en">removeEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>mouseup<span class="pl-pds">"</span></span>, dragging_handleMouseup );
 			<span class="pl-c1">clearInterval</span>( <span class="pl-smi">dragging_setup</span>.<span class="pl-smi">timer</span> );
@@ -129,7 +129,7 @@
 
 		<span class="pl-k">function</span> <span class="pl-en">dragging_handleInterval</span>() {
 
-			<span class="pl-en">console</span>.<span class="pl-c1">log</span>(
+			<span class="pl-c1">console</span>.<span class="pl-en">log</span>(
 				<span class="pl-s"><span class="pl-pds">"</span>Drag delta from origin:<span class="pl-pds">"</span></span>,
 				( <span class="pl-smi">dragging_setup</span>.<span class="pl-smi">currentClientY</span> <span class="pl-k">-</span> <span class="pl-smi">dragging_setup</span>.<span class="pl-smi">initialClientY</span> )
 			);

@@ -129,13 +129,13 @@
 				<span class="pl-c">// I bind the JavaScript events to the view-model.</span>
 				<span class="pl-k">function</span> <span class="pl-en">link</span>( <span class="pl-smi">scope</span>, <span class="pl-smi">element</span>, <span class="pl-smi">attributes</span> ) {
 
-					<span class="pl-en">console</span>.<span class="pl-c1">log</span>( <span class="pl-s"><span class="pl-pds">"</span>.... Uploader directive linked.<span class="pl-pds">"</span></span> );
+					<span class="pl-c1">console</span>.<span class="pl-en">log</span>( <span class="pl-s"><span class="pl-pds">"</span>.... Uploader directive linked.<span class="pl-pds">"</span></span> );
 
 					<span class="pl-c">// Let's log the next tick so we can when things happen in the console.</span>
 					<span class="pl-c1">setTimeout</span>(
 						<span class="pl-k">function</span>() {
 
-							<span class="pl-en">console</span>.<span class="pl-c1">log</span>( <span class="pl-s"><span class="pl-pds">"</span>&gt;&gt;&gt;&gt; Tick &lt;&lt;&lt;&lt;<span class="pl-pds">"</span></span> );
+							<span class="pl-c1">console</span>.<span class="pl-en">log</span>( <span class="pl-s"><span class="pl-pds">"</span>&gt;&gt;&gt;&gt; Tick &lt;&lt;&lt;&lt;<span class="pl-pds">"</span></span> );
 
 						}
 					);
@@ -172,7 +172,7 @@
 					<span class="pl-c">// I handle the destroy event, performing cleanup.</span>
 					<span class="pl-k">function</span> <span class="pl-en">handleDestroy</span>() {
 
-						<span class="pl-en">console</span>.<span class="pl-c1">warn</span>( <span class="pl-s"><span class="pl-pds">"</span>.... Destroying uploader.<span class="pl-pds">"</span></span> );
+						<span class="pl-c1">console</span>.<span class="pl-en">warn</span>( <span class="pl-s"><span class="pl-pds">"</span>.... Destroying uploader.<span class="pl-pds">"</span></span> );
 
 						<span class="pl-c">// If the Plupload uploader had not yet been initialized, stop</span>
 						<span class="pl-c">// the timer to make sure it doesn't try to.</span>

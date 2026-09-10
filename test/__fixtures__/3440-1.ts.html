@@ -44,7 +44,7 @@
 	<span class="pl-c">// Angular application.</span>
 	<span class="pl-k">public</span> <span class="pl-en">ngDoCheck</span>() <span class="pl-k">:</span> <span class="pl-c1">void</span> {
 
-		<span class="pl-c1">console</span>.<span class="pl-c1">log</span>( <span class="pl-s"><span class="pl-pds">"</span>ngDoCheck() - Change detection running.<span class="pl-pds">"</span></span> );
+		<span class="pl-c1">console</span>.<span class="pl-en">log</span>( <span class="pl-s"><span class="pl-pds">"</span>ngDoCheck() - Change detection running.<span class="pl-pds">"</span></span> );
 
 	}
 
@@ -97,7 +97,7 @@
 	<span class="pl-c">// I handle mousedown events.</span>
 	<span class="pl-k">private</span> <span class="pl-en">handleMousedown</span> <span class="pl-k">=</span> ( <span class="pl-v">event</span><span class="pl-k">:</span> <span class="pl-en">MouseEvent</span> ) <span class="pl-k">:</span> <span class="pl-c1">void</span> <span class="pl-k">=&gt;</span> {
 
-		<span class="pl-c1">console</span>.<span class="pl-c1">log</span>( <span class="pl-s"><span class="pl-pds">"</span>mousedown<span class="pl-pds">"</span></span> );
+		<span class="pl-c1">console</span>.<span class="pl-en">log</span>( <span class="pl-s"><span class="pl-pds">"</span>mousedown<span class="pl-pds">"</span></span> );
 		<span class="pl-c">// TEST: The current method is running OUTSIDE of the Angular Zone. As such, I'm</span>
 		<span class="pl-c">// testing to see if subsequent event bindings, configured OUTSIDE of the Angular</span>
 		<span class="pl-c">// Zone, will continue to operate OUTSIDE of the Angular Zone.</span>
@@ -109,7 +109,7 @@
 	<span class="pl-c">// I handle mouseup events.</span>
 	<span class="pl-k">private</span> <span class="pl-en">handleMouseup</span> <span class="pl-k">=</span> ( <span class="pl-v">event</span><span class="pl-k">:</span> <span class="pl-en">MouseEvent</span> ) <span class="pl-k">:</span> <span class="pl-c1">void</span> <span class="pl-k">=&gt;</span> {
 
-		<span class="pl-c1">console</span>.<span class="pl-c1">log</span>( <span class="pl-s"><span class="pl-pds">"</span>mouseup<span class="pl-pds">"</span></span> );
+		<span class="pl-c1">console</span>.<span class="pl-en">log</span>( <span class="pl-s"><span class="pl-pds">"</span>mouseup<span class="pl-pds">"</span></span> );
 
 		<span class="pl-c1">this</span>.<span class="pl-c1">element</span>.<span class="pl-en">removeEventListener</span>( <span class="pl-s"><span class="pl-pds">"</span>mouseup<span class="pl-pds">"</span></span>, <span class="pl-c1">this</span>.<span class="pl-c1">handleMouseup</span>, <span class="pl-c1">false</span> );
 		<span class="pl-c">// TEST: If the current event handler is running outside of the Angular Zone</span>
@@ -118,7 +118,7 @@
 		<span class="pl-c1">setTimeout</span>(
 			() <span class="pl-k">:</span> <span class="pl-c1">void</span> <span class="pl-k">=&gt;</span> {
 
-				<span class="pl-c1">console</span>.<span class="pl-c1">log</span>( <span class="pl-s"><span class="pl-pds">"</span>timer<span class="pl-pds">"</span></span> );
+				<span class="pl-c1">console</span>.<span class="pl-en">log</span>( <span class="pl-s"><span class="pl-pds">"</span>timer<span class="pl-pds">"</span></span> );
 
 			},
 			<span class="pl-c1">100</span>

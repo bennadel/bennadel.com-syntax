@@ -909,9 +909,9 @@ if (!UPDATE) {
 	// The patch must delete ONLY the dot-method lists. Rules keyed on an actual
 	// global receiver and the bare-global call lists are knowledge, not
 	// guesswork, and stay built-ins.
-	var keptBuiltins = highlight("console.log( \"x\" );\nsetTimeout( run, 100 );", "js");
-	assertEqual("console method is still a built-in",
-		keptBuiltins.html.includes("<span class=\"pl-c1\">log</span>"), true);
+	var keptBuiltins = highlight("Math.round( x );\nsetTimeout( run, 100 );", "js");
+	assertEqual("Math method is still a built-in",
+		keptBuiltins.html.includes("<span class=\"pl-c1\">round</span>"), true);
 	assertEqual("bare global call is still a built-in",
 		keptBuiltins.html.includes("<span class=\"pl-c1\">setTimeout</span>"), true);
 
@@ -920,6 +920,33 @@ if (!UPDATE) {
 	var chainInCfm = highlight(`<script type="text/javascript">\n${chainSource}\n</script>`, "cfm");
 	assertEqual("DOM-colliding method in an embedded js chain is a function name",
 		chainInCfm.html.includes("<span class=\"pl-en\">click</span>"), true);
+
+	// -- console global ---------------------------------------------------------------
+
+	// Every JavaScript grammar here gave `console` a rule of its own with a
+	// method roster, so `console.log(` and `document.addEventListener(` rendered
+	// with their colors swapped. The console-global patch (src/grammars/stock.js,
+	// and its twin in src/grammars/cfml.js for script islands) rescopes `console`
+	// as the same DOM global as `document` and lets the method fall through.
+	var consoleSource = "console.log( \"x\" );\ndocument.addEventListener( \"click\", run );";
+
+	for (var fence of ["js", "ts"]) {
+		var consoleOut = highlight(consoleSource, fence);
+		assertEqual(`console in ${fence} is a global like document`,
+			consoleOut.html.includes("<span class=\"pl-c1\">console</span>"), true);
+		assertEqual(`console method in ${fence} is a function name like any other`,
+			consoleOut.html.includes("<span class=\"pl-en\">log</span>"), true);
+		assertEqual(`document in ${fence} is a global`,
+			consoleOut.html.includes("<span class=\"pl-c1\">document</span>"), true);
+		assertEqual(`document method in ${fence} is a function name`,
+			consoleOut.html.includes("<span class=\"pl-en\">addEventListener</span>"), true);
+	}
+
+	var consoleInCfm = highlight(`<script type="text/javascript">\n${consoleSource}\n</script>`, "cfm");
+	assertEqual("console in an embedded script is a global like document",
+		consoleInCfm.html.includes("<span class=\"pl-c1\">console</span>"), true);
+	assertEqual("console method in an embedded script is a function name",
+		consoleInCfm.html.includes("<span class=\"pl-en\">log</span>"), true);
 
 	// -- object keys ------------------------------------------------------------------
 
@@ -1007,12 +1034,12 @@ if (!UPDATE) {
 	// drops a patch from the list.
 	assertEqual("every vendored grammar is patched",
 		[...cfmlPatches.values()].map((names) => names.join(",")).join(" | "),
-		"bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits,function-metadata,comment-hyphens,bad-angle-bracket,doctype-capture,method-name-lists,object-keys,sql-column-words | bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits,function-metadata,comment-hyphens,bad-angle-bracket,doctype-capture,method-name-lists,object-keys,sql-column-words");
+		"bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits,function-metadata,comment-hyphens,bad-angle-bracket,doctype-capture,method-name-lists,console-global,object-keys,sql-column-words | bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits,function-metadata,comment-hyphens,bad-angle-bracket,doctype-capture,method-name-lists,console-global,object-keys,sql-column-words");
 
 	// Same pin for the stock-grammar patch layer (src/grammars/stock.js).
 	assertEqual("every stock grammar is patched",
 		[...stockPatches.entries()].map(([scope, names]) => `${scope}:${names.join(",")}`).join(" | "),
-		"source.css:nesting | source.js:method-name-lists,object-keys | source.sql:statement-keywords | source.ts:template-property,method-name-lists,object-keys,property-names | text.html.basic:comment-hyphens,doctype-capture");
+		"source.css:nesting | source.js:method-name-lists,console-global,object-keys | source.sql:statement-keywords | source.ts:template-property,method-name-lists,console-global,object-keys,property-names | text.html.basic:comment-hyphens,doctype-capture");
 
 	// The vendored files are byte-identical to upstream, and this is what makes
 	// that a fact rather than an intention. Both patches are applied to the

@@ -80,7 +80,7 @@ export var CFML_SCRIPT = "embedding.cfml.cfs";
 */
 export var applied = new Map();
 
-var PATCHES = [patchBareInclude, patchSafeNavigation, patchTagIsland, patchBadAmpersand, patchCustomTagDigits, patchFunctionMetadata, patchCommentHyphens, patchBadAngleBracket, patchDoctypeCapture, patchMethodNameLists, patchObjectKeys, patchSqlColumnWords];
+var PATCHES = [patchBareInclude, patchSafeNavigation, patchTagIsland, patchBadAmpersand, patchCustomTagDigits, patchFunctionMetadata, patchCommentHyphens, patchBadAngleBracket, patchDoctypeCapture, patchMethodNameLists, patchConsoleGlobal, patchObjectKeys, patchSqlColumnWords];
 
 export async function loadCfmlGrammars() {
 	return Promise.all([
@@ -815,6 +815,85 @@ function patchMethodNameLists(grammar, file) {
 	}
 
 	return "method-name-lists";
+}
+
+/**
+* `console` in a script island renders as a class, and its methods as
+* built-ins.
+*
+* The twin of patchConsoleGlobal in stock.js, which carries the full
+* rationale: the vendored copy of Microsoft's JavaScript rules gives `console`
+* a rule of its own with a method roster, while `document` and `window` are
+* one entry in a list scoped support.variable.dom and take whatever the
+* method-call rule gives the name after them. Cutting the console match after
+* the receiver group and rescoping it makes `console.log(` render exactly like
+* `document.addEventListener(`. This DIVERGES from GitHub, which keeps the
+* special rule.
+*/
+function patchConsoleGlobal(grammar, file) {
+	// Both script-island contexts carry their own copy of the rule: the general
+	// one, and the twin used inside <cfoutput> blocks.
+	var ENTRIES = [
+		"source-js-support-objects",
+		"source-js-cfoutput-support-objects"
+	];
+
+	var HEAD = "(?x)(?<!\\.|\\$)\\b(console)";
+	var TAIL = "\\b(?!\\$)";
+	var EXPECTED = [
+		"support.class.console.js",
+		"punctuation.accessor.js",
+		"support.function.console.js"
+	];
+
+	for (var entry of ENTRIES) {
+		// Unguarded for the same reason as the patches above: a rename throws a
+		// TypeError that names the expression.
+		var patterns = grammar.repository[entry].patterns;
+
+		var matches = patterns.filter((p) => p.captures && Object.values(p.captures).some((c) => c.name === "support.class.console.js"));
+
+		// Anchor check on the exact rule shape. Anything else means the rule was
+		// reworked -- re-derive rather than cutting into a stranger.
+		if (
+			matches.length !== 1
+			|| JSON.stringify(Object.values(matches[0].captures).map((c) => c.name)) !== JSON.stringify(EXPECTED)
+			|| !matches[0].match.startsWith(HEAD)
+			|| !matches[0].match.endsWith(TAIL)
+		) {
+			throw new Error(`${file}: ${entry} no longer has the expected console rule shape; re-derive patchConsoleGlobal`);
+		}
+
+		matches[0].match = `${HEAD}${TAIL}`;
+		matches[0].captures = {
+			"1": {
+				name: "support.variable.dom.js"
+			}
+		};
+	}
+
+	// The console scopes must be gone entirely. A third carrier appearing in an
+	// upstream update would survive this patch and put the class color back in
+	// some context nobody re-tested -- fail loudly instead.
+	function count(node, scope) {
+		if (Array.isArray(node)) {
+			return node.reduce((sum, item) => sum + count(item, scope), 0);
+		}
+		if (node && typeof node === "object") {
+			var self = (node.name === scope) ? 1 : 0;
+			return Object.values(node).reduce((sum, value) => sum + count(value, scope), self);
+		}
+		return 0;
+	}
+
+	if (
+		count(grammar, "support.class.console.js") !== 0
+		|| count(grammar, "support.function.console.js") !== 0
+	) {
+		throw new Error(`${file}: a console rule now appears outside the two support-objects entries; extend patchConsoleGlobal to cover it`);
+	}
+
+	return "console-global";
 }
 
 /**
