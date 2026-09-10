@@ -141,14 +141,14 @@ export async function handleRequest({method, path, language, token, body}) {
 	try {
 		var result = highlight(body, language);
 
-		// x-language is emitted even when nothing resolved -- an empty value
+		// x-scope is emitted even when nothing resolved -- an empty value
 		// rather than an absent header, so a client reads it unconditionally.
 		return {
 			status: 200,
 			headers: {
 				"content-type": "text/html; charset=utf-8",
 				"x-highlighted": String(result.highlighted),
-				"x-language": result.resolvedLanguage ?? ""
+				"x-scope": result.scope ?? ""
 			},
 			body: result.html
 		};

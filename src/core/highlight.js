@@ -134,7 +134,7 @@ var ESCAPES = {"&": "&amp;", "<": "&lt;", ">": "&gt;"};
 *
 * @param {string} code   Raw source. Never trusted.
 * @param {string} flag   Fence tag, e.g. 'cfml'.
-* @returns {{html: string, highlighted: boolean, resolvedLanguage: string|null}}
+* @returns {{html: string, highlighted: boolean, scope: string|null}}
 */
 export function highlight(code, flag) {
 	var source = normalize(code);
@@ -179,7 +179,7 @@ export function highlight(code, flag) {
 			{allowDangerousHtml: true}
 		),
 		highlighted: true,
-		resolvedLanguage: scope
+		scope
 	};
 }
 
@@ -365,7 +365,7 @@ function plain(source) {
 		// ours, routing it through the serializer would only be ceremony.
 		html: escapeText(source),
 		highlighted: false,
-		resolvedLanguage: null
+		scope: null
 	};
 }
 

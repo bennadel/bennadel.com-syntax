@@ -121,13 +121,13 @@ for (var entry of entries) {
 	// acquiring token spans. Neither is visible in a golden diff alone, because
 	// --update would happily bless either one.
 	var expectPlain = EXPECT_PLAIN.has(language);
-	var isPlain = !result.highlighted && result.resolvedLanguage == null;
+	var isPlain = !result.highlighted && result.scope == null;
 
 	if (expectPlain !== isPlain) {
 		fail(`${entry} resolves as expected`,
 			expectPlain
-				? `expected the plain-text path, got resolvedLanguage=${result.resolvedLanguage} -- a grammar has claimed "${language}"`
-				: `highlighted=${result.highlighted} resolvedLanguage=${result.resolvedLanguage} -- is "${language}" still a known flag?`);
+				? `expected the plain-text path, got scope=${result.scope} -- a grammar has claimed "${language}"`
+				: `highlighted=${result.highlighted} scope=${result.scope} -- is "${language}" still a known flag?`);
 		continue;
 	}
 
@@ -146,7 +146,7 @@ for (var entry of entries) {
 	}
 
 	if (result.html === expected) {
-		pass(`${entry} (${result.resolvedLanguage})`);
+		pass(`${entry} (${result.scope})`);
 	} else {
 		fail(entry, diffAt(result.html, expected));
 	}
@@ -214,7 +214,7 @@ if (!UPDATE) {
 
 	var unknown = highlight("x = 1", "not-a-real-language");
 	assertEqual("unknown language is not an error", unknown.highlighted, false);
-	assertEqual("unknown language resolves to null", unknown.resolvedLanguage, null);
+	assertEqual("unknown language resolves to null", unknown.scope, null);
 	assertEqual("unknown language still returns text", unknown.html, "x = 1");
 
 	var noFlag = highlight("x = 1");
@@ -224,7 +224,7 @@ if (!UPDATE) {
 	// must degrade to escaped plain text rather than throwing or truncating.
 	var long = highlight("a".repeat(config.maxLineLength + 1), "cfml");
 	assertEqual("over-long line refuses", long.highlighted, false);
-	assertEqual("over-long line resolves to null", long.resolvedLanguage, null);
+	assertEqual("over-long line resolves to null", long.scope, null);
 	assertEqual("over-long line returns all of it", long.html.length, config.maxLineLength + 1);
 
 	var atLimit = highlight("a".repeat(config.maxLineLength), "cfml");
@@ -292,7 +292,7 @@ if (!UPDATE) {
 		var result = highlight("! plain <text> & symbols", flag);
 		assertEqual(
 			`"${flag}" falls through to plain text`,
-			`${result.highlighted}/${result.resolvedLanguage}`,
+			`${result.highlighted}/${result.scope}`,
 			"false/null"
 		);
 	}
@@ -354,7 +354,7 @@ if (!UPDATE) {
 	];
 
 	for (var [flag, scope] of mustResolve) {
-		assertEqual(`"${flag}" resolves to ${scope}`, highlight("x", flag).resolvedLanguage, scope);
+		assertEqual(`"${flag}" resolves to ${scope}`, highlight("x", flag).scope, scope);
 	}
 
 	// Tags that resolve ONLY because of a flagOverrides entry. Kept separate
@@ -380,7 +380,7 @@ if (!UPDATE) {
 	];
 
 	for (var [flag, scope] of mustResolveViaOverride) {
-		assertEqual(`override: "${flag}" -> ${scope}`, highlight("x", flag).resolvedLanguage, scope);
+		assertEqual(`override: "${flag}" -> ${scope}`, highlight("x", flag).scope, scope);
 	}
 
 	// -------------------------------------------------------------------------
@@ -421,8 +421,8 @@ if (!UPDATE) {
 
 	// Case and whitespace are normalized before lookup, so these are the same
 	// tag. Worth pinning because the archive's fence tags were hand-typed.
-	assertEqual("flags are case-insensitive", highlight("x", "CFML").resolvedLanguage, "embedding.cfml");
-	assertEqual("flags are trimmed", highlight("x", "  js  ").resolvedLanguage, "source.js");
+	assertEqual("flags are case-insensitive", highlight("x", "CFML").scope, "embedding.cfml");
+	assertEqual("flags are trimmed", highlight("x", "  js  ").scope, "source.js");
 
 	// -------------------------------------------------------------------------
 	// Content-based scope refinement
@@ -437,7 +437,7 @@ if (!UPDATE) {
 	console.log("");
 	console.log("cfc tag-vs-script detection");
 
-	var asCfc = (code) => highlight(code, "cfc").resolvedLanguage;
+	var asCfc = (code) => highlight(code, "cfc").scope;
 
 	assertEqual("full tag-based component -> embedding.cfml",
 		asCfc("<cfcomponent>\n\t<cffunction name=\"init\">\n\t</cffunction>\n</cfcomponent>"), "embedding.cfml");
@@ -472,15 +472,15 @@ if (!UPDATE) {
 	// The refinement keys off the scope, not the tag, so the explicit script
 	// spellings get the same correction.
 	assertEqual("\"cfs\" with tag-based content -> embedding.cfml",
-		highlight("<cfset x = 1 />", "cfs").resolvedLanguage, "embedding.cfml");
+		highlight("<cfset x = 1 />", "cfs").scope, "embedding.cfml");
 	assertEqual("\"cfscript\" with tag-based content -> embedding.cfml",
-		highlight("<cfset x = 1 />", "cfscript").resolvedLanguage, "embedding.cfml");
+		highlight("<cfset x = 1 />", "cfscript").scope, "embedding.cfml");
 
 	// Unrelated scopes must be untouched by the refinement.
 	assertEqual("cfml with tag content unaffected",
-		highlight("<cfset x = 1 />", "cfml").resolvedLanguage, "embedding.cfml");
+		highlight("<cfset x = 1 />", "cfml").scope, "embedding.cfml");
 	assertEqual("js containing a cf-looking line unaffected",
-		highlight("const s = 1;\n<cfset x = 1 />", "js").resolvedLanguage, "source.js");
+		highlight("const s = 1;\n<cfset x = 1 />", "js").scope, "source.js");
 
 	// -------------------------------------------------------------------------
 	// CFML grammar: what cfmleditor fixed, and what we still patch
@@ -559,7 +559,7 @@ if (!UPDATE) {
 		"cfc"
 	);
 	assertEqual("tag-based file still routes to the tag grammar",
-		insideTag.resolvedLanguage, "embedding.cfml");
+		insideTag.scope, "embedding.cfml");
 	assertEqual("grammar reaches cfscript nested in tags",
 		insideTag.html.includes("<span class=\"pl-k\">final</span>"), true);
 	assertEqual("include patch reaches cfscript nested in tags",
@@ -581,7 +581,7 @@ if (!UPDATE) {
 	);
 
 	assertEqual("island component routes to the script grammar",
-		island.resolvedLanguage, "embedding.cfml.cfs");
+		island.scope, "embedding.cfml.cfs");
 	assertEqual("island cfquery is a tag",
 		island.html.includes("<span class=\"pl-ent\">cfquery</span>"), true);
 	assertEqual("island cfquery embeds SQL",
@@ -734,7 +734,7 @@ if (!UPDATE) {
 	// visible through an ordinary `htm` fence).
 	var dividerInHtm = highlight("<!-- ------- -->\n<div>x</div>", "htm");
 	assertEqual("htm fence resolves to the stock html grammar",
-		dividerInHtm.resolvedLanguage, "text.html.basic");
+		dividerInHtm.scope, "text.html.basic");
 	assertEqual("divider comment in html is not illegal",
 		dividerInHtm.html.includes("pl-ii"), false);
 	assertEqual("divider in html renders as one comment",
@@ -751,7 +751,7 @@ if (!UPDATE) {
 	// `WITH RECURSIVE` color as one keyword rather than half of one.
 	var statements = highlight("EXPLAIN SELECT 1;\nEXPLAIN ANALYZE SELECT 1;\nexplain select 1;\nWITH t AS (SELECT 1) SELECT 1;\nWITH RECURSIVE t AS (SELECT 1) SELECT 1;\nwith t as (select 1) select 1;", "sql");
 	assertEqual("sql fence resolves to the stock sql grammar",
-		statements.resolvedLanguage, "source.sql");
+		statements.scope, "source.sql");
 	assertEqual("explain is a keyword",
 		statements.html.includes("<span class=\"pl-k\">EXPLAIN</span> <span class=\"pl-k\">SELECT</span>"), true);
 	assertEqual("explain analyze is one keyword",
@@ -800,7 +800,7 @@ if (!UPDATE) {
 		"p { color: red; }"
 	].join("\n"), "css");
 	assertEqual("css fence resolves to the stock css grammar",
-		nested.resolvedLanguage, "source.css");
+		nested.scope, "source.css");
 	assertEqual("nesting selector is a tag",
 		nested.html.includes("<span class=\"pl-ent\">&amp;</span><span class=\"pl-e\">:focus</span>,"), true);
 	assertEqual("declaration inside a nested block is a property",
@@ -841,7 +841,7 @@ if (!UPDATE) {
 		"ts"
 	);
 	assertEqual("ts fence resolves to the stock typescript grammar",
-		templateNextLine.resolvedLanguage, "source.ts");
+		templateNextLine.scope, "source.ts");
 	assertEqual("next-line template markup renders as a tag",
 		templateNextLine.html.includes("<span class=\"pl-ent\">a</span>"), true);
 	// Angular binding syntax deliberately renders as a GENERIC attribute --
@@ -884,7 +884,7 @@ if (!UPDATE) {
 
 	var chainInJs = highlight(chainSource, "js");
 	assertEqual("js fence resolves to the stock javascript grammar",
-		chainInJs.resolvedLanguage, "source.js");
+		chainInJs.scope, "source.js");
 	assertEqual("unlisted method in a js chain is a function name",
 		chainInJs.html.includes("<span class=\"pl-en\">attr</span>"), true);
 	assertEqual("DOM-colliding method in a js chain is the same function scope",
@@ -1068,8 +1068,8 @@ if (!UPDATE) {
 	// plausible in their own right. If the archive scan turns up real uses,
 	// override them the way `txt` is overridden. If these values ever change,
 	// that is worth knowing rather than absorbing silently.
-	assertEqual("known wart: \"snippet\"", highlight("x", "snippet").resolvedLanguage, "source.yasnippet");
-	assertEqual("known wart: \"tpl\"", highlight("x", "tpl").resolvedLanguage, "source.go-template");
+	assertEqual("known wart: \"snippet\"", highlight("x", "snippet").scope, "source.yasnippet");
+	assertEqual("known wart: \"tpl\"", highlight("x", "tpl").scope, "source.go-template");
 }
 
 // ---------------------------------------------------------------------------

@@ -5,7 +5,7 @@ by [Ben Nadel][ben-nadel]
 
 On my blogging platform, the fenced code-block syntax highlighting has historically been provided by GitHub (via publish-time Gist creation). And it's always bothered me that this is the one remaining _core_ part of the blogging workflow that I feel like I don't own. As such, with the aide of **Claude Code**, I've finally set out to make my own self-hosted syntax highlighting service.
 
-The API takes the raw code as the POST body (Content-Type is ignored) with the language as an optional `?language=` query parameter, and returns escaped HTML with `pl-*` token classes — the same vocabulary GitHub's Markdown API emits, so existing CSS works unchanged. The response body is the HTML fragment itself, with metadata in the `X-Highlighted` and `X-Language` headers; errors return JSON `{error}`. Output is identical to GitHub for languages where it ships the same TextMate grammar and diverges where GitHub ships a different one.
+The API takes the raw code as the POST body (Content-Type is ignored) with the language as an optional `?language=` query parameter, and returns escaped HTML with `pl-*` token classes — the same vocabulary GitHub's Markdown API emits, so existing CSS works unchanged. The response body is the HTML fragment itself, with metadata in the `X-Highlighted` and `X-Scope` headers; errors return JSON `{error}`. Output is identical to GitHub for languages where it ships the same TextMate grammar and diverges where GitHub ships a different one.
 
 The API runs locally in Docker and is deployed to AWS Lambda as a zip (Click-Ops for the win - baby-stepping my way to a working solution).
 
@@ -24,7 +24,7 @@ curl -si -X POST 'http://127.0.0.1:3000/highlight?language=cfml' \
   --data-binary '<cfscript>x = 1;</cfscript>'
 ```
 
-Use `--data-binary` when posting from a file (`--data-binary @file.cfm`) — plain `-d` strips newlines. The `-i` shows the `X-Highlighted` and `X-Language` response headers alongside the HTML body.
+Use `--data-binary` when posting from a file (`--data-binary @file.cfm`) — plain `-d` strips newlines. The `-i` shows the `X-Highlighted` and `X-Scope` response headers alongside the HTML body.
 
 ## Repository Layout
 
@@ -122,7 +122,7 @@ Upload the zip in the Lambda console. **Handler is `src/adapters/lambda.handler`
 
 | | |
 |---|---|
-| `POST /highlight?language=<flag>` | The service. Requires `x-highlight-token`. The request body is the raw code text; its Content-Type is ignored. `language` is optional. A 200 body is the highlighted HTML fragment (`text/html`), with `X-Highlighted: true\|false` and `X-Language` (the resolved language — always present, empty when nothing resolved) as headers. Errors are JSON `{error}`. |
+| `POST /highlight?language=<flag>` | The service. Requires `x-highlight-token`. The request body is the raw code text; its Content-Type is ignored. `language` is optional. A 200 body is the highlighted HTML fragment (`text/html`), with `X-Highlighted: true\|false` and `X-Scope` (the TextMate scope of the grammar that ran, e.g. `embedding.cfml` — a debugging aid, not a language name; always present, empty when nothing resolved) as headers. Errors are JSON `{error}`. |
 | `GET /health` | `{"ok":true}`. Unauthenticated. |
 
 `X-Highlighted: false` is **not an error** — it means the language was unrecognized or a line exceeded `MAX_LINE_LENGTH`, and the body is escaped plain text. Still HTTP 200. Callers never branch on it — one degradation path, never a third case to special-case.

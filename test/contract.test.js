@@ -13,11 +13,11 @@
 *
 *   1. Each adapter returns the expected status.
 *   2. Both adapters return the SAME status, the SAME body, and the SAME
-*      contract headers (content-type, x-highlighted, x-language). Transport
+*      contract headers (content-type, x-highlighted, x-scope). Transport
 *      headers -- date, content-length, connection -- are deliberately not
 *      compared.
 *   3. Where a case pins them, the coarse header expectations hold:
-*      x-highlighted exactly, and only whether x-language is empty, never its
+*      x-highlighted exactly, and only whether x-scope is empty, never its
 *      value.
 *
 * The second is the one worth having. It turns "identical contract" from a
@@ -63,7 +63,7 @@ var MAX_LINE_LENGTH = loadConfig(process.env).maxLineLength;
 // without one.
 //
 // Expectation fields, both optional: `highlighted` pins the x-highlighted
-// value exactly; `resolved` pins only whether x-language is empty. Neither
+// value exactly; `resolved` pins only whether x-scope is empty. Neither
 // ever pins the resolved value itself -- a grammar change must not fail a
 // transport test.
 var cases = [
@@ -146,7 +146,7 @@ for (var {name, request, status, highlighted, resolved} of cases) {
 		&& lambda.body === server.body
 		&& lambda.headers["content-type"] === server.headers["content-type"]
 		&& lambda.headers["x-highlighted"] === server.headers["x-highlighted"]
-		&& lambda.headers["x-language"] === server.headers["x-language"];
+		&& lambda.headers["x-scope"] === server.headers["x-scope"];
 	var expected = lambda.status === status && server.status === status;
 
 	// Checked against one adapter only -- `match` already covers the other.
@@ -157,7 +157,7 @@ for (var {name, request, status, highlighted, resolved} of cases) {
 	}
 
 	if (resolved !== undefined) {
-		headersOk = headersOk && (lambda.headers["x-language"] !== "") === resolved;
+		headersOk = headersOk && (lambda.headers["x-scope"] !== "") === resolved;
 	}
 
 	var ok = match && expected && headersOk;
@@ -253,6 +253,6 @@ function contractHeaders(read) {
 	return {
 		"content-type": read("content-type") ?? null,
 		"x-highlighted": read("x-highlighted") ?? null,
-		"x-language": read("x-language") ?? null
+		"x-scope": read("x-scope") ?? null
 	};
 }
