@@ -133,9 +133,9 @@ function lookupScope(starryNight, flag) {
 * Adjust a resolved scope using the source itself.
 *
 * Only one rule, and it exists because a `.cfc` can be written either way:
-* tag-based in older code, script-based in newer. Linguist maps the extension to
-* `source.cfscript`, which renders script correctly and mangles tags -- angle
-* brackets as `pl-k`, tag names as `pl-smi` instead of `pl-ent`.
+* tag-based in older code, script-based in newer. The `cfc` tag resolves to
+* CFML_SCRIPT, and the tag and script grammars are different grammars, so the
+* tag alone cannot say which one is right. The source can.
 *
 * GitHub has the same behaviour, so this is a deliberate DIVERGENCE from parity
 * rather than a bug fix. It is the exact case the project exists for: GitHub's
@@ -162,11 +162,10 @@ function refineScope(scope, source) {
 /**
 * Does this look like tag-based CFML rather than script?
 *
-* Anchored to the start of a line, which is what makes it safe. A bare
-* /<cf[a-z]/ would fire on `var s = "<cfoutput>"` inside a script-based
-* component, and a false positive is the expensive direction: `text.html.cfm`
-* produces ZERO tokens for script-based source, so a wrong guess turns a
-* correctly highlighted block into a plain one.
+* Anchored to the start of a line, which is what makes it safe. Tag-based code
+* puts `<cf...` at the start of a line; script-based code carries it mid-line,
+* in strings (`var s = "<cfoutput>"`), in comments, and inside tag islands. A
+* bare /<cf[a-z]/ would fire on all of those, so the anchor errs toward script.
 *
 * Matching any `<cf...` tag rather than `<cfcomponent` specifically is
 * deliberate. Twenty years of blog examples are mostly fragments -- a lone

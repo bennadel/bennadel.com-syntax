@@ -61,7 +61,7 @@ var config;
 * token is fatal only to the thing that serves requests.
 *
 * On the scopes: grammar dependencies resolve silently when unmet --
-* source.cfscript depends on source.sql, and a missing dependency degrades
+* source.css.less depends on source.css, and a missing dependency degrades
 * highlighting rather than throwing. Failing at boot beats shipping quietly
 * wrong output.
 *

@@ -435,11 +435,10 @@ if (!UPDATE) {
 	// -------------------------------------------------------------------------
 	// Content-based scope refinement
 	//
-	// A .cfc may be tag-based or script-based, and Linguist maps the extension to
-	// `source.cfscript` either way. refineScope() looks at the source to correct
-	// that. Both directions matter and both fail silently: script-based content
-	// under text.html.cfm produces NO tokens at all, and tag-based content under
-	// source.cfscript scopes tag names as `pl-smi` instead of `pl-ent`.
+	// A .cfc may be tag-based or script-based, and the `cfc` tag resolves to
+	// `embedding.cfml.cfs` either way. refineScope() looks at the source to
+	// correct that: tag-based content goes to `embedding.cfml`, script-based
+	// content stays where it was routed.
 	// -------------------------------------------------------------------------
 
 	console.log("");
@@ -463,8 +462,8 @@ if (!UPDATE) {
 		asCfc("/**\n* Does a thing.\n*/\ncomponent {\n}"), "embedding.cfml.cfs");
 
 	// The false-positive traps. These are why the pattern is line-anchored: a
-	// bare /<cf[a-z]/ would fire on both, and misrouting script-based source to
-	// text.html.cfm yields zero tokens -- strictly worse than doing nothing.
+	// bare /<cf[a-z]/ would fire on both and send a script-based component to
+	// the tag grammar.
 	assertEqual("CFML tag inside a string stays embedding.cfml.cfs",
 		asCfc("component {\n\tfunction f() {\n\t\tvar s = \"<cfoutput>#x#</cfoutput>\";\n\t}\n}"), "embedding.cfml.cfs");
 	assertEqual("CFML tag in a trailing comment stays embedding.cfml.cfs",
