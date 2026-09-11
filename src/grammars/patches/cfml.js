@@ -73,7 +73,7 @@ function bareIncludeInCfml(grammar) {
 	var exprIndex = order.findIndex((p) => p.include === "#source-cfml-script-expressions");
 
 	if (tagIndex < 0 || exprIndex < 0) {
-		throw new Error(`${grammar.scopeName}: ${ORDER} no longer includes both tag-in-script and expressions`);
+		throw new Error(`${grammar.scopeName}: ${ORDER} no longer includes both tag-in-script and expressions; re-derive bareIncludeInCfml`);
 	}
 
 	if (tagIndex > exprIndex) {
@@ -90,7 +90,7 @@ function bareIncludeInCfml(grammar) {
 	);
 
 	if (!upstreamHandlesIt) {
-		throw new Error(`${grammar.scopeName}: the tag-in-script alternation no longer lists 'include'`);
+		throw new Error(`${grammar.scopeName}: the tag-in-script alternation no longer lists 'include'; upstream may have fixed it -- remove bareIncludeInCfml rather than duplicating`);
 	}
 
 	target.unshift({
@@ -213,7 +213,7 @@ function tagIslandInCfml(grammar) {
 		// includes, so the port is only sound while the file inlines both.
 		for (var required of ["cfml-tags", "text-html-cfml"]) {
 			if (!grammar.repository[required]) {
-				throw new Error(`${grammar.scopeName}: repository no longer has ${required}; the tag-island rule has nothing to hand the island body to`);
+				throw new Error(`${grammar.scopeName}: repository no longer has ${required}; tagIslandInCfml has nothing to hand the island body to`);
 			}
 		}
 
