@@ -44,8 +44,7 @@ import {promisify} from "node:util";
 
 import {loadConfig} from "../src/core/config.js";
 import {init, highlight, normalize, longestLine} from "../src/core/highlight.js";
-import {applied as cfmlPatches} from "../src/grammars/cfml.js";
-import {applied as stockPatches} from "../src/grammars/stock.js";
+import {applied as patches} from "../src/grammars/patches/index.js";
 
 var DIR = new URL("./__fixtures__/", import.meta.url);
 var GRAMMARS = new URL("../src/grammars/", import.meta.url);
@@ -489,8 +488,8 @@ if (!UPDATE) {
 	// section is the ledger for that swap. The first group is behaviour the
 	// new grammar gives us for free and the old one got wrong -- asserted so a
 	// future downgrade or a bad upstream bump is caught rather than admired. The
-	// second is the two token patches in src/grammars/cfml.js, which are the only
-	// things we still carry ourselves.
+	// second is the patches in src/grammars/patches/, which are the only things
+	// we still carry ourselves.
 	//
 	// Every assertion names the specific misclassification, so if upstream ever
 	// fixes one the corresponding rule can be deleted and this tells you which.
@@ -729,7 +728,7 @@ if (!UPDATE) {
 	assertEqual("lowercase html5 doctype is a tag name",
 		doctypeInHtm.html.includes("<span class=\"pl-ent\">doctype</span>"), true);
 
-	// The same gap in the STOCK html grammar, patched by src/grammars/stock.js
+	// The same gap in the STOCK html grammar, patched by src/grammars/patches/html.js
 	// (the patch is applied to a clone before createStarryNight, so it must be
 	// visible through an ordinary `htm` fence).
 	var dividerInHtm = highlight("<!-- ------- -->\n<div>x</div>", "htm");
@@ -746,7 +745,7 @@ if (!UPDATE) {
 
 	// The stock SQL grammar's statement alternation has neither EXPLAIN nor WITH,
 	// so the word opening a query-plan post or a CTE renders plain above a
-	// highlighted SELECT. The statement-keywords patch (src/grammars/stock.js)
+	// highlighted SELECT. The statement-keywords patch (src/grammars/patches/sql.js)
 	// adds both, folding ANALYZE and RECURSIVE in so `EXPLAIN ANALYZE` and
 	// `WITH RECURSIVE` color as one keyword rather than half of one.
 	var statements = highlight("EXPLAIN SELECT 1;\nEXPLAIN ANALYZE SELECT 1;\nexplain select 1;\nWITH t AS (SELECT 1) SELECT 1;\nWITH RECURSIVE t AS (SELECT 1) SELECT 1;\nwith t as (select 1) select 1;", "sql");
@@ -776,9 +775,9 @@ if (!UPDATE) {
 
 	// Neither SQL grammar knows the MySQL table-option words, so a CREATE TABLE
 	// ends in a line where only the `=` signs color. The ddl-keywords patch
-	// (src/grammars/stock.js) and the sql-ddl-words patch (src/grammars/cfml.js)
-	// add COLLATE, ENGINE, DEFAULT and CHARSET to the `sql` fence and to
-	// cfquery bodies respectively; the stock patch folds CHARACTER SET in too.
+	// (src/grammars/patches/sql.js) adds COLLATE, ENGINE, DEFAULT and CHARSET
+	// to the `sql` fence and to cfquery bodies; its stock branch folds
+	// CHARACTER SET in too.
 	var ddlSource = "CREATE TABLE t (\n\tname VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin default null\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;\nSELECT 1 FROM t WHERE slug COLLATE utf8_bin = 'x';";
 	var ddl = highlight(ddlSource, "sql");
 	assertEqual("sql table options are keywords",
@@ -801,7 +800,7 @@ if (!UPDATE) {
 	// The stock CSS grammar parses a block's contents as declarations only, so a
 	// nested rule reads as a broken declaration: `&:focus,` opens a property
 	// value that swallows the next line, and a nested `.b { ... }` closes the
-	// OUTER block early. The nesting patch (src/grammars/stock.js) ports the
+	// OUTER block early. The nesting patch (src/grammars/patches/css-nesting.js) ports the
 	// vscode fork's nesting support: `&` colors as a tag, a nested selector as a
 	// selector, and the declarations inside color as declarations.
 	var nested = highlight([
@@ -862,7 +861,7 @@ if (!UPDATE) {
 	// The stock CSS grammar colors media features from a fixed list that stops
 	// at Media Queries Level 4, so `prefers-reduced-motion: no-preference`
 	// renders plain beside a colored `min-width: 600px`. The media-features
-	// patch (src/grammars/stock.js) reads any `(name: value)` as a property
+	// patch (src/grammars/patches/css.js) reads any `(name: value)` as a property
 	// name and a property value, the way the maintained grammars do.
 	var media = highlight([
 		"@media ( prefers-reduced-motion: no-preference ) { }",
@@ -896,7 +895,7 @@ if (!UPDATE) {
 	// The stock CSS grammar colors a declaration value only from keyword lists,
 	// so an author-defined name (`animation-name: modal-enter`) renders plain
 	// between colored keywords. The value-identifiers patch
-	// (src/grammars/stock.js) gives any unclaimed identifier in value position
+	// (src/grammars/patches/css.js) gives any unclaimed identifier in value position
 	// the keyword scope, the way Sublime and Lezer do.
 	var values = highlight([
 		".a {",
@@ -954,7 +953,7 @@ if (!UPDATE) {
 
 	// The Less grammar names only @import, @font-face and @media as at-rules;
 	// any other `@word` reads as a Less variable. The at-rules patch
-	// (src/grammars/stock.js) adds the other CSS at-rule names beside @media
+	// (src/grammars/patches/less.js) adds the other CSS at-rule names beside @media
 	// and leaves the variable rule alone.
 	var lessAtRules = highlight([
 		"@brand: red;",
@@ -1004,7 +1003,7 @@ if (!UPDATE) {
 	// An inline component template -- the `template:` property of an object
 	// literal -- rendered as one flat string because Microsoft's grammar has no
 	// embedded-language support in template literals. The template-property
-	// patch (src/grammars/stock.js) hands a string value's content to
+	// patch (src/grammars/patches/javascript.js) hands a string value's content to
 	// text.html.basic. The archive writes the delimiter both on the same line
 	// as the key and on the next line, so both are asserted.
 	var templateNextLine = highlight(
@@ -1048,7 +1047,7 @@ if (!UPDATE) {
 	// Both JavaScript grammars guessed a dot-method's meaning from name lists,
 	// so a jQuery chain alternated colors: `.attr(` was a plain function while
 	// `.click(` collided with the DOM roster and rendered as a built-in. The
-	// method-name-lists patch (src/grammars/stock.js) deletes the lists so every
+	// method-name-lists patch (src/grammars/patches/javascript.js) deletes the lists so every
 	// dot-method name gets the same entity.name.function scope. This diverges
 	// from GitHub, which keeps the alternating colors.
 	var chainSource = "menuRoot\n\t.attr( \"href\", \"x\" )\n\t.click( handleClick );";
@@ -1087,7 +1086,7 @@ if (!UPDATE) {
 		keptBuiltins.html.includes("<span class=\"pl-c1\">setTimeout</span>"), true);
 
 	// A script island in a CFML page uses the vendored grammars' own copy of
-	// the JavaScript rules, patched separately in src/grammars/cfml.js.
+	// the JavaScript rules, which the same patch covers with a branch of its own.
 	var chainInCfm = highlight(`<script type="text/javascript">\n${chainSource}\n</script>`, "cfm");
 	assertEqual("DOM-colliding method in an embedded js chain is a function name",
 		chainInCfm.html.includes("<span class=\"pl-en\">click</span>"), true);
@@ -1096,8 +1095,8 @@ if (!UPDATE) {
 
 	// Every JavaScript grammar here gave `console` a rule of its own with a
 	// method roster, so `console.log(` and `document.addEventListener(` rendered
-	// with their colors swapped. The console-global patch (src/grammars/stock.js,
-	// and its twin in src/grammars/cfml.js for script islands) rescopes `console`
+	// with their colors swapped. The console-global patch
+	// (src/grammars/patches/javascript.js) rescopes `console`
 	// as the same DOM global as `document` and lets the method fall through.
 	var consoleSource = "console.log( \"x\" );\ndocument.addEventListener( \"click\", run );";
 
@@ -1123,8 +1122,8 @@ if (!UPDATE) {
 
 	// Object-literal keys rendered as plain text: the TextMate lineage assigns
 	// them only a meta scope, while GitHub's own rendering (now tree-sitter)
-	// colors them pl-c1. The object-keys patch (src/grammars/stock.js, and its
-	// twin in src/grammars/cfml.js for script islands) gives bare keys
+	// colors them pl-c1. The object-keys patch
+	// (src/grammars/patches/javascript.js) gives bare keys
 	// constant.other.object.key.
 	var keysSource = "var options = {\n\tduration: 500,\n\tqueue: fastQueue\n};";
 
@@ -1172,7 +1171,7 @@ if (!UPDATE) {
 	// The same property name rendered three ways: a class-field declaration
 	// took pl-v, a dot-access pl-smi, an object key pl-c1. GitHub's renderer
 	// colors every property identifier pl-c1; the property-names patch
-	// (src/grammars/stock.js) appends constant.other.property.ts to each
+	// (src/grammars/patches/javascript.js) appends constant.other.property.ts to each
 	// carrier so the four positions below agree with it and with each other.
 	var props = highlight(
 		"class A {\n\tpublic alpha: string[];\n\tconstructor() {\n\t\tthis.beta = this.gamma.delta;\n\t\tvar { epsilon: e } = this;\n\t\tvar plain = other;\n\t}\n}\ninterface I { member: number; }",
@@ -1199,18 +1198,24 @@ if (!UPDATE) {
 
 	// ---------------------------------------------------------------------------
 
-	// Every patch must have actually run on both files. A patch that silently
-	// stops applying looks fixed and is not, and the anchor assertions inside
-	// src/grammars/cfml.js only fire if the ANCHOR moved -- not if someone quietly
-	// drops a patch from the list.
-	assertEqual("every vendored grammar is patched",
-		[...cfmlPatches.values()].map((names) => names.join(",")).join(" | "),
-		"bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits,function-metadata,comment-hyphens,bad-angle-bracket,doctype-capture,method-name-lists,console-global,object-keys,sql-column-words,sql-ddl-words | bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits,function-metadata,comment-hyphens,bad-angle-bracket,doctype-capture,method-name-lists,console-global,object-keys,sql-column-words,sql-ddl-words");
-
-	// Same pin for the stock-grammar patch layer (src/grammars/stock.js).
-	assertEqual("every stock grammar is patched",
-		[...stockPatches.entries()].map(([scope, names]) => `${scope}:${names.join(",")}`).join(" | "),
-		"source.css:nesting,media-features,value-identifiers | source.css.less:at-rules | source.js:method-name-lists,console-global,object-keys | source.sql:statement-keywords,ddl-keywords | source.ts:template-property,method-name-lists,console-global,object-keys,property-names | text.html.basic:comment-hyphens,doctype-capture");
+	// Every patch must have actually run on every grammar it has a branch for.
+	// A patch that silently stops applying looks fixed and is not, and the
+	// anchor assertions inside src/grammars/patches/ only fire if the ANCHOR
+	// moved -- not if someone quietly drops a patch from a module's list or a
+	// scope from its branches. Stock scopes first, in starry-night's list
+	// order; then the two vendored grammars in load order.
+	assertEqual("every patched grammar ran every patch",
+		[...patches.entries()].map(([scope, names]) => `${scope}:${names.join(",")}`).join(" | "),
+		[
+			"source.css:nesting,media-features,value-identifiers",
+			"source.css.less:at-rules",
+			"source.js:method-name-lists,console-global,object-keys",
+			"source.sql:statement-keywords,ddl-keywords",
+			"source.ts:method-name-lists,console-global,object-keys,template-property,property-names",
+			"text.html.basic:comment-hyphens,doctype-capture",
+			"embedding.cfml:bare-include,safe-navigation,tag-island,custom-tag-digits,function-metadata,bad-ampersand,comment-hyphens,bad-angle-bracket,doctype-capture,method-name-lists,console-global,object-keys,column-words,ddl-keywords",
+			"embedding.cfml.cfs:bare-include,safe-navigation,tag-island,custom-tag-digits,function-metadata,bad-ampersand,comment-hyphens,bad-angle-bracket,doctype-capture,method-name-lists,console-global,object-keys,column-words,ddl-keywords"
+		].join(" | "));
 
 	// The vendored files are byte-identical to upstream, and this is what makes
 	// that a fact rather than an intention. Both patches are applied to the

@@ -62,8 +62,10 @@
   adding an exclusion rule.
 * **Never hand-edit `src/grammars/*.tmLanguage.json`.** They are vendored from
   cfmleditor byte-identical. Patches are applied to the parsed JSON at load
-  time in `src/grammars/cfml.js`, never to the files on disk. Stock
-  starry-night grammars are patched the same way in `src/grammars/stock.js`.
+  time, never to the files on disk, from `src/grammars/patches/` - one module
+  per language family, each patch a descriptor with a branch per grammar that
+  carries the rule. Stock starry-night grammars are patched the same way, on
+  clones. `src/grammars/cfml.js` and `src/grammars/stock.js` only load.
   `test/corpus.test.js` hashes both vendored files and fails on any change - a
   single added space is enough. Updating them upstream is a deliberate
   procedure: `LICENSES/README.md`.

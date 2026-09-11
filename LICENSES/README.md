@@ -54,9 +54,9 @@ the maintained grammar, and that is the whole argument: not that it is better
 today, but that it will still be right in five years. What the swap gained and
 what it gave up is recorded in the header of `src/grammars/cfml.js`.
 
-**They are byte-identical to upstream and must stay that way.** The two patches
-this project needs are applied to the parsed JSON in memory at load time, by
-`src/grammars/cfml.js`, never to the files on disk. Hand-editing a 600 KB
+**They are byte-identical to upstream and must stay that way.** The patches
+this project needs are applied to the parsed JSON in memory at load time, from
+`src/grammars/patches/`, never to the files on disk. Hand-editing a 600 KB
 generated file would make every future upstream update a conflict against
 something unreadable.
 

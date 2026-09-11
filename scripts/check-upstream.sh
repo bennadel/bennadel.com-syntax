@@ -120,7 +120,7 @@ Most of the evaluation is already automated, so start by letting it run:
 
 The suite is built to tell you what changed and what it means:
 
-  - The patch anchors in src/grammars/cfml.js assert their own preconditions.
+  - The patch anchors in src/grammars/patches/ assert their own preconditions.
     A failure there means upstream restructured the region we patch -- or, for
     safe-navigation, that upstream now handles `?.` itself and our patch should
     be DELETED rather than carried forward.

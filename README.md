@@ -34,7 +34,7 @@ The boundary that carries weight here is **what ships versus what does not**, an
 |---|---|---|
 | `src/core/` | `highlight.js`, the pure function over code plus a language flag; `config.js`, every env var parsed and validated once; `api.js`, transport-neutral auth, routing and response serialization | yes |
 | `src/adapters/` | `server.js` for `node:http`, `lambda.js` for a Function URL. Transport only — no logic that both would need | yes |
-| `src/grammars/` | The two cfmleditor CFML grammars, vendored byte-identical, plus `cfml.js` which loads and patches them in memory | yes |
+| `src/grammars/` | The two cfmleditor CFML grammars, vendored byte-identical; `cfml.js` and `stock.js`, which load them and the stock grammars; and `patches/`, the in-memory grammar patches, one module per language family | yes |
 | `test/` | `corpus.test.js` (golden output), `contract.test.js` (adapter parity), `__fixtures__/` | no |
 | `tools/` | Local inspection pages on `:3001` — `/` renders the corpus, `/blog` renders a live post. Never packaged | no |
 | `scripts/` | One `docker compose` wrapper per routine task, plus `check-upstream.sh` | no |
@@ -173,7 +173,7 @@ Every Linguist grammar is registered, plus 2 vendored CFML grammars. Individual 
 
 ## Local Grammar Changes
 
-Where this service renders differently from the published grammars, the difference is a deliberate preference. Each line states what a reader of the rendered page sees. How it is done is in the source (`src/grammars/cfml.js`, `src/grammars/stock.js`, `src/core/highlight.js`); this list stays current with it.
+Where this service renders differently from the published grammars, the difference is a deliberate preference. Each line states what a reader of the rendered page sees. How it is done is in the source (`src/grammars/patches/`, one module per language family, and `src/core/highlight.js` for fence tags); this list stays current with it.
 
 **Rendering**
 

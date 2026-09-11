@@ -5,7 +5,8 @@ import {createStarryNight, all} from "@wooorm/starry-night";
 import sourceJsRegexp from "@wooorm/starry-night/source.js.regexp";
 import {toHtml} from "hast-util-to-html";
 
-import {loadCfmlGrammars, CFML_TAG, CFML_SCRIPT} from "../grammars/cfml.js";
+import {loadCfmlGrammars} from "../grammars/cfml.js";
+import {CFML_TAG, CFML_SCRIPT} from "../grammars/scopes.js";
 import {patchStockGrammars} from "../grammars/stock.js";
 
 var starryNight;
