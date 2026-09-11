@@ -53,8 +53,7 @@
 * NO EXTERNAL DEPENDENCIES
 *
 * Both declare ZERO external includes -- everything, SQL and JavaScript
-* included, is inlined into ~270 repository entries per file. That is why each
-* is ~600 KB against Linguist's 25.5 KB cfscript, and it is also why they need
+* included, is inlined into each file's own repository. That is why they need
 * no `dependencies` and cannot be broken by an unrelated grammar changing.
 *
 * It is also what makes the patches in patches/ reach EVERYWHERE. A grammar

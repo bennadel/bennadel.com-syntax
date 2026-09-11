@@ -43,11 +43,11 @@ import {CFML_TAG, CFML_SCRIPT} from "../scopes.js";
 * Why the rule wins, measured rather than assumed:
 *
 * `source-cfml-script-statements` consults `#source-cfml-script-tag-in-script`
-* at index 3 and `#source-cfml-script-expressions` at index 5. Both can claim
-* `include` at the same offset, and TextMate breaks that tie by pattern order --
-* so the ENTRY we add to is reached first and the identifier rule never gets a
-* look. Swapping those two entries flips this token from pl-ent to pl-smi, which
-* is why the ordering is asserted below: upstream could reorder them and the
+* before `#source-cfml-script-expressions`. Both can claim `include` at the same
+* offset, and TextMate breaks that tie by pattern order -- so the ENTRY we add
+* to is reached first and the identifier rule never gets a look. Swapping those
+* two entries flips this token from pl-ent to pl-smi, which is why
+* `bareIncludeInCfml` asserts the ordering: upstream could reorder them and the
 * patch would keep "applying" while doing nothing.
 *
 * Position WITHIN the entry is irrelevant here -- unshift and push both produce

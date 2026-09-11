@@ -108,7 +108,7 @@ Both live in `test/` rather than beside the code they exercise. The deployment z
 ./scripts/package.sh
 ```
 
-Writes `./dist/function.<YYYYMMDD>.zip` (~4.0 MB), then verifies its own output: `onig.wasm`, `src/adapters/lambda.js` and `package.json` must all be present or it exits non-zero. Their absence would otherwise produce a deploy that *succeeds* and a function that fails every invocation forever.
+Writes `./dist/function.<YYYYMMDD>.zip`, then verifies its own output: `onig.wasm`, `src/adapters/lambda.js` and `package.json` must all be present or it exits non-zero. Their absence would otherwise produce a deploy that *succeeds* and a function that fails every invocation forever.
 
 **The date is in the filename, not in the zip.** Two builds from unchanged source produce byte-identical archives, so "did this artifact come from this source?" is answerable by rebuilding and comparing hashes — a proof rather than a claim. A timestamp inside the zip would destroy that. The filename distinguishes the builds on your disk and claims nothing more; since packaging does not require committed code, the date says when the build ran and nothing about which commit it came from. Same-day rebuilds overwrite.
 

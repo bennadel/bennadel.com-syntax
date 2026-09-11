@@ -213,7 +213,7 @@ function methodNameListsInCfml(grammar) {
 		|| count(grammar, named("support.function.dom.js")) !== 0
 		|| count(grammar, named("support.function.js")) !== ENTRIES.length
 	) {
-		throw new Error(`${grammar.scopeName}: a dot-method name list now appears outside the two support-objects entries; extend methodNameListsInCfml to cover it`);
+		throw new Error(`${grammar.scopeName}: a dot-method name list now appears outside ${ENTRIES.join(", ")}; extend methodNameListsInCfml to cover it`);
 	}
 }
 
@@ -374,7 +374,7 @@ function consoleGlobalInCfml(grammar) {
 		count(grammar, named("support.class.console.js")) !== 0
 		|| count(grammar, named("support.function.console.js")) !== 0
 	) {
-		throw new Error(`${grammar.scopeName}: a console rule now appears outside the two support-objects entries; extend consoleGlobalInCfml to cover it`);
+		throw new Error(`${grammar.scopeName}: a console rule now appears outside ${ENTRIES.join(", ")}; extend consoleGlobalInCfml to cover it`);
 	}
 }
 
@@ -500,11 +500,11 @@ function objectKeysInCfml(grammar) {
 		promoteBareKey(matches[0], "constant.other.object.key.js");
 	}
 
-	// The two entries must be the ONLY carriers of the bare-key shape. A third
+	// ENTRIES must be the ONLY carriers of the bare-key shape. A third
 	// appearing in an upstream update would survive this patch and keep plain
 	// keys in some context nobody re-tested -- fail loudly instead.
 	if (count(grammar, isCarrier) !== 0) {
-		throw new Error(`${grammar.scopeName}: a bare object-key rule now appears outside the two object-member entries; extend objectKeysInCfml to cover it`);
+		throw new Error(`${grammar.scopeName}: a bare object-key rule now appears outside ${ENTRIES.join(", ")}; extend objectKeysInCfml to cover it`);
 	}
 }
 

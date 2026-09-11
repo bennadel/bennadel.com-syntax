@@ -263,12 +263,12 @@ if (!UPDATE) {
 	// -------------------------------------------------------------------------
 	// Flag resolution
 	//
-	// The service registers `all` (694 grammars) because curation was closed
-	// outright -- not deferred -- and Linguist's alias set is far
-	// wider than the languages this archive
-	// actually uses. That makes junk and plain-text fence tags a live hazard:
-	// they do not fail, they resolve to something obscure and produce confident,
-	// wrong highlighting. `txt` -> `text.adblock` styled prose as a comment.
+	// The service registers `all` because curation was closed outright -- not
+	// deferred -- and Linguist's alias set is far wider than the languages this
+	// archive actually uses. That makes junk and plain-text fence tags a live
+	// hazard: they do not fail, they resolve to something obscure and produce
+	// confident, wrong highlighting. `txt` -> `text.adblock` styled prose as a
+	// comment.
 	//
 	// These assertions are the guard, and they are deliberately about
 	// RESOLUTION rather than output bytes -- a golden file cannot express "this

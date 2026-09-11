@@ -8,10 +8,10 @@ kind needs anything recorded here.
 carries its own license file, and because the deployment artifact ships
 `node_modules` verbatim rather than bundling it, those license files travel with
 the code automatically. Nothing to do. (Worth knowing that starry-night itself
-vendors ~700 grammars from many upstreams and documents them in its own `notice`
-file — `node_modules/@wooorm/starry-night/notice`, about 1.6 MB. That file is the
+vendors hundreds of grammars from many upstreams and documents them in its own
+`notice` file — `node_modules/@wooorm/starry-night/notice`. That file is the
 model this directory imitates at a much smaller scale, and it is already inside
-`function.zip` along with 35 other license files.)
+`function.zip` along with every other package's license file.)
 
 **Why there is no extracted license bundle here, unlike an Angular build.**
 `ng build` writes a `3rdpartylicenses.txt` into its output, and it has to:
@@ -56,9 +56,9 @@ what it gave up is recorded in the header of `src/grammars/cfml.js`.
 
 **They are byte-identical to upstream and must stay that way.** The patches
 this project needs are applied to the parsed JSON in memory at load time, from
-`src/grammars/patches/`, never to the files on disk. Hand-editing a 600 KB
-generated file would make every future upstream update a conflict against
-something unreadable.
+`src/grammars/patches/`, never to the files on disk. Hand-editing a generated
+file would make every future upstream update a conflict against something
+unreadable.
 
 That is not an honour-system claim: `test/corpus.test.js` hashes both files on
 every run and fails if either has changed. If you deliberately update them,

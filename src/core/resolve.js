@@ -17,12 +17,11 @@ import {CFML_TAG, CFML_SCRIPT} from "../grammars/scopes.js";
 // A value of `null` forces the plain-text path, which is a real and necessary
 // override rather than a way of spelling "absent" -- see `txt` below.
 var flagOverrides = new Map([
-	// All three below were confirmed against a fence-tag scan of the archive on
-	// 2026-08-04: each is a tag actually in use that resolved to nothing, so the
-	// blocks were rendering as unhighlighted plain text.
+	// Every entry was confirmed against a fence-tag scan of the archive on
+	// 2026-08-04: each is a tag actually in use.
 	//
 	// These point at a grammar, which means they only work while that grammar is
-	// registered. Curation must keep all three targets checked -- and note that
+	// registered. Curation must keep every target checked -- and note that
 	// curation cannot replace these entries, because it can add grammars but
 	// cannot invent an alias.
 

@@ -39,7 +39,7 @@ RUN npm ci --omit=dev --ignore-scripts
 # Produces the Lambda deployment zip.
 #
 # `FROM deps` is the entire point: npm ci becomes a CACHED LAYER. The equivalent
-# `docker run ... npm ci && zip` one-liner reinstalls ~24 MB of dependencies on
+# `docker run ... npm ci && zip` one-liner reinstalls every dependency on
 # every invocation; here npm only re-runs when package-lock.json actually
 # changes, so rebuilding the zip after a source edit takes seconds.
 #
