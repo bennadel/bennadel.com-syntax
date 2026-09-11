@@ -14,8 +14,8 @@
 * resolves to, and reading a `test-update` diff with some idea of what it will
 * actually change on the page.
 *
-* /blog is the half that earns its keep. The fixture corpus is 14 hand-picked
-* files against an archive of ~4,900 posts, and /blog is the only
+* /blog is the half that earns its keep. The fixture corpus is a hand-picked
+* sample against an archive of thousands of posts, and /blog is the only
 * thing here that meets real prose-embedded code -- the tag nobody anticipated,
 * the block that trips MAX_LINE_LENGTH, the grammar that looks right on a
 * fixture and wrong in situ.
@@ -44,8 +44,8 @@
 *
 * WHY IT IMPORTS THE MODULE RATHER THAN CALLING THE API
 *
-* The HTTP surface already has 21 automated cases in test/contract.test.js, and a
-* human clicking around adds nothing to them. Importing src/core/highlight.js
+* The HTTP surface is already covered by test/contract.test.js, and a human
+* clicking around adds nothing to it. Importing src/core/highlight.js
 * directly means this needs no token and no running highlighter, so exposing
 * this port exposes no API surface -- and any bug you see here is unambiguously
 * a highlighting bug rather than a transport one.
@@ -99,9 +99,7 @@ var STYLE = ["core", "both"].map((name) => ({
 
 /**
 * The chrome every page here shares: colour tokens, typography, and the badge
-* strip. Extracted when the third page arrived -- two near-identical copies was
-* tolerable, three was not, and the pages had already started to drift apart in
-* ways that were accidental rather than meant.
+* strip.
 *
 * Page width is a variable rather than a fixed rule because that is the one
 * thing they genuinely disagree on: the fixture list is a reading column, the
@@ -311,10 +309,6 @@ ${fixtures.map(section).join("\n")}
 </html>`;
 }
 
-// ---------------------------------------------------------------------------
-// Live archive check (/blog)
-// ---------------------------------------------------------------------------
-
 function section(fixture) {
 	var {entry, goldenName, language, result, lines, golden, drift} = fixture;
 	var id = entry.replace(/[^a-z0-9]+/gi, "-");
@@ -349,6 +343,10 @@ function section(fixture) {
 	</details>
 </section>`;
 }
+
+// ---------------------------------------------------------------------------
+// Live archive check (/blog)
+// ---------------------------------------------------------------------------
 
 function blogPage({input, includeComments, fetched, error}) {
 	var form = `

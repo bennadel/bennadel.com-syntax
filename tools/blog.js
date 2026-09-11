@@ -4,8 +4,8 @@
 *
 * WHAT THIS IS FOR
 *
-* The fixture corpus is 14 hand-picked files. The archive is ~4,900 posts. This
-* closes that gap without checking anything in: paste a URL, see what the
+* The fixture corpus is a hand-picked sample. The archive is thousands of posts.
+* This closes that gap without checking anything in: paste a URL, see what the
 * service would do to every block in it. It is how you find the tag you have
 * never seen, the block that trips MAX_LINE_LENGTH, and the grammar that looks
 * fine on a fixture and wrong on real prose-embedded code.
