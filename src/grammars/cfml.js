@@ -47,7 +47,7 @@
 * Exact parity with GitHub for CFML. GitHub renders CFML with the same stale
 * Linguist grammar we just left, so matching it and being correct are now
 * different things, and we chose correct. This is the same trade refineScope()
-* in core/highlight.js already makes for tag-based `.cfc` files, and the reason
+* in core/resolve.js already makes for tag-based `.cfc` files, and the reason
 * the project exists: GitHub's CFML is out of reach, self-hosted it is a file.
 *
 * NO EXTERNAL DEPENDENCIES
@@ -88,7 +88,7 @@ export async function loadCfmlGrammars() {
 * Leaving cfmleditor's own lists in place would make these grammars resolvable
 * straight from a fence tag, racing Linguist's registrations for the same names
 * with no stated winner. Every route into these scopes is instead an explicit
-* entry in `flagOverrides` (src/core/highlight.js), so the mapping is readable in one
+* entry in `flagOverrides` (src/core/resolve.js), so the mapping is readable in one
 * place and a tag cannot start resolving here by accident.
 *
 * `dependencies` is emptied because there genuinely are none -- these grammars

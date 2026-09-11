@@ -10,6 +10,7 @@ import {init, highlight} from "./highlight.js";
 * The layering, which is the directory structure rather than a convention:
 *
 *   src/core/highlight.js       pure highlighting, no I/O concepts at all
+*   src/core/resolve.js         fence tag -> grammar scope, the tag policy
 *   src/core/config.js          every env var, parsed and validated once
 *   src/core/api.js             this file -- requests, but not transports
 *   src/adapters/server.js      node:http adapter

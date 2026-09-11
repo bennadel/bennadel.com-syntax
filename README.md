@@ -32,7 +32,7 @@ The boundary that carries weight here is **what ships versus what does not**, an
 
 | path | what it is | ships |
 |---|---|---|
-| `src/core/` | `highlight.js`, the pure function over code plus a language flag; `config.js`, every env var parsed and validated once; `api.js`, transport-neutral auth, routing and response serialization | yes |
+| `src/core/` | `highlight.js`, the pure function over code plus a language flag; `resolve.js`, fence tag to grammar scope; `config.js`, every env var parsed and validated once; `api.js`, transport-neutral auth, routing and response serialization | yes |
 | `src/adapters/` | `server.js` for `node:http`, `lambda.js` for a Function URL. Transport only — no logic that both would need | yes |
 | `src/grammars/` | The two cfmleditor CFML grammars, vendored byte-identical; `cfml.js` and `stock.js`, which load them and the stock grammars; and `patches/`, the in-memory grammar patches, one module per language family | yes |
 | `test/` | `corpus.test.js` (golden output), `contract.test.js` (adapter parity), `__fixtures__/` | no |
@@ -169,11 +169,11 @@ docker buildx imagetools inspect node:24-alpine --format '{{println .Manifest.Di
 |---|---|
 | [LICENSES/](LICENSES/) | Third-party notices and provenance for code vendored by hand — currently the two cfmleditor CFML grammars. npm dependencies need nothing here; they carry their own licenses and ship them with `node_modules`. |
 
-Every Linguist grammar is registered, plus 2 vendored CFML grammars. Individual fence tags are corrected by the `flagOverrides` map in `src/core/highlight.js`, which is commented with what each override repairs.
+Every Linguist grammar is registered, plus 2 vendored CFML grammars. Individual fence tags are corrected by the `flagOverrides` map in `src/core/resolve.js`, which is commented with what each override repairs.
 
 ## Local Grammar Changes
 
-Where this service renders differently from the published grammars, the difference is a deliberate preference. Each line states what a reader of the rendered page sees. How it is done is in the source (`src/grammars/patches/`, one module per language family, and `src/core/highlight.js` for fence tags); this list stays current with it.
+Where this service renders differently from the published grammars, the difference is a deliberate preference. Each line states what a reader of the rendered page sees. How it is done is in the source (`src/grammars/patches/`, one module per language family, and `src/core/resolve.js` for fence tags); this list stays current with it.
 
 **Rendering**
 
