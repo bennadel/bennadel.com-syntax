@@ -323,7 +323,7 @@ function section(fixture) {
 		? badge("highlighted", "yes", "ok")
 		: badge("highlighted", "no -- plain text", "warn");
 
-	var resolved = badge("scope", result.resolvedLanguage ?? "none", result.resolvedLanguage ? "ok" : "warn");
+	var resolved = badge("scope", result.scope ?? "none", result.scope ? "ok" : "warn");
 
 	var goldenBadge = golden === null
 		? badge("golden", "missing", "warn")
@@ -430,7 +430,7 @@ function blogSection(block, index) {
 	<h2>${escapeHtml(label)}</h2>
 	<p class="badges">
 		${badge("flag", block.flag, "neutral")}
-		${badge("scope", result.resolvedLanguage ?? "none", result.resolvedLanguage ? "ok" : "warn")}
+		${badge("scope", result.scope ?? "none", result.scope ? "ok" : "warn")}
 		${result.highlighted
 			? badge("highlighted", "yes", "ok")
 			: badge("highlighted", "NO -- plain text", "bad")}
