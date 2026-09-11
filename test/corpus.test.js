@@ -382,6 +382,15 @@ if (!UPDATE) {
 		assertEqual(`override: "${flag}" -> ${scope}`, highlight("x", flag).scope, scope);
 	}
 
+	// Recorded, not endorsed. These resolve to grammars that are almost
+	// certainly not what the author meant, and they are left alone because
+	// unlike `txt` there is no documented intent to overrule and the tags are
+	// plausible in their own right. If the archive scan turns up real uses,
+	// override them the way `txt` is overridden. If these values ever change,
+	// that is worth knowing rather than absorbing silently.
+	assertEqual("known wart: \"snippet\"", highlight("x", "snippet").scope, "source.yasnippet");
+	assertEqual("known wart: \"tpl\"", highlight("x", "tpl").scope, "source.go-template");
+
 	// -------------------------------------------------------------------------
 	// Grammar registry: dependencies missingScopes() cannot see
 	//
@@ -482,21 +491,22 @@ if (!UPDATE) {
 		highlight("const s = 1;\n<cfset x = 1 />", "js").scope, "source.js");
 
 	// -------------------------------------------------------------------------
-	// CFML grammar: what cfmleditor fixed, and what we still patch
+	// Grammar assertions, in three groups.
 	//
-	// cfmleditor's grammars replace Linguist's 2013 cfscript grammar, and this
-	// section is the ledger for that swap. The first group is behaviour the
-	// new grammar gives us for free and the old one got wrong -- asserted so a
-	// future downgrade or a bad upstream bump is caught rather than admired. The
-	// second is the patches in src/grammars/patches/, which are the only things
-	// we still carry ourselves.
+	// First, the cfmleditor grammars: what they get right that Linguist's 2013
+	// cfscript grammar got wrong -- asserted so a downgrade or a bad upstream
+	// bump is caught rather than admired -- and the patches that exist only for
+	// them. Second, the language-family patches in src/grammars/patches/, one
+	// block per patch, asserted through whichever fences reach the grammars the
+	// patch branches on. Third, the patch layer as a whole: the registry of what
+	// ran, and the hashes of the vendored files.
 	//
 	// Every assertion names the specific misclassification, so if upstream ever
 	// fixes one the corresponding rule can be deleted and this tells you which.
 	// -------------------------------------------------------------------------
 
 	console.log("");
-	console.log("CFML grammar");
+	console.log("cfmleditor grammars");
 
 	var script = (code) => highlight(code, "cfs").html;
 
@@ -522,7 +532,7 @@ if (!UPDATE) {
 	assertEqual("queryExecute SQL survives mixed case",
 		script("var r = QueryExecute( \"SELECT id FROM t\" );").includes("<span class=\"pl-k\">SELECT</span>"), true);
 
-	// -- the patches we still carry ---------------------------------------------
+	// -- cfml-only patches ------------------------------------------------------
 
 	// CF2018. cfmleditor has no rule for `?.`, so without our patch neither
 	// character is claimed and the operator renders as plain text.
@@ -659,29 +669,6 @@ if (!UPDATE) {
 	assertEqual("string metadata value after a call value still highlights",
 		metadata.html.includes("<span class=\"pl-pds\">\"</span>x<span class=\"pl-pds\">\"</span>"), true);
 
-	// -- comment hyphens ----------------------------------------------------------
-
-	// Hyphen-run divider comments -- `<!-- ------- -->`, the archive's house
-	// style -- rendered invalid.illegal -> pl-ii because the comment rule brands
-	// every inner `--` illegal. The comment-hyphens patch deletes that catch-all;
-	// the run falls through to the enclosing comment scope. Deliberately NOT
-	// GitHub's rendering (text.html.basic has the same strictness): correct
-	// beats parity. Both HTML contexts are asserted because each has its own
-	// copy of the comment rule.
-	var divider = highlight("<!-- ------- -->\n<div>x</div>", "cfm");
-	assertEqual("hyphen-run divider comment is not illegal",
-		divider.html.includes("pl-ii"), false);
-	assertEqual("divider renders as one comment",
-		divider.html.includes("<span class=\"pl-c\">&lt;!-- ------- --&gt;</span>"), true);
-	// The comment must still END at `-->` -- the patch removes an inner rule,
-	// not the terminator -- or the markup after it would be swallowed.
-	assertEqual("markup after the divider is still a tag",
-		divider.html.includes("<span class=\"pl-ent\">div</span>"), true);
-
-	var dividerInCfoutput = highlight("<cfoutput><!-- ------- -->#x#</cfoutput>", "cfm");
-	assertEqual("divider comment inside cfoutput is not illegal",
-		dividerInCfoutput.html.includes("pl-ii"), false);
-
 	// -- bad angle bracket ----------------------------------------------------------
 
 	// A `<` that opens no tag rendered invalid.illegal -> pl-ii, which lights up
@@ -705,6 +692,45 @@ if (!UPDATE) {
 	assertEqual("real tag after a bare < still highlights",
 		angleTag.html.includes("<span class=\"pl-ent\">div</span>"), true);
 
+	console.log("");
+	console.log("grammar patches");
+
+	// -- comment hyphens ----------------------------------------------------------
+
+	// Hyphen-run divider comments -- `<!-- ------- -->`, the archive's house
+	// style -- rendered invalid.illegal -> pl-ii because the comment rule brands
+	// every inner `--` illegal. The comment-hyphens patch deletes that catch-all;
+	// the run falls through to the enclosing comment scope. Deliberately NOT
+	// GitHub's rendering (text.html.basic has the same strictness): correct
+	// beats parity. Both HTML contexts are asserted because each has its own
+	// copy of the comment rule.
+	var divider = highlight("<!-- ------- -->\n<div>x</div>", "cfm");
+	assertEqual("hyphen-run divider comment is not illegal",
+		divider.html.includes("pl-ii"), false);
+	assertEqual("divider renders as one comment",
+		divider.html.includes("<span class=\"pl-c\">&lt;!-- ------- --&gt;</span>"), true);
+	// The comment must still END at `-->` -- the patch removes an inner rule,
+	// not the terminator -- or the markup after it would be swallowed.
+	assertEqual("markup after the divider is still a tag",
+		divider.html.includes("<span class=\"pl-ent\">div</span>"), true);
+
+	var dividerInCfoutput = highlight("<cfoutput><!-- ------- -->#x#</cfoutput>", "cfm");
+	assertEqual("divider comment inside cfoutput is not illegal",
+		dividerInCfoutput.html.includes("pl-ii"), false);
+
+	// The same gap in the STOCK html grammar, patched by src/grammars/patches/html.js
+	// (the patch is applied to a clone before createStarryNight, so it must be
+	// visible through an ordinary `htm` fence).
+	var dividerInHtm = highlight("<!-- ------- -->\n<div>x</div>", "htm");
+	assertEqual("htm fence resolves to the stock html grammar",
+		dividerInHtm.scope, "text.html.basic");
+	assertEqual("divider comment in html is not illegal",
+		dividerInHtm.html.includes("pl-ii"), false);
+	assertEqual("divider in html renders as one comment",
+		dividerInHtm.html.includes("<span class=\"pl-c\">&lt;!-- ------- --&gt;</span>"), true);
+	assertEqual("markup after the html divider is still a tag",
+		dividerInHtm.html.includes("<span class=\"pl-ent\">div</span>"), true);
+
 	// -- doctype capture ------------------------------------------------------------
 
 	// The SGML rule's doctype sub-rule assigns its scope to capture group 1 of
@@ -727,19 +753,6 @@ if (!UPDATE) {
 	var doctypeInHtm = highlight("<!doctype html>\n<html></html>", "htm");
 	assertEqual("lowercase html5 doctype is a tag name",
 		doctypeInHtm.html.includes("<span class=\"pl-ent\">doctype</span>"), true);
-
-	// The same gap in the STOCK html grammar, patched by src/grammars/patches/html.js
-	// (the patch is applied to a clone before createStarryNight, so it must be
-	// visible through an ordinary `htm` fence).
-	var dividerInHtm = highlight("<!-- ------- -->\n<div>x</div>", "htm");
-	assertEqual("htm fence resolves to the stock html grammar",
-		dividerInHtm.scope, "text.html.basic");
-	assertEqual("divider comment in html is not illegal",
-		dividerInHtm.html.includes("pl-ii"), false);
-	assertEqual("divider in html renders as one comment",
-		dividerInHtm.html.includes("<span class=\"pl-c\">&lt;!-- ------- --&gt;</span>"), true);
-	assertEqual("markup after the html divider is still a tag",
-		dividerInHtm.html.includes("<span class=\"pl-ent\">div</span>"), true);
 
 	// -- statement keywords ---------------------------------------------------------
 
@@ -1196,7 +1209,8 @@ if (!UPDATE) {
 	assertEqual("ts local variable is still a variable",
 		props.html.includes("<span class=\"pl-smi\">plain</span>"), true);
 
-	// ---------------------------------------------------------------------------
+	console.log("");
+	console.log("patch registry and vendored hashes");
 
 	// Every patch must have actually run on every grammar it has a branch for.
 	// A patch that silently stops applying looks fixed and is not, and the
@@ -1237,15 +1251,6 @@ if (!UPDATE) {
 
 		assertEqual(`vendored unmodified: ${file}`, actual, expected);
 	}
-
-	// Recorded, not endorsed. These resolve to grammars that are almost
-	// certainly not what the author meant, and they are left alone because
-	// unlike `txt` there is no documented intent to overrule and the tags are
-	// plausible in their own right. If the archive scan turns up real uses,
-	// override them the way `txt` is overridden. If these values ever change,
-	// that is worth knowing rather than absorbing silently.
-	assertEqual("known wart: \"snippet\"", highlight("x", "snippet").scope, "source.yasnippet");
-	assertEqual("known wart: \"tpl\"", highlight("x", "tpl").scope, "source.go-template");
 }
 
 // ---------------------------------------------------------------------------
