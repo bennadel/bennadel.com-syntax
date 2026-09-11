@@ -4,10 +4,10 @@
 *
 * The vendored JSON stays byte-identical to upstream. That is the whole point:
 * a generated file far too large to diff or merge by hand would make every
-* future update a conflict against something unreadable. The stock
-* starry-night grammars are patched the same way, on clones, for the reason
-* stock.js gives. Instead each patch is a named descriptor with a stated
-* anchor, and updating upstream is a re-download plus the test suite.
+* future update a conflict against something unreadable. Instead each patch
+* is a named descriptor with a stated anchor, and updating upstream is a
+* re-download plus the test suite. The stock starry-night grammars are
+* patched the same way, on clones, for the reason stock.js gives.
 *
 * Every patch ASSERTS its anchor before mutating, and every assertion covers a
 * condition that would otherwise fail SILENTLY. A patch that stops applying is

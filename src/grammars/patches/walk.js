@@ -1,5 +1,9 @@
 /**
-* The one traversal every "must be the ONLY carrier" assertion is built on.
+* The traversal the "must be the ONLY carrier" assertions are built on. The
+* `JSON.stringify(...).includes` scans in badAmpersandInCfml and
+* badAngleBracketInCfml are the deliberate exception: there the deleted scope
+* must not appear as ANY string, inside a compound name or a regex included,
+* which a walk over rule objects cannot promise.
 *
 * A TextMate grammar is nested arrays and plain objects. Both functions walk
 * it depth-first from `node`: arrays are recursed, every plain object is

@@ -79,8 +79,7 @@ function nestingInCss(grammar) {
 	var selector = repo.selector;
 
 	if (
-		!selector
-		|| !selector.begin.startsWith("(?x)\n(?=\n  (?:\\|)?")
+		!selector.begin.startsWith("(?x)\n(?=\n  (?:\\|)?")
 		|| selector.end !== "(?=\\s*[/@{)])"
 	) {
 		throw new Error(`${grammar.scopeName}: the selector rule no longer has the expected begin/end; re-derive nestingInCss`);

@@ -86,8 +86,7 @@ function methodNameListsInJs(grammar) {
 	];
 
 	if (
-		!call
-		|| call.patterns.length !== 1
+		call.patterns.length !== 1
 		|| call.patterns[0].begin !== "(\\.)\\s*([\\w$]+)\\s*(?=\\()"
 		|| JSON.stringify(call.patterns[0].beginCaptures[2].patterns.map((p) => p.name)) !== JSON.stringify(EXPECTED)
 	) {

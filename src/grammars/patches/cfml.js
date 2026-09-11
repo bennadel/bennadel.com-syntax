@@ -107,8 +107,7 @@ function bareIncludeInCfml(grammar) {
 * patched it there. Carried across so the swap is not a regression: it was
 * `pl-k` before and it is `pl-k` after.
 *
-* Scoped as an operator, which puts it alongside `=` and `&&`. The rule is a
-* single-line `match` with no state -- the only kind that belongs in a patch.
+* Scoped as an operator, which puts it alongside `=` and `&&`.
 */
 var patchSafeNavigation = {
 	name: "safe-navigation",

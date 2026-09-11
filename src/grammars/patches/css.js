@@ -55,11 +55,10 @@ function mediaFeaturesInCss(grammar) {
 	var query = grammar.repository["media-query"];
 	var KEY_VALUE = "punctuation.separator.key-value.css";
 
-	var parens = (query && query.patterns || []).filter((p) => p.begin === "\\(" && p.end === "\\)");
+	var parens = query.patterns.filter((p) => p.begin === "\\(" && p.end === "\\)");
 
 	if (
-		!query
-		|| query.begin !== "\\G"
+		query.begin !== "\\G"
 		|| query.end !== "(?=\\s*[{;])"
 		|| parens.length !== 1
 	) {
@@ -179,8 +178,7 @@ function valueIdentifiersInCss(grammar) {
 	var IMPORTANT = "!\\s*important(?![\\w-])";
 
 	if (
-		!values
-		|| !Array.isArray(values.patterns)
+		!Array.isArray(values.patterns)
 		|| values.patterns.at(-1).match !== IMPORTANT
 		|| !["#functions", "#property-keywords", "#numeric-values", "#color-keywords", "#string"].every((include) => values.patterns.some((p) => p.include === include))
 	) {
