@@ -1232,8 +1232,8 @@ if (!UPDATE) {
 		].join(" | "));
 
 	// The vendored files are byte-identical to upstream, and this is what makes
-	// that a fact rather than an intention. Both patches are applied to the
-	// PARSED JSON in memory, never to the files on disk, so any change here is
+	// that a fact rather than an intention. Patches are applied to the PARSED
+	// JSON in memory, never to the files on disk, so any change here is
 	// either a deliberate upstream update or someone hand-editing a 600 KB
 	// generated file at midnight to make one token render differently.
 	//

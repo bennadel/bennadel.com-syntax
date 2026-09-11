@@ -72,9 +72,9 @@ the new files, having read what changed.
 2. `shasum -a 256 src/grammars/*.tmLanguage.json`
 3. Update the commit, date and hashes here and in `src/grammars/cfml.js`
 4. Update the `SOURCES` hashes in `test/corpus.test.js`
-5. `./scripts/test.sh` — the patch assertions will tell you whether upstream has
-   started handling `include "…"` or `?.` itself, in which case the corresponding
-   patch should be deleted rather than carried forward
+5. `./scripts/test.sh` — each patch throws if the upstream rule it compensates
+   for is gone, which usually means upstream fixed the thing itself; delete that
+   patch rather than carry it forward
 6. `./scripts/test-update.sh`, then **read the golden diff**
 7. Re-check [`cfmleditor-MIT.txt`](cfmleditor-MIT.txt) against upstream's LICENSE
    at the new commit, in case the copyright line changed
