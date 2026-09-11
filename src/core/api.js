@@ -17,10 +17,9 @@ import {init, highlight} from "./highlight.js";
 *   src/adapters/lambda.js      Function URL adapter
 *
 * Dependencies point one way only: adapters import core, core imports nothing
-* from adapters, and highlight.js imports neither. A `../adapters/` import
-* appearing anywhere under core/ means the layering has been broken, and that
-* is now visible in the import line itself rather than requiring someone to
-* know the rule.
+* from adapters. A `../adapters/` import appearing anywhere under core/ means
+* the layering has been broken, and that is now visible in the import line
+* itself rather than requiring someone to know the rule.
 *
 * Why this exists: the API contract has to be identical against both adapters.
 * Nothing about running two adapters guarantees that -- it holds only

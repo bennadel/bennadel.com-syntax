@@ -1,7 +1,7 @@
 /**
 * The scope names the vendored cfmleditor grammars declare. A leaf module so
-* the loader, the patch modules and core/highlight.js can all import them
-* without any of them importing each other.
+* the patch modules and core/ can both import them without importing each
+* other.
 */
 
 /** Tag-based CFML: `.cfm` files, and `.cfc` files written with tags. */
