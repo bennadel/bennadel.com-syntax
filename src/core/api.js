@@ -19,8 +19,7 @@ import {init, highlight} from "./highlight.js";
 * from adapters, and highlight.js imports neither. A `../adapters/` import
 * appearing anywhere under core/ means the layering has been broken, and that
 * is now visible in the import line itself rather than requiring someone to
-* know the rule. src/grammars/ sits outside both -- it is vendored third-party
-* data plus its loader, not our logic, and LICENSES/README.md tracks it as such.
+* know the rule.
 *
 * Why this exists: the API contract has to be identical against both adapters.
 * Nothing about running two adapters guarantees that -- it holds only

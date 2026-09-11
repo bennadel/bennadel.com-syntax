@@ -45,7 +45,7 @@ The boundary that carries weight here is **what ships versus what does not**, an
 
 Dependencies inside `src/` point one way: adapters import core, core imports nothing from adapters. A `../adapters/` import under `core/` means the layering has been broken, and the import line itself says so.
 
-Three directories are the *inputs* (`src/`, `test/`, `tools/`); `dist/` is the only *output*. `src/grammars/` sits outside the core/adapters split on purpose — it is third-party code this repo happens to carry, tracked in [`LICENSES/README.md`](LICENSES/README.md), not our logic.
+Three directories are the *inputs* (`src/`, `test/`, `tools/`); `dist/` is the only *output*. `src/grammars/` sits outside the core/adapters split because it is not a layer: two vendored grammars (third-party, tracked in [`LICENSES/README.md`](LICENSES/README.md)) and the in-memory patches this repo applies to them and to starry-night's stock grammars. Core imports it; nothing in it imports core.
 
 ## Running It Locally
 
