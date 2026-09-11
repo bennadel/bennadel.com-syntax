@@ -80,7 +80,7 @@ export var CFML_SCRIPT = "embedding.cfml.cfs";
 */
 export var applied = new Map();
 
-var PATCHES = [patchBareInclude, patchSafeNavigation, patchTagIsland, patchBadAmpersand, patchCustomTagDigits, patchFunctionMetadata, patchCommentHyphens, patchBadAngleBracket, patchDoctypeCapture, patchMethodNameLists, patchConsoleGlobal, patchObjectKeys, patchSqlColumnWords];
+var PATCHES = [patchBareInclude, patchSafeNavigation, patchTagIsland, patchBadAmpersand, patchCustomTagDigits, patchFunctionMetadata, patchCommentHyphens, patchBadAngleBracket, patchDoctypeCapture, patchMethodNameLists, patchConsoleGlobal, patchObjectKeys, patchSqlColumnWords, patchSqlDdlWords];
 
 export async function loadCfmlGrammars() {
 	return Promise.all([
@@ -1002,12 +1002,74 @@ function patchObjectKeys(grammar, file) {
 function patchSqlColumnWords(grammar, file) {
 	var WORDS = ["name", "type", "value", "status", "date", "data"];
 
+	var roster = sqlKeywordRoster(grammar, file, "patchSqlColumnWords");
+
+	// Anchor check: every word to remove must be present exactly once, spelled
+	// bare. A word already gone means upstream pruned it and this roster should
+	// shrink; a word present twice or wrapped in regex means the list changed
+	// shape and a plain string removal is no longer sound.
+	for (var word of WORDS) {
+		if (roster.words.filter((w) => w === word).length !== 1) {
+			throw new Error(`${file}: source-sql keyword list no longer contains "${word}" exactly once; re-derive patchSqlColumnWords`);
+		}
+	}
+
+	roster.write(roster.words.filter((w) => !WORDS.includes(w)));
+
+	return "sql-column-words";
+}
+
+/**
+* `COLLATE`, `ENGINE`, `DEFAULT` and `CHARSET` render as plain text inside a
+* cfquery body.
+*
+* The same generic keyword list patchSqlColumnWords prunes was copied from
+* SQL Server Management Studio, and these four are not in it: three are MySQL
+* table options SSMS never sees, and DEFAULT is colored there by a different
+* mechanism. In this archive a CREATE TABLE inside a cfquery is MySQL, and its
+* last line renders with only the `=` signs colored. Found via fixtures
+* 3918-4.sql and 4233-1.sql, whose `sql` fences get the same words from
+* patchDdlKeywords in stock.js.
+*
+* All four are reserved in MySQL, and COLLATE and DEFAULT everywhere else, so
+* none can be an unquoted column name: the collision that argues for pruning
+* `name` argues for adding these. `CHARACTER SET` needs nothing here; both
+* words are already in the list.
+*/
+function patchSqlDdlWords(grammar, file) {
+	var WORDS = ["collate", "engine", "default", "charset"];
+
+	var roster = sqlKeywordRoster(grammar, file, "patchSqlDdlWords");
+
+	// A word already present means upstream added it; drop it from this list.
+	for (var word of WORDS) {
+		if (roster.words.includes(word)) {
+			throw new Error(`${file}: source-sql keyword list already contains "${word}"; remove it from patchSqlDdlWords`);
+		}
+	}
+
+	roster.write(roster.words.concat(WORDS));
+
+	return "sql-ddl-words";
+}
+
+/**
+* The generic keyword alternation of cfmleditor's inlined vscode-mssql grammar
+* -- the one ~830-word `keyword.other.sql` rule in source-sql -- with its
+* word list split out and a writer that puts a new list back. Shared by the
+* two patches that edit the roster.
+*
+* The generic rule is the only `keyword.other.sql` rule whose match is a bare
+* word alternation -- the DML/DDL siblings carry dotted suffixes
+* (keyword.other.DML.sql) and are not what is being edited. It must also be
+* the ONLY carrier of that alternation in the whole grammar: a second copy in
+* an upstream update would keep the old roster in some context nobody
+* re-tested -- fail loudly instead.
+*/
+function sqlKeywordRoster(grammar, file, patchName) {
 	var HEAD = "\\b(?i)(";
 	var TAIL = ")\\b";
 
-	// The generic keyword rule is the only `keyword.other.sql` rule whose match
-	// is a bare word alternation -- the DML/DDL siblings carry dotted suffixes
-	// (keyword.other.DML.sql) and are not what is being edited here.
 	function isCarrier(node) {
 		return (
 			node.name === "keyword.other.sql"
@@ -1022,27 +1084,9 @@ function patchSqlColumnWords(grammar, file) {
 	var matches = grammar.repository["source-sql"].patterns.filter(isCarrier);
 
 	if (matches.length !== 1) {
-		throw new Error(`${file}: source-sql no longer has exactly one generic keyword alternation; re-derive patchSqlColumnWords`);
+		throw new Error(`${file}: source-sql no longer has exactly one generic keyword alternation; re-derive ${patchName}`);
 	}
 
-	var rule = matches[0];
-	var words = rule.match.slice(HEAD.length, -TAIL.length).split("|");
-
-	// Anchor check: every word to remove must be present exactly once, spelled
-	// bare. A word already gone means upstream pruned it and this roster should
-	// shrink; a word present twice or wrapped in regex means the list changed
-	// shape and a plain string removal is no longer sound.
-	for (var word of WORDS) {
-		if (words.filter((w) => w === word).length !== 1) {
-			throw new Error(`${file}: source-sql keyword list no longer contains "${word}" exactly once; re-derive patchSqlColumnWords`);
-		}
-	}
-
-	rule.match = HEAD + words.filter((w) => !WORDS.includes(w)).join("|") + TAIL;
-
-	// The entry must be the ONLY carrier of the alternation. A second copy in an
-	// upstream update would keep coloring column names in some context nobody
-	// re-tested -- fail loudly instead.
 	function count(node) {
 		if (Array.isArray(node)) {
 			return node.reduce((sum, item) => sum + count(item), 0);
@@ -1055,8 +1099,15 @@ function patchSqlColumnWords(grammar, file) {
 	}
 
 	if (count(grammar) !== 1) {
-		throw new Error(`${file}: a generic SQL keyword alternation now appears outside source-sql; extend patchSqlColumnWords to cover it`);
+		throw new Error(`${file}: a generic SQL keyword alternation now appears outside source-sql; extend ${patchName} to cover it`);
 	}
 
-	return "sql-column-words";
+	var rule = matches[0];
+
+	return {
+		words: rule.match.slice(HEAD.length, -TAIL.length).split("|"),
+		write(words) {
+			rule.match = HEAD + words.join("|") + TAIL;
+		}
+	};
 }

@@ -772,6 +772,30 @@ if (!UPDATE) {
 	assertEqual("with is a keyword inside a cfquery body",
 		cte.html.includes("<span class=\"pl-k\">WITH</span> t <span class=\"pl-k\">AS</span>"), true);
 
+	// -- ddl keywords -----------------------------------------------------------------
+
+	// Neither SQL grammar knows the MySQL table-option words, so a CREATE TABLE
+	// ends in a line where only the `=` signs color. The ddl-keywords patch
+	// (src/grammars/stock.js) and the sql-ddl-words patch (src/grammars/cfml.js)
+	// add COLLATE, ENGINE, DEFAULT and CHARSET to the `sql` fence and to
+	// cfquery bodies respectively; the stock patch folds CHARACTER SET in too.
+	var ddlSource = "CREATE TABLE t (\n\tname VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin default null\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;\nSELECT 1 FROM t WHERE slug COLLATE utf8_bin = 'x';";
+	var ddl = highlight(ddlSource, "sql");
+	assertEqual("sql table options are keywords",
+		ddl.html.includes(") <span class=\"pl-k\">ENGINE=</span>InnoDB <span class=\"pl-k\">DEFAULT</span> <span class=\"pl-k\">CHARSET=</span>utf8mb4 <span class=\"pl-k\">COLLATE=</span>utf8mb4_0900_ai_ci;"), true);
+	assertEqual("sql character set is one keyword",
+		ddl.html.includes("<span class=\"pl-k\">CHARACTER SET</span> utf8mb4 <span class=\"pl-k\">COLLATE</span> utf8mb4_bin"), true);
+	assertEqual("sql ddl words are matched case-insensitively",
+		ddl.html.includes("<span class=\"pl-k\">default</span> <span class=\"pl-k\">null</span>"), true);
+	assertEqual("sql collate in a where clause is a keyword and its collation is not",
+		ddl.html.includes("slug <span class=\"pl-k\">COLLATE</span> utf8_bin <span class=\"pl-k\">=</span>"), true);
+
+	var ddlInCfquery = highlight(`<cfquery name="q">\n${ddlSource}\n</cfquery>`, "cfm");
+	assertEqual("cfquery table options are keywords",
+		ddlInCfquery.html.includes(") <span class=\"pl-k\">ENGINE=</span>InnoDB <span class=\"pl-k\">DEFAULT</span> <span class=\"pl-k\">CHARSET=</span>utf8mb4 <span class=\"pl-k\">COLLATE=</span>utf8mb4_0900_ai_ci;"), true);
+	assertEqual("cfquery collate in a where clause is a keyword and its collation is not",
+		ddlInCfquery.html.includes("slug <span class=\"pl-k\">COLLATE</span> utf8_bin <span class=\"pl-k\">=</span>"), true);
+
 	// -- nesting ----------------------------------------------------------------------
 
 	// The stock CSS grammar parses a block's contents as declarations only, so a
@@ -1127,12 +1151,12 @@ if (!UPDATE) {
 	// drops a patch from the list.
 	assertEqual("every vendored grammar is patched",
 		[...cfmlPatches.values()].map((names) => names.join(",")).join(" | "),
-		"bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits,function-metadata,comment-hyphens,bad-angle-bracket,doctype-capture,method-name-lists,console-global,object-keys,sql-column-words | bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits,function-metadata,comment-hyphens,bad-angle-bracket,doctype-capture,method-name-lists,console-global,object-keys,sql-column-words");
+		"bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits,function-metadata,comment-hyphens,bad-angle-bracket,doctype-capture,method-name-lists,console-global,object-keys,sql-column-words,sql-ddl-words | bare-include,safe-navigation,tag-island,bad-ampersand,custom-tag-digits,function-metadata,comment-hyphens,bad-angle-bracket,doctype-capture,method-name-lists,console-global,object-keys,sql-column-words,sql-ddl-words");
 
 	// Same pin for the stock-grammar patch layer (src/grammars/stock.js).
 	assertEqual("every stock grammar is patched",
 		[...stockPatches.entries()].map(([scope, names]) => `${scope}:${names.join(",")}`).join(" | "),
-		"source.css:nesting,media-features,value-identifiers | source.js:method-name-lists,console-global,object-keys | source.sql:statement-keywords | source.ts:template-property,method-name-lists,console-global,object-keys,property-names | text.html.basic:comment-hyphens,doctype-capture");
+		"source.css:nesting,media-features,value-identifiers | source.js:method-name-lists,console-global,object-keys | source.sql:statement-keywords,ddl-keywords | source.ts:template-property,method-name-lists,console-global,object-keys,property-names | text.html.basic:comment-hyphens,doctype-capture");
 
 	// The vendored files are byte-identical to upstream, and this is what makes
 	// that a fact rather than an intention. Both patches are applied to the

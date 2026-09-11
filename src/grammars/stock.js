@@ -24,7 +24,7 @@ var PATCHES = new Map([
 	["source.css", [patchNesting, patchMediaFeatures, patchValueIdentifiers]],
 	["source.js", [patchMethodNameLists, patchConsoleGlobal, patchObjectKeys]],
 	["source.ts", [patchTemplateProperty, patchMethodNameLists, patchConsoleGlobal, patchObjectKeys, patchPropertyNames]],
-	["source.sql", [patchStatementKeywords]],
+	["source.sql", [patchStatementKeywords, patchDdlKeywords]],
 	["text.html.basic", [patchCommentHyphens, patchDoctypeCapture]]
 ]);
 
@@ -810,6 +810,47 @@ function patchStatementKeywords(grammar) {
 	}
 
 	return "statement-keywords";
+}
+
+/**
+* `COLLATE`, `ENGINE`, `DEFAULT`, `CHARSET` and `CHARACTER SET` render as
+* plain text in a `sql` fence.
+*
+* The stock grammar's DDL coverage is a handful of rules for CREATE, types,
+* `PRIMARY KEY` and `NOT NULL`; the table-option and column-option words
+* around them are absent, so a MySQL CREATE TABLE ends in a line where only
+* the `=` signs are colored, and `slug COLLATE utf8_bin = 'x'` in a WHERE
+* clause colors the column and the operator but not the word between them.
+* GitHub ships the same rule and renders the same gap. Found via fixtures
+* 3918-4.sql and 4233-1.sql.
+*
+* All five are reserved in MySQL, and COLLATE and DEFAULT in Postgres, SQL
+* Server and SQLite too, so none can be an unquoted column name: coloring
+* them cannot misfire the way `name` or `status` would. `CHARACTER SET` is
+* folded in as one token the way the DML rule folds `union(\s+all)?`, or the
+* stock `SET` rule would color half the phrase.
+*
+* The patch prepends the words to the DDL rule that already carries `ON` and
+* `NOT NULL`, so they render in that rule's scope beside them. The collation,
+* engine and charset names that follow stay plain: they are identifiers.
+*/
+function patchDdlKeywords(grammar) {
+	var SCOPE = "keyword.other.DDL.create.II.sql";
+	var STOCK = "(?i:\\b(on|((is\\s+)?not\\s+)?null)\\b)";
+	var HEAD = "(?i:\\b(";
+
+	// Like the DML rule, this one lives in the grammar's top-level patterns.
+	var rules = grammar.patterns.filter((p) => p.name === SCOPE);
+
+	// Anchor on the whole stock alternation: it is short enough that any
+	// change to it means re-deriving rather than splicing.
+	if (rules.length !== 1 || rules[0].match !== STOCK) {
+		throw new Error(`${grammar.scopeName}: the ${SCOPE} rule no longer has the expected alternation; re-derive patchDdlKeywords`);
+	}
+
+	rules[0].match = `${HEAD}collate|engine|default|charset|character\\s+set|${STOCK.slice(HEAD.length)}`;
+
+	return "ddl-keywords";
 }
 
 /**

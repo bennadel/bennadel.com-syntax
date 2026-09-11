@@ -3,8 +3,8 @@
 	<span class="pl-s"><span class="pl-pds">`</span>listID<span class="pl-pds">`</span></span> <span class="pl-k">int</span>(<span class="pl-c1">10</span>) unsigned <span class="pl-k">NOT NULL</span>, <span class="pl-c">-- The "foreign key" reference.</span>
 	<span class="pl-s"><span class="pl-pds">`</span>description<span class="pl-pds">`</span></span> <span class="pl-k">varchar</span>(<span class="pl-c1">300</span>) <span class="pl-k">NOT NULL</span>,
 	<span class="pl-s"><span class="pl-pds">`</span>createdAt<span class="pl-pds">`</span></span> datetime <span class="pl-k">NOT NULL</span>,
-	<span class="pl-s"><span class="pl-pds">`</span>dueAt<span class="pl-pds">`</span></span> datetime DEFAULT <span class="pl-k">NULL</span>,
+	<span class="pl-s"><span class="pl-pds">`</span>dueAt<span class="pl-pds">`</span></span> datetime <span class="pl-k">DEFAULT</span> <span class="pl-k">NULL</span>,
 	<span class="pl-s"><span class="pl-pds">`</span>sort<span class="pl-pds">`</span></span> <span class="pl-k">int</span>(<span class="pl-c1">11</span>) <span class="pl-k">NOT NULL</span>,
 	<span class="pl-k">PRIMARY KEY</span> (<span class="pl-s"><span class="pl-pds">`</span>id<span class="pl-pds">`</span></span>),
 	KEY <span class="pl-s"><span class="pl-pds">`</span>byList<span class="pl-pds">`</span></span> (<span class="pl-s"><span class="pl-pds">`</span>listID<span class="pl-pds">`</span></span>)
-) ENGINE<span class="pl-k">=</span>InnoDB DEFAULT CHARSET<span class="pl-k">=</span>utf8;
+) <span class="pl-k">ENGINE=</span>InnoDB <span class="pl-k">DEFAULT</span> <span class="pl-k">CHARSET=</span>utf8;

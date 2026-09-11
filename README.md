@@ -185,6 +185,7 @@ Where this service renders differently from the published grammars, the differen
 - **CFML**: call expressions in function metadata (`cachedWithin = createTimeSpan(...)`) highlight as expressions, not errors.
 - **CFML**: `<`, `<=` and `<>` in cfquery SQL bodies are not flagged as errors.
 - **CFML**: common column names (`name`, `type`, `value`, `status`, `date`, `data`) are not colored as SQL keywords inside cfquery bodies.
+- **CFML**: `COLLATE`, `ENGINE`, `DEFAULT` and `CHARSET` color as keywords inside cfquery bodies.
 - **CFML**: a block written with tags highlights as tags even when the fence says script (`cfc`, `cfs`, `cfscript`).
 - **CFML, HTML**: `--` inside an HTML comment (hyphen-divider comments) is not flagged as an error.
 - **CFML, HTML**: the `<!DOCTYPE` keyword is highlighted.
@@ -198,6 +199,7 @@ Where this service renders differently from the published grammars, the differen
 - **TypeScript**: template strings in `@Component` metadata parse as HTML.
 - **TypeScript**: a property name renders in one color whether declared, accessed via `this.`, or used as a literal key.
 - **SQL**: `EXPLAIN`, `EXPLAIN ANALYZE`, `WITH` and `WITH RECURSIVE` color as keywords.
+- **SQL**: `COLLATE`, `ENGINE`, `DEFAULT`, `CHARSET` and `CHARACTER SET` color as keywords.
 
 **Fence tags**
 
