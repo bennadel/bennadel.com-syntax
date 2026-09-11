@@ -100,12 +100,6 @@ var flagOverrides = new Map([
 	["txt", null]
 ]);
 
-// Linguist's two spellings are listed alongside ours on purpose. Nothing routes
-// to them today, but a future override that forgets to use the
-// CFML_SCRIPT constant would otherwise lose the tag-vs-script correction
-// silently, which is exactly the class of bug this file guards against.
-var SCRIPT_SCOPES = new Set([CFML_SCRIPT, "source.cfscript", "source.cfscript.patched"]);
-
 /**
 * Resolve a fence tag to a TextMate scope, corrected by the source. Undefined
 * means "no grammar", which is a normal outcome, not an error.
@@ -160,10 +154,7 @@ function lookupScope(starryNight, flag) {
 * script, whatever it was labelled.
 */
 function refineScope(scope, source) {
-	// Both spellings: the stock scope, and our patched wrapper around it. Listing
-	// both means an override that forgets to point at the patched grammar still
-	// gets the tag-vs-script correction rather than silently losing it.
-	if (SCRIPT_SCOPES.has(scope) && looksTagBased(source)) return CFML_TAG;
+	if (scope === CFML_SCRIPT && looksTagBased(source)) return CFML_TAG;
 
 	return scope;
 }

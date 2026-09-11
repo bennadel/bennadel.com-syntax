@@ -552,7 +552,7 @@ if (!UPDATE) {
 	assertEqual("ordinary strings are still strings",
 		script("var s = \"hello\";").includes("<span class=\"pl-s\">"), true);
 
-	// -- patches now reach nested script ----------------------------------------
+	// -- patches reach nested script --------------------------------------------
 
 	// Do not reintroduce a wrapper grammar to carry the patches. A wrapper only
 	// applies where WE pick the entry grammar, so inside a tag-based file it is

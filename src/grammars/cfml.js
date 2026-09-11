@@ -57,12 +57,12 @@
 * is ~600 KB against Linguist's 25.5 KB cfscript, and it is also why they need
 * no `dependencies` and cannot be broken by an unrelated grammar changing.
 *
-* It is also what makes the patches in patches/ reach EVERYWHERE. The old
-* wrapper grammar (`source.cfscript.patched`, deleted with this change) could
-* only patch blocks where we picked the entry grammar; it could not reach
-* cfscript nested inside a tag file, because `text.html.cfm` included
-* `source.cfscript` by name. With everything inlined there is no include chain
-* to lose, so a patch applied to the file applies to every context in it.
+* It is also what makes the patches in patches/ reach EVERYWHERE. A grammar
+* that reaches its script blocks through an `include` by scope name hands them
+* to whatever grammar is REGISTERED under that name, not to our patched copy,
+* so a patch would stop at the include. With everything inlined there is no
+* include chain to lose, so a patch applied to the file applies to every
+* context in it.
 */
 
 import {readFile} from "node:fs/promises";
