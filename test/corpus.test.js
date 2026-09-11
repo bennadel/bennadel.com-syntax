@@ -818,6 +818,9 @@ if (!UPDATE) {
 		"\t@media (min-width: 600px) {",
 		"\t\tcolor: blue;",
 		"\t}",
+		"\t@supports (display: grid) {",
+		"\t\tcolor: green;",
+		"\t}",
 		"\t.e&f { }",
 		"\toutline: none;",
 		"}",
@@ -842,6 +845,8 @@ if (!UPDATE) {
 		nested.html.includes("<span class=\"pl-c1\">filter</span>:<span class=\"pl-c1\">blur</span>("), true);
 	assertEqual("declaration directly inside a nested media block is a property",
 		nested.html.includes("<span class=\"pl-c1\">color</span>: <span class=\"pl-c1\">blue</span>;\n\t}"), true);
+	assertEqual("declaration directly inside a nested supports block is a property",
+		nested.html.includes("<span class=\"pl-c1\">color</span>: <span class=\"pl-c1\">green</span>;\n\t}"), true);
 	assertEqual("nesting selector before an identifier is invalid",
 		nested.html.includes("<span class=\"pl-ii\">.e&amp;f</span>"), true);
 	// The one-line nested rules above must not have closed the outer block:

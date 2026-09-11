@@ -192,7 +192,7 @@ Where this service renders differently from the published grammars, the differen
 - **CFML, JavaScript, TypeScript**: every chained method call renders in one color, whether or not the name collides with a DOM or standard-library method.
 - **CFML, JavaScript, TypeScript**: object-literal keys color as constants.
 - **CFML, JavaScript, TypeScript**: `console` colors as a global like `document` and `window`, and `console.log(` colors like any other method call rather than as a built-in.
-- **CSS**: nested rules highlight as rules: the `&` nesting selector colors like an element name, a nested selector colors as a selector, and the declarations inside a nested block color as declarations rather than plain text.
+- **CSS**: nested rules highlight as rules: the `&` nesting selector colors like an element name, a nested selector colors as a selector, and the declarations inside a nested block, including directly inside a nested `@media` or `@supports`, color as declarations rather than plain text.
 - **CSS**: every feature in an `@media` header colors like a property name and its value like a property value, including features the grammar predates (`prefers-reduced-motion`, `prefers-color-scheme`, `pointer`).
 - **CSS**: an author-defined name in a declaration value (`animation-name: modal-enter`, a grid area, an unlisted font) colors like a keyword value instead of plain text.
 - **Less**: `@supports`, `@keyframes`, `@container`, `@layer`, `@page` and the other CSS at-rules color as keywords like `@media`, not as Less variables.

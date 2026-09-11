@@ -956,13 +956,16 @@ function patchAtRules(grammar) {
 *   as a selector unless the line reads as a declaration. The two lists are
 *   exactly the intersection of the grammar's tag-names and property-names
 *   alternations, which the patch verifies against both regexes.
-* - The body of a nested `@media` (and of any at-rule the grammar has no
-*   dedicated rule for) also tries declarations, so `.a { @media (...) {
-*   color: blue; } }` colors its declaration.
+* - The body of a nested `@media`, of a nested `@supports`, and of any
+*   at-rule the grammar has no dedicated rule for also tries declarations, so
+*   `.a { @media (...) { color: blue; } }` colors its declaration.
 *
-* The regex text below is the fork's, `(?x)` comments included, with ONE
-* deviation: #shared-names rejects a name on "a `;` before any `{`", where
-* the fork rejects on "a `;` anywhere on the line". The fork's test reads a
+* The regex text below is the fork's, `(?x)` comments included, with TWO
+* deviations. The fork leaves the `@supports` body dispatching to `$self`
+* alone, so `.a { @supports (...) { color: blue; } }` colors nothing there
+* while the same line under `@media` colors; this patch treats the three
+* bodies alike. And #shared-names rejects a name on "a `;` before any `{`",
+* where the fork rejects on "a `;` anywhere on the line". The fork's test reads a
 * one-line nested rule -- `span { color: red; }` -- as the property `span`,
 * whose value then runs to the `;` and whose `}` closes the ENCLOSING block,
 * so every line after it parses at the wrong level. The selector rule's own
@@ -1264,13 +1267,14 @@ function patchNesting(grammar) {
 	// nested `{`), #at-rules (a nested `@media`), and #selector again.
 	ruleList.push({include: "$self"});
 
-	// -- at-rule bodies: declarations directly inside a nested @media -------------
+	// -- at-rule bodies: declarations directly inside a nested @media/@supports ---
 
-	// The media body and the generic at-rule body (anything without its own
-	// rule: @container, @layer, @scope, ...) dispatch to `$self` only, so a
-	// declaration written directly inside one is plain text. Nesting makes that
-	// the common case. Same two bodies the fork changed.
-	var BODIES = ["meta.at-rule.media.body.css", "meta.at-rule.body.css"];
+	// The media body, the supports body and the generic at-rule body (anything
+	// without its own rule: @container, @layer, @scope, ...) dispatch to `$self`
+	// only, so a declaration written directly inside one is plain text. Nesting
+	// makes that the common case. The fork changed the first and last of these;
+	// the supports body is this patch's own addition.
+	var BODIES = ["meta.at-rule.media.body.css", "meta.at-rule.supports.body.css", "meta.at-rule.body.css"];
 
 	function bodies(node) {
 		if (Array.isArray(node)) {
