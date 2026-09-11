@@ -945,6 +945,55 @@ if (!UPDATE) {
 	assertEqual("value identifiers carry no illegal tokens",
 		values.html.includes("pl-ii"), false);
 
+	// -- less at-rules ----------------------------------------------------------------
+
+	// The Less grammar names only @import, @font-face and @media as at-rules;
+	// any other `@word` reads as a Less variable. The at-rules patch
+	// (src/grammars/stock.js) adds the other CSS at-rule names beside @media
+	// and leaves the variable rule alone.
+	var lessAtRules = highlight([
+		"@brand: red;",
+		"@container: 1200px;",
+		"@layer-width: 1px;",
+		".x {",
+		"\tcolor: @brand;",
+		"\twidth: @container;",
+		"\t@media print { b: c; }",
+		"\t@supports ( position: sticky ) or ( position: -webkit-sticky ) { b: c; }",
+		"}",
+		"@keyframes spin { to { b: c; } }",
+		"@-webkit-keyframes spin { to { b: c; } }",
+		"@container (min-width: 1px) { .y { b: c; } }",
+		"@layer base;",
+		"@page { margin: 0; }"
+	].join("\n"), "less");
+	assertEqual("less fence resolves to the stock less grammar",
+		lessAtRules.scope, "source.css.less");
+	assertEqual("less @supports is a keyword",
+		lessAtRules.html.includes("<span class=\"pl-k\">@supports</span> ( <span class=\"pl-c1\">position</span>"), true);
+	assertEqual("less @keyframes is a keyword",
+		lessAtRules.html.includes("<span class=\"pl-k\">@keyframes</span> <span class=\"pl-c1\">spin</span>"), true);
+	assertEqual("less vendor-prefixed @keyframes is a keyword",
+		lessAtRules.html.includes("<span class=\"pl-k\">@-webkit-keyframes</span>"), true);
+	assertEqual("less @container at-rule is a keyword",
+		lessAtRules.html.includes("<span class=\"pl-k\">@container</span> (<span class=\"pl-c1\">min-width</span>"), true);
+	assertEqual("less @layer is a keyword",
+		lessAtRules.html.includes("<span class=\"pl-k\">@layer</span> base;"), true);
+	assertEqual("less @page is a keyword",
+		lessAtRules.html.includes("<span class=\"pl-k\">@page</span> {"), true);
+	assertEqual("less @media is unchanged",
+		lessAtRules.html.includes("<span class=\"pl-k\">@media</span> <span class=\"pl-c1\">print</span>"), true);
+	assertEqual("less variable declaration is still a variable",
+		lessAtRules.html.includes("<span class=\"pl-smi\">@brand</span>: <span class=\"pl-c1\">red</span>;"), true);
+	assertEqual("less variable use is still a variable",
+		lessAtRules.html.includes("<span class=\"pl-c1\">color</span>: <span class=\"pl-smi\">@brand</span>;"), true);
+	assertEqual("less variable named like an at-rule is still a variable when declared",
+		lessAtRules.html.includes("<span class=\"pl-smi\">@container</span>: <span class=\"pl-c1\">1200</span>"), true);
+	assertEqual("less variable named like an at-rule is still a variable when used",
+		lessAtRules.html.includes("<span class=\"pl-c1\">width</span>: <span class=\"pl-smi\">@container</span>;"), true);
+	assertEqual("less variable with an at-rule prefix is still a variable",
+		lessAtRules.html.includes("<span class=\"pl-smi\">@layer-width</span>: "), true);
+
 	// -- template property ----------------------------------------------------------
 
 	// An inline component template -- the `template:` property of an object
@@ -1156,7 +1205,7 @@ if (!UPDATE) {
 	// Same pin for the stock-grammar patch layer (src/grammars/stock.js).
 	assertEqual("every stock grammar is patched",
 		[...stockPatches.entries()].map(([scope, names]) => `${scope}:${names.join(",")}`).join(" | "),
-		"source.css:nesting,media-features,value-identifiers | source.js:method-name-lists,console-global,object-keys | source.sql:statement-keywords,ddl-keywords | source.ts:template-property,method-name-lists,console-global,object-keys,property-names | text.html.basic:comment-hyphens,doctype-capture");
+		"source.css:nesting,media-features,value-identifiers | source.css.less:at-rules | source.js:method-name-lists,console-global,object-keys | source.sql:statement-keywords,ddl-keywords | source.ts:template-property,method-name-lists,console-global,object-keys,property-names | text.html.basic:comment-hyphens,doctype-capture");
 
 	// The vendored files are byte-identical to upstream, and this is what makes
 	// that a fact rather than an intention. Both patches are applied to the
