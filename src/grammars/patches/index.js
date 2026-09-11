@@ -3,21 +3,22 @@
 * to a file.
 *
 * The vendored JSON stays byte-identical to upstream. That is the whole point:
-* a 606 KB, 15,510-line generated-looking file cannot be meaningfully diffed or
-* merged, so hand-editing it would make every future update a conflict against
-* something unreadable. The stock starry-night grammars are patched the same
-* way, on clones, for the reason stock.js gives. Instead each patch is a named
-* descriptor with a stated anchor, and updating upstream is a re-download plus
-* the test suite.
+* a generated file far too large to diff or merge by hand would make every
+* future update a conflict against something unreadable. The stock
+* starry-night grammars are patched the same way, on clones, for the reason
+* stock.js gives. Instead each patch is a named descriptor with a stated
+* anchor, and updating upstream is a re-download plus the test suite.
 *
 * Every patch ASSERTS its anchor before mutating, and every assertion covers a
 * condition that would otherwise fail SILENTLY. A patch that stops applying is
 * worse than no patch -- it looks fixed and is not.
 *
-* Patch TOKENS here, never STRUCTURE. A structural gap is evidence for adopting
-* a better grammar, not for writing a cleverer regex: a claim like "the first
-* argument of this call is SQL" is about the parse tree, and no pattern match
-* placed near the call site can make it soundly.
+* A patch may add, copy or rewire rules. What it may not do is assert
+* something the lexer cannot see: every rule must be decidable from the
+* characters in front of it. Where a maintained grammar already has the rule,
+* port it; where none does, key the rule on position, not on meaning. A gap
+* that cannot be closed that way is evidence for adopting a better grammar,
+* not for a cleverer regex.
 *
 * ONE MODULE PER LANGUAGE FAMILY
 *

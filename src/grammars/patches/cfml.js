@@ -165,17 +165,11 @@ function safeNavigationInCfml(grammar) {
 *   2. In BOTH files the include sits only in `main`, the top-of-script
 *      dispatch -- so an island works at the top of a <cfscript> block and
 *      nowhere else. Function bodies, blocks, and struct literals dispatch
-*      through `source-cfml-script-statements` (fifteen include sites,
-*      measured), never through main. An island inside a function -- where a
-*      cfquery actually lives -- fell through to the tag-in-script attribute
-*      scanner in upstream's own tag grammar. The include is added to the
-*      statements dispatch, which every one of those contexts reaches.
-*
-* A begin/end rule, which "patch TOKENS, never STRUCTURE" in the patches
-* index header reads as forbidding. The prohibition is against structural
-* claims a lexer cannot soundly make; this is upstream's own structure,
-* re-wired to where the content actually occurs, and it makes no new parse
-* claim at all.
+*      through `source-cfml-script-statements`, never through main. An
+*      island inside a function -- where a cfquery actually lives -- fell
+*      through to the tag-in-script attribute scanner in upstream's own tag
+*      grammar. The include is added to the statements dispatch, which every
+*      one of those contexts reaches.
 *
 * One function for both grammars, on purpose. Which gap applies is decided by
 * whether the repository already carries the entry, not by scope name, so if
