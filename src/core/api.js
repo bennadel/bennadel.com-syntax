@@ -102,25 +102,25 @@ export async function handleRequest({method, path, language, token, body}) {
 	// Unauthenticated, and reveals nothing beyond liveness. Serves the container
 	// healthcheck locally, and is the target for a keep-warm ping on Lambda.
 	if (method === "GET" && path === "/health") {
-		return jsonResponse(200, {ok: true});
+		return textResponse(200, "ok");
 	}
 
 	if (path !== "/highlight") {
-		return jsonResponse(404, {error: "Not found"});
+		return textResponse(404, "Not found");
 	}
 
 	if (method !== "POST") {
-		return jsonResponse(405, {error: "Method not allowed"});
+		return textResponse(405, "Method not allowed");
 	}
 
 	if (!tokenMatches(token)) {
-		return jsonResponse(401, {error: "Unauthorized"});
+		return textResponse(401, "Unauthorized");
 	}
 
 	// Authoritative, unlike a declared Content-Length, which can lie or be
 	// absent.
 	if (Buffer.byteLength(body, "utf8") > config.maxBytes) {
-		return jsonResponse(413, {error: "Payload too large"});
+		return textResponse(413, "Payload too large");
 	}
 
 	// An unknown language or an over-long line is NOT an error -- highlight()
@@ -154,19 +154,22 @@ export async function handleRequest({method, path, language, token, body}) {
 	} catch (error) {
 		console.error(error);
 
-		return jsonResponse(500, {error: error.message});
+		return textResponse(500, error.message);
 	}
 }
 
 /**
-* Every non-200 speaks JSON; only a successful highlight returns HTML. Header
-* names are lowercase everywhere so the two adapters emit identical bytes.
+* Every non-200 is a plain-text message; only a successful highlight returns
+* HTML. The status code carries the meaning and the body exists to be logged,
+* so do not wrap it in JSON -- a caller has nothing to do with an error object
+* beyond writing it out, and a bare string writes out as-is. Header names are
+* lowercase everywhere so the two adapters emit identical bytes.
 */
-function jsonResponse(status, payload) {
+function textResponse(status, message) {
 	return {
 		status,
-		headers: {"content-type": "application/json; charset=utf-8"},
-		body: JSON.stringify(payload)
+		headers: {"content-type": "text/plain; charset=utf-8"},
+		body: message
 	};
 }
 

@@ -18,7 +18,7 @@ $ grep -rn 'pl-c1' dist/
 Binary file dist/function.zip matches -- pass `-a` to force text mode
 
 $ curl -s "$HOST/health"
-{"ok":true}
+ok
 
 # systemctl restart highlighter
 Job for highlighter.service failed because the control process exited.
