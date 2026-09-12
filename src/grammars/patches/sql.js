@@ -70,9 +70,7 @@ function statementKeywordsInSql(grammar) {
 
 	rules[0].match = `${HEAD}explain(\\s+analyze)?|with(\\s+recursive)?|${rules[0].match.slice(HEAD.length)}`;
 
-	// The top-level rule must be the ONLY carrier of the scope. A second one
-	// appearing in a starry-night upgrade would leave EXPLAIN and WITH plain in
-	// some context nobody re-tested -- fail loudly instead.
+	// The top-level rule must be the ONLY carrier of the scope.
 	if (count(grammar, (node) => node.name === SCOPE) !== 1) {
 		throw new Error(`${grammar.scopeName}: a ${SCOPE} rule now appears outside the top-level patterns; extend statementKeywordsInSql to cover it`);
 	}
@@ -217,9 +215,7 @@ function columnWordsInCfml(grammar) {
 * The generic rule is the only `keyword.other.sql` rule whose match is a bare
 * word alternation -- the DML/DDL siblings carry dotted suffixes
 * (keyword.other.DML.sql) and are not what is being edited. It must also be
-* the ONLY carrier of that alternation in the whole grammar: a second copy in
-* an upstream update would keep the old roster in some context nobody
-* re-tested -- fail loudly instead.
+* the ONLY carrier of that alternation in the whole grammar.
 */
 function sqlKeywordRoster(grammar, caller) {
 	var HEAD = "\\b(?i)(";

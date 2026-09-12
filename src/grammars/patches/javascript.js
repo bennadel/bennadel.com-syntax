@@ -27,6 +27,11 @@
 import {CFML_TAG, CFML_SCRIPT} from "../scopes.js";
 import {count, find, named} from "./walk.js";
 
+// The two repository entries cfmleditor parses each JavaScript rule set in;
+// a cfmleditor branch edits both.
+var SUPPORT_OBJECTS = ["source-js-support-objects", "source-js-cfoutput-support-objects"];
+var OBJECT_MEMBER = ["source-js-object-member", "source-js-cfoutput-object-member"];
+
 /**
 * Chained method calls render in different colors.
 *
@@ -98,9 +103,6 @@ function methodNameListsInJs(grammar) {
 	// support lists in front of them are the deletion.
 	call.patterns[0].beginCaptures[2].patterns = call.patterns[0].beginCaptures[2].patterns.slice(3);
 
-	// The deleted scopes must appear NOWHERE else, or a starry-night upgrade
-	// could add a second name-list rule that survives this patch and puts the
-	// alternating colors back in some context nobody re-tested.
 	// support.function.js legitimately survives ONCE, in function_calls'
 	// bare-global list; the other two must be gone entirely.
 	if (
@@ -155,9 +157,6 @@ function methodNameListsInTs(grammar) {
 
 	rules.splice(rules.indexOf(matches[0]), 1);
 
-	// The deleted scopes must appear NOWHERE else, or a starry-night upgrade
-	// could add a second name-list rule that survives this patch and puts the
-	// alternating colors back in some context nobody re-tested.
 	// support.function.ts legitimately survives ONCE, in the bare-global
 	// list (parseInt, setTimeout); the other three must be gone entirely.
 	if (
@@ -171,12 +170,7 @@ function methodNameListsInTs(grammar) {
 }
 
 function methodNameListsInCfml(grammar) {
-	// Both script-island contexts carry their own copy of the rule: the general
-	// one, and the copy used inside <cfoutput> blocks.
-	var ENTRIES = [
-		"source-js-support-objects",
-		"source-js-cfoutput-support-objects"
-	];
+	var ENTRIES = SUPPORT_OBJECTS;
 
 	var EXPECTED = [
 		"punctuation.accessor.js",
@@ -203,11 +197,9 @@ function methodNameListsInCfml(grammar) {
 		patterns.splice(patterns.indexOf(matches[0]), 1);
 	}
 
-	// The deleted scopes must be gone entirely, except support.function.js,
-	// which legitimately survives ONCE per entry in the bare-global call list
-	// (parseInt, setTimeout -- not dot methods). A third carrier appearing in
-	// an upstream update would survive this patch and put the alternating
-	// colors back in some context nobody re-tested -- fail loudly instead.
+	// support.function.js legitimately survives ONCE per entry, in the
+	// bare-global call list (parseInt, setTimeout -- not dot methods); the
+	// other two must be gone entirely.
 	if (
 		count(grammar, named("support.function.event-handler.js")) !== 0
 		|| count(grammar, named("support.function.dom.js")) !== 0
@@ -273,9 +265,7 @@ function consoleGlobalInJs(grammar) {
 		name: "support.variable.dom.js"
 	};
 
-	// The console scopes must appear NOWHERE else, or a starry-night upgrade
-	// could add a second console rule that survives this patch and puts the
-	// type-name color back in some context nobody re-tested.
+	// The console scopes must be gone entirely.
 	if (
 		count(grammar, named("entity.name.type.object.console.js")) !== 0
 		|| count(grammar, named("support.function.console.js")) !== 0
@@ -315,9 +305,7 @@ function consoleGlobalInTs(grammar) {
 		}
 	};
 
-	// The console scopes must appear NOWHERE else, or a starry-night upgrade
-	// could add a second console rule that survives this patch and puts the
-	// type-name color back in some context nobody re-tested.
+	// The console scopes must be gone entirely.
 	if (
 		count(grammar, named("support.class.console.ts")) !== 0
 		|| count(grammar, named("support.function.console.ts")) !== 0
@@ -327,13 +315,9 @@ function consoleGlobalInTs(grammar) {
 }
 
 function consoleGlobalInCfml(grammar) {
-	// Both script-island contexts carry their own copy of the rule: the general
-	// one, and the copy used inside <cfoutput> blocks. The rule is the same
-	// shape as source.ts's, cut the same way: after the receiver group.
-	var ENTRIES = [
-		"source-js-support-objects",
-		"source-js-cfoutput-support-objects"
-	];
+	// The rule is the same shape as source.ts's, cut the same way: after the
+	// receiver group.
+	var ENTRIES = SUPPORT_OBJECTS;
 
 	var HEAD = "(?x)(?<!\\.|\\$)\\b(console)";
 	var TAIL = "\\b(?!\\$)";
@@ -367,9 +351,7 @@ function consoleGlobalInCfml(grammar) {
 		};
 	}
 
-	// The console scopes must be gone entirely. A third carrier appearing in an
-	// upstream update would survive this patch and put the class color back in
-	// some context nobody re-tested -- fail loudly instead.
+	// The console scopes must be gone entirely.
 	if (
 		count(grammar, named("support.class.console.js")) !== 0
 		|| count(grammar, named("support.function.console.js")) !== 0
@@ -476,12 +458,7 @@ function objectKeysInJs(grammar) {
 }
 
 function objectKeysInCfml(grammar) {
-	// Both script-island contexts carry their own copy of the rule: the general
-	// one, and the copy used inside <cfoutput> blocks.
-	var ENTRIES = [
-		"source-js-object-member",
-		"source-js-cfoutput-object-member"
-	];
+	var ENTRIES = OBJECT_MEMBER;
 
 	var isCarrier = bareKeyCarrier("meta.object-literal.key.js");
 
@@ -500,9 +477,7 @@ function objectKeysInCfml(grammar) {
 		promoteBareKey(matches[0], "constant.other.object.key.js");
 	}
 
-	// ENTRIES must be the ONLY carriers of the bare-key shape. A third
-	// appearing in an upstream update would survive this patch and keep plain
-	// keys in some context nobody re-tested -- fail loudly instead.
+	// ENTRIES must be the ONLY carriers of the bare-key shape.
 	if (count(grammar, isCarrier) !== 0) {
 		throw new Error(`${grammar.scopeName}: a bare object-key rule now appears outside ${ENTRIES.join(", ")}; extend objectKeysInCfml to cover it`);
 	}

@@ -1,9 +1,7 @@
 /**
 * CSS patches: `source.css`, the stock starry-night grammar.
 *
-*   nesting             nested rules highlight as rules (in css-nesting.js:
-*                       a port of the vscode-css fork, kept alone so the
-*                       upstream diff is the whole file)
+*   nesting             nested rules highlight as rules (css-nesting.js)
 *   media-features      every `(name: value)` in an `@media` header colors
 *                       like a property, listed or not
 *   value-identifiers   an author-defined name in a declaration value colors

@@ -21,6 +21,10 @@
 import {CFML_TAG, CFML_SCRIPT} from "../scopes.js";
 import {count} from "./walk.js";
 
+// The two repository entries cfmleditor parses HTML content in; every branch
+// here edits both.
+var HTML_CONTENT = ["text-html-cfml", "text-html-cfml-cfoutput"];
+
 /**
 * Bare `&` renders as invalid.illegal -> pl-ii, white on red.
 *
@@ -50,12 +54,7 @@ var patchBadAmpersand = {
 };
 
 function badAmpersandInCfml(grammar) {
-	// Both HTML-content contexts carry their own copy of the rule set: the
-	// general one, and the copy used inside <cfoutput> blocks.
-	var ENTRIES = [
-		"text-html-cfml-character-reference",
-		"text-html-cfml-cfoutput-character-reference"
-	];
+	var ENTRIES = HTML_CONTENT.map((entry) => `${entry}-character-reference`);
 
 	var CATCH_ALL = "invalid.illegal.bad-ampersand.html";
 
@@ -73,13 +72,10 @@ function badAmpersandInCfml(grammar) {
 		patterns.splice(index, 1);
 	}
 
-	// The two entries above must be the ONLY carriers. A third copy appearing
-	// elsewhere in an upstream update would survive this patch and put pl-ii
-	// ampersands back in some context nobody re-tested -- fail loudly instead.
-	// A string scan rather than a walk, so the scope is caught inside a
-	// compound name or a regex too.
+	// ENTRIES must be the ONLY carriers. A string scan rather than a walk, so
+	// the scope is caught inside a compound name or a regex too.
 	if (JSON.stringify(grammar.repository).includes(CATCH_ALL)) {
-		throw new Error(`${grammar.scopeName}: ${CATCH_ALL} now appears outside the two character-reference entries; extend badAmpersandInCfml to cover it`);
+		throw new Error(`${grammar.scopeName}: ${CATCH_ALL} now appears outside ${ENTRIES.join(", ")}; extend badAmpersandInCfml to cover it`);
 	}
 }
 
@@ -121,12 +117,7 @@ var patchBadAngleBracket = {
 };
 
 function badAngleBracketInCfml(grammar) {
-	// Both HTML-content contexts carry their own copy of the pair: the general
-	// one, and the copy used inside <cfoutput> blocks.
-	var ENTRIES = [
-		"text-html-cfml",
-		"text-html-cfml-cfoutput"
-	];
+	var ENTRIES = HTML_CONTENT;
 
 	var CATCH_ALLS = new Map([
 		["invalid.illegal.incomplete.html", "<>"],
@@ -149,14 +140,11 @@ function badAngleBracketInCfml(grammar) {
 		}
 	}
 
-	// The two entries above must be the ONLY carriers. A third copy appearing
-	// elsewhere in an upstream update would survive this patch and put pl-ii
-	// operators back in some context nobody re-tested -- fail loudly instead.
-	// A string scan rather than a walk, so the scope is caught inside a
-	// compound name or a regex too.
+	// ENTRIES must be the ONLY carriers. A string scan rather than a walk, so
+	// the scope is caught inside a compound name or a regex too.
 	for (var scope of CATCH_ALLS.keys()) {
 		if (JSON.stringify(grammar.repository).includes(scope)) {
-			throw new Error(`${grammar.scopeName}: ${scope} now appears outside the two HTML-content entries; extend badAngleBracketInCfml to cover it`);
+			throw new Error(`${grammar.scopeName}: ${scope} now appears outside ${ENTRIES.join(", ")}; extend badAngleBracketInCfml to cover it`);
 		}
 	}
 }
@@ -225,21 +213,13 @@ function commentHyphensInHtml(grammar) {
 	comments[0].patterns.splice(index, 1);
 
 	// The comment rule must be the ONLY carrier of a `--`-shaped catch-all.
-	// One appearing elsewhere in a starry-night upgrade would survive this
-	// patch and put pl-ii dividers back in some context nobody re-tested --
-	// fail loudly instead.
 	if (count(grammar, isCatchAll) > 0) {
 		throw new Error(`${grammar.scopeName}: a \`--\` ${CATCH_ALL} rule now appears outside the top-level comment rule; extend commentHyphensInHtml to cover it`);
 	}
 }
 
 function commentHyphensInCfml(grammar) {
-	// Both HTML-content contexts carry their own copy of the comment rule: the
-	// general one, and the copy used inside <cfoutput> blocks.
-	var ENTRIES = [
-		"text-html-cfml",
-		"text-html-cfml-cfoutput"
-	];
+	var ENTRIES = HTML_CONTENT;
 
 	var CATCH_ALL = "invalid.illegal.bad-comments-or-CDATA.html";
 
@@ -265,14 +245,12 @@ function commentHyphensInCfml(grammar) {
 		comments[0].patterns.splice(index, 1);
 	}
 
-	// The two entries above must be the ONLY carriers of the bare-`--` form. The
-	// SGML rule (`<!` ... `>`) legitimately keeps the same scope NAME on a
-	// different match, so full absence cannot be asserted the way bad-ampersand
-	// asserts it; the exact rule shape is counted instead. A third comment
-	// context appearing in an upstream update would survive this patch and put
-	// pl-ii dividers back somewhere nobody re-tested -- fail loudly instead.
+	// ENTRIES must be the ONLY carriers of the bare-`--` form. The SGML rule
+	// (`<!` ... `>`) legitimately keeps the same scope NAME on a different
+	// match, so full absence cannot be asserted the way bad-ampersand asserts
+	// it; the exact rule shape is counted instead.
 	if (count(grammar.repository, isCatchAll) > 0) {
-		throw new Error(`${grammar.scopeName}: a bare-\`--\` ${CATCH_ALL} rule now appears outside the two HTML-content entries; extend commentHyphensInCfml to cover it`);
+		throw new Error(`${grammar.scopeName}: a bare-\`--\` ${CATCH_ALL} rule now appears outside ${ENTRIES.join(", ")}; extend commentHyphensInCfml to cover it`);
 	}
 }
 
@@ -329,21 +307,14 @@ function doctypeCaptureInHtml(grammar) {
 
 	doctypes[0].begin = `(${BROKEN})`;
 
-	// The SGML rule must be the ONLY carrier of the broken shape. One appearing
-	// elsewhere in a starry-night upgrade would survive this patch and keep a
-	// plain doctype in some context nobody re-tested -- fail loudly instead.
+	// The SGML rule must be the ONLY carrier of the broken shape.
 	if (count(grammar, (node) => node.name === "meta.tag.sgml.doctype.html" && node.begin === BROKEN) > 0) {
 		throw new Error(`${grammar.scopeName}: a no-capture doctype rule now appears outside the top-level SGML rule; extend doctypeCaptureInHtml to cover it`);
 	}
 }
 
 function doctypeCaptureInCfml(grammar) {
-	// Both HTML-content contexts carry their own copy of the SGML rule: the
-	// general one, and the copy used inside <cfoutput> blocks.
-	var ENTRIES = [
-		"text-html-cfml",
-		"text-html-cfml-cfoutput"
-	];
+	var ENTRIES = HTML_CONTENT;
 
 	var BROKEN = "(?i:DOCTYPE)";
 
@@ -371,12 +342,9 @@ function doctypeCaptureInCfml(grammar) {
 		doctypes[0].begin = `(${BROKEN})`;
 	}
 
-	// The two entries above must be the ONLY carriers of the broken shape. A
-	// third copy appearing in an upstream update would survive this patch and
-	// keep a plain doctype in some context nobody re-tested -- fail loudly
-	// instead.
+	// ENTRIES must be the ONLY carriers of the broken shape.
 	if (count(grammar.repository, (node) => node.name === "meta.tag.sgml.doctype.html" && node.begin === BROKEN) > 0) {
-		throw new Error(`${grammar.scopeName}: a no-capture doctype rule now appears outside the two HTML-content entries; extend doctypeCaptureInCfml to cover it`);
+		throw new Error(`${grammar.scopeName}: a no-capture doctype rule now appears outside ${ENTRIES.join(", ")}; extend doctypeCaptureInCfml to cover it`);
 	}
 }
 

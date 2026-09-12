@@ -13,6 +13,11 @@
 * condition that would otherwise fail SILENTLY. A patch that stops applying is
 * worse than no patch -- it looks fixed and is not.
 *
+* After the edit, a patch counts the carriers of the shape it changed and
+* throws if any it did not edit remain. A second copy of the rule arriving in
+* an upstream update would otherwise survive the patch and put the old
+* rendering back in some context nobody re-tested.
+*
 * A patch may add, copy or rewire rules. What it may not do is assert
 * something the lexer cannot see: every rule must be decidable from the
 * characters in front of it. Where a maintained grammar already has the rule,
