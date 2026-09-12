@@ -3,22 +3,13 @@
 *
 * WHAT THIS IS FOR
 *
-* Two pages, both rendering through highlight() with GitHub's own stylesheet so
-* the output can be LOOKED AT:
-*
-*   /       every fixture in test/__fixtures__/
-*   /blog   the code blocks pulled out of a live bennadel.com post
+* One page, rendering every fixture in test/__fixtures__/ through highlight()
+* with GitHub's own stylesheet so the output can be LOOKED AT.
 *
 * That matters for the work no assertion can do for you: judging whether a
 * candidate grammar is an improvement, seeing what an unfamiliar fence tag
 * resolves to, and reading a `test-update` diff with some idea of what it will
 * actually change on the page.
-*
-* /blog is the half that earns its keep. The fixture corpus is a hand-picked
-* sample against an archive of thousands of posts, and /blog is the only
-* thing here that meets real prose-embedded code -- the tag nobody anticipated,
-* the block that trips MAX_LINE_LENGTH, the grammar that looks right on a
-* fixture and wrong in situ.
 *
 * WHAT THIS IS NOT
 *
@@ -63,8 +54,7 @@ import {createServer} from "node:http";
 import {readdir, readFile} from "node:fs/promises";
 
 import {loadConfig} from "../src/core/config.js";
-import {init, highlight, normalize, longestLine} from "../src/core/highlight.js";
-import {fetchBlocks} from "./blog.js";
+import {init, highlight} from "../src/core/highlight.js";
 
 var PORT = Number(process.env.PORT ?? 3001);
 
@@ -94,21 +84,16 @@ var STYLE = ["core", "both"].map((name) => ({
 }));
 
 /**
-* The chrome every page here shares: colour tokens, typography, and the badge
-* strip.
-*
-* Page width is a variable rather than a fixed rule because that is the one
-* thing they genuinely disagree on: the fixture list is a reading column, the
-* archive check is wider.
+* The page chrome: colour tokens, typography, and the badge strip.
 */
 var BASE_CSS = `
-	:root { color-scheme: light dark; --page: 62rem;
+	:root { color-scheme: light dark;
 		--fg:#1f2328; --bg:#fff; --muted:#59636e; --line:#d1d9e0; --panel:#f6f8fa; }
 	@media (prefers-color-scheme: dark) {
 		:root { --fg:#f0f6fc; --bg:#0d1117; --muted:#9198a1; --line:#3d444d; --panel:#151b23; }
 	}
 	* { box-sizing: border-box; }
-	body { margin:0 auto; padding:2rem 1.5rem 6rem; max-width:var(--page); background:var(--bg); color:var(--fg);
+	body { margin:0 auto; padding:2rem 1.5rem 6rem; max-width:62rem; background:var(--bg); color:var(--fg);
 		font:14px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
 	h1 { font-size:1.5rem; margin:0 0 .25rem; }
 	h2 { font-size:1rem; margin:0 0 .5rem; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; }
@@ -141,7 +126,7 @@ var BASE_CSS = `
 var ESCAPES = {"&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;"};
 
 var server = createServer(async (request, response) => {
-	var {pathname, searchParams} = new URL(request.url, "http://localhost");
+	var {pathname} = new URL(request.url, "http://localhost");
 
 	try {
 		var style = STYLE.find(({name}) => pathname === `/style/${name}.css`);
@@ -156,26 +141,6 @@ var server = createServer(async (request, response) => {
 			var fixtures = await loadFixtures();
 
 			return send(response, 200, "text/html; charset=utf-8", page(fixtures));
-		}
-
-		// GET with the URL in the query string rather than a POST, so a result is
-		// linkable and survives a refresh -- the whole workflow here is "look at
-		// this post, change something in src/, restart, look again".
-		if (pathname === "/blog") {
-			var input = searchParams.get("url");
-			var includeComments = searchParams.get("comments") === "1";
-
-			// A failed fetch is an ordinary outcome of pasting a URL, not a crash:
-			// it renders as a message above the form with the input still in it.
-			// The catch-all below stays for genuine bugs, which is why this does
-			// not swallow anything broader than the fetch.
-			var [fetched, error] = input
-				? await fetchBlocks(input, {includeComments})
-					.then((value) => [value, null], (reason) => [null, reason.message])
-				: [null, null];
-
-			return send(response, 200, "text/html; charset=utf-8",
-				blogPage({input, includeComments, fetched, error}));
 		}
 
 		send(response, 404, "text/plain; charset=utf-8", "Not found\n");
@@ -199,7 +164,7 @@ try {
 	var starryNight = await init(config);
 
 	server.listen(PORT, () => {
-		console.log(`tools on ${PORT}, ${starryNight.scopes().length} grammars (/, /blog)`);
+		console.log(`tools on ${PORT}, ${starryNight.scopes().length} grammars`);
 	});
 } catch (error) {
 	console.error(error.message);
@@ -286,8 +251,7 @@ ${BASE_CSS}
 <p class="lede">
 	${fixtures.length} fixtures &middot; ${plain} rendered as plain text &middot;
 	${drifting === 0 ? "all goldens match" : `<strong>${drifting} differ from their golden</strong>`} &middot;
-	MAX_LINE_LENGTH ${config.maxLineLength} &middot;
-	<a href="/blog">check a live post &rarr;</a>
+	MAX_LINE_LENGTH ${config.maxLineLength}
 </p>
 <p class="note">
 	<strong>This page is an inspection tool, not a test.</strong> Nothing here fails.
@@ -338,140 +302,6 @@ function section(fixture) {
 		<pre class="markup"><code>${escapeHtml(result.html)}</code></pre>
 	</details>
 </section>`;
-}
-
-// ---------------------------------------------------------------------------
-// Live archive check (/blog)
-// ---------------------------------------------------------------------------
-
-function blogPage({input, includeComments, fetched, error}) {
-	var form = `
-<form method="get" action="/blog">
-	<input type="url" name="url" value="${escapeHtml(input ?? "")}" placeholder="https://www.bennadel.com/blog/4661-..." autofocus>
-	<label><input type="checkbox" name="comments" value="1"${includeComments ? " checked" : ""}> include reader comments</label>
-	<button type="submit">Highlight</button>
-</form>`;
-
-	var body = "";
-
-	if (error) {
-		body = `<p class="error">${escapeHtml(error)}</p>`;
-	} else if (fetched) {
-		var {url, title, blocks, commentCount} = fetched;
-
-		var skipped = includeComments ? 0 : commentCount;
-
-		body = `
-<p class="lede">
-	<a href="${escapeHtml(url.href)}">${escapeHtml(title ?? url.href)}</a><br>
-	${blocks.length} code block${blocks.length === 1 ? "" : "s"}
-	${skipped ? `&middot; ${skipped} more in reader comments, not shown` : ""}
-	&middot; flags: ${[...new Set(blocks.map((b) => b.flag))].map((f) => `<code>${escapeHtml(f)}</code>`).join(", ") || "none"}
-</p>
-${blocks.length === 0 ? `<p class="note">No language-tagged code blocks. Usually that just means the post has none. If you know it has code, the blog template has changed and <code>tools/blog.js</code> needs updating &mdash; it matches <code>&lt;pre&gt;&lt;code class="language-*"&gt;</code>.</p>` : ""}
-${blocks.map(blogSection).join("\n")}`;
-	}
-
-	return `<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>archive check</title>
-${STYLE.map(({name}) => `<link rel="stylesheet" href="/style/${name}.css">`).join("\n")}
-<style>
-${BASE_CSS}
-	:root { --page: 72rem; }
-	form { display:flex; flex-wrap:wrap; gap:.5rem; align-items:center; margin:0 0 1.5rem;
-		border:1px solid var(--line); background:var(--panel); border-radius:6px; padding:1rem; }
-	form input[type=url] { flex:1 1 26rem; min-width:0; font:13px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
-		padding:.45rem .6rem; border:1px solid var(--line); border-radius:6px; background:var(--bg); color:var(--fg); }
-	form label { font-size:12px; color:var(--muted); display:flex; align-items:center; gap:.35rem; }
-	form button { font:600 13px/1 inherit; padding:.55rem 1rem; border-radius:6px; cursor:pointer;
-		border:1px solid var(--line); background:var(--bg); color:var(--fg); }
-	.error { border:1px solid #cf222e; border-radius:6px; padding:.75rem 1rem; margin:0 0 1.5rem; font-size:13px; }
-	pre.markup { font-size:11px; color:var(--muted); margin-top:.5rem; }
-	details { margin-top:.75rem; }
-	summary { cursor:pointer; color:var(--muted); font-size:12px; user-select:none; }
-</style>
-</head>
-<body>
-<h1>archive check</h1>
-<p class="lede"><a href="/">&larr; fixtures</a></p>
-${form}
-<p class="note">
-	<strong>Fetches a live post and runs its code blocks through <code>highlight()</code>.</strong>
-	The blog stores the raw source in the HTML and transcludes the highlighted Gist over it in the
-	browser, so what you see here is what this service <em>would</em> have produced for the same block.
-	Nothing is asserted and nothing is saved &mdash; when a block turns up something worth keeping,
-	add it to <code>test/__fixtures__/</code>, which is where <code>corpus.test.js</code> can hold it.
-</p>
-${body}
-</body>
-</html>`;
-}
-
-function blogSection(block, index) {
-	var source = normalize(block.source);
-	var result = highlight(source, block.flag);
-	var longest = longestLine(source);
-	var preserved = textPreserved(source, result.html);
-
-	var label = block.filename ?? `block ${index}`;
-
-	return `
-<section>
-	<h2>${escapeHtml(label)}</h2>
-	<p class="badges">
-		${badge("flag", block.flag, "neutral")}
-		${badge("scope", result.scope ?? "none", result.scope ? "ok" : "warn")}
-		${result.highlighted
-			? badge("highlighted", "yes", "ok")
-			: badge("highlighted", "NO -- plain text", "bad")}
-		${badge("lines", String(source.split("\n").length), "neutral")}
-		${badge("longest line", `${longest.length} / ${config.maxLineLength}`,
-			longest.length > config.maxLineLength ? "bad" : "neutral")}
-		${preserved
-			? badge("text preserved", "yes", "ok")
-			: badge("text preserved", "NO -- ESCAPING BUG", "bad")}
-		${block.isComment ? badge("from", "reader comment", "warn") : ""}
-	</p>
-	<pre class="render"><code>${result.html}</code></pre>
-	<details>
-		<summary>source as extracted &middot; markup</summary>
-		<pre class="markup"><code>${escapeHtml(source)}</code></pre>
-		<pre class="markup"><code>${escapeHtml(result.html)}</code></pre>
-	</details>
-</section>`;
-}
-
-/**
-* Does the rendered markup still contain exactly the source text?
-*
-* This is the one assertion the page can make on its own. Every fixture has a
-* golden file to compare against; an arbitrary archive post has nothing, so the
-* only property checkable without a human is that highlighting is
-* TEXT-PRESERVING -- strip the tags, undo the escaping, and you must be holding
-* the input back again.
-*
-* It is a real check, not decoration. Escaping bugs are the failure mode that
-* matters most here, because they are silent: a dropped `&` or a doubled `&amp;`
-* renders as something plausible and corrupts the stored HTML permanently. That
-* is also why `normalize()` is imported rather than reimplemented -- the
-* comparison has to be against what highlight() was actually given.
-*/
-function textPreserved(source, html) {
-	// Exactly the three entities src/core/highlight.js emits, via ESCAPES, and no
-	// more.
-	// Decoding a wider set would make this pass on output the service does not
-	// actually produce, which is the opposite of what the check is for. Stripping
-	// tags is safe for the same reason the extractor's regex is: a literal `<` in
-	// the source is already `&lt;` by this point and cannot look like a tag.
-	var text = html
-		.replace(/<[^>]*>/g, "")
-		.replace(/&(?:lt|gt|amp);/g, (entity) => ({"&lt;": "<", "&gt;": ">", "&amp;": "&"})[entity]);
-
-	return text === normalize(source);
 }
 
 function badge(label, value, tone) {

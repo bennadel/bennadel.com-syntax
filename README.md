@@ -43,7 +43,7 @@ The boundary that carries weight here is **what ships versus what does not**, an
 | `src/adapters/` | `server.js` for `node:http`, `lambda.js` for a Function URL. Transport only — no logic that both would need | yes |
 | `src/grammars/` | The two cfmleditor CFML grammars, vendored byte-identical; `cfml.js`, which reads and patches them; `stock.js`, which swaps patched clones into starry-night's stock list; `scopes.js`, their scope names; and `patches/`, the grammar patches, one module per language family | yes |
 | `test/` | `corpus.test.js` (golden output), `contract.test.js` (adapter parity), `__fixtures__/` | no |
-| `tools/` | Local inspection pages on `:3001` — `/` renders the corpus, `/blog` renders a live post. Never packaged | no |
+| `tools/` | Local inspection page on `:3001` — `/` renders the corpus. Never packaged | no |
 | `scripts/` | One `docker compose` wrapper per routine task, plus `check-upstream.sh` | no |
 | `dist/` | Build output, `function.<YYYYMMDD>.zip`. Ignores itself via `dist/.gitignore` | n/a |
 | `LICENSES/` | Provenance and notices for the hand-vendored grammars, and the procedure for updating them | no |

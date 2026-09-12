@@ -123,9 +123,7 @@ services:
   # below -- run this image without that mount and it fails MODULE_NOT_FOUND,
   # which is the correct outcome rather than a bug to fix.
   #
-  # It serves two pages: `/` renders the golden corpus, and `/blog` pulls the
-  # code blocks out of a live bennadel.com post so real prose-embedded code can
-  # be looked at -- the half that finds what the fixtures cannot.
+  # It serves one page: `/` renders the golden corpus.
   tools:
     build:
       context: .

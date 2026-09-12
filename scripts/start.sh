@@ -6,7 +6,7 @@
 #   ./scripts/start.sh -d       detached
 #
 #   API    http://127.0.0.1:3000   (POST /highlight, needs the token header)
-#   tools  http://127.0.0.1:3001   fixtures, and /blog to check a live post
+#   tools  http://127.0.0.1:3001   renders the fixture corpus
 #
 # Both are bound to loopback. Nothing on your LAN can reach either one.
 #
