@@ -29,6 +29,17 @@ services:
 
     # Bound to loopback only. Nothing on your LAN can reach this, and it is
     # never fronted by a web server.
+    #
+    # This service needs no egress, but it cannot be denied any. `network_mode:
+    # none` leaves only loopback INSIDE the container, so the published port
+    # would be unreachable from the host. DO NOT ADD A `networks:` BLOCK TO
+    # BLOCK OUTBOUND ACCESS EITHER. Both ways of doing that were tried here and
+    # neither works: `enable_ip_masquerade: "false"` because Docker Desktop NATs
+    # again at the macOS VM boundary, and `internal: true` because it kills
+    # inbound along with outbound and the service has to answer HTTP. Egress is
+    # deliberately not enforced on Lambda either. This comment is the only
+    # record of the two failed experiments -- do not re-run them. The services
+    # that do set `network_mode: none` are the ones that answer nothing.
     ports:
       - "127.0.0.1:3000:3000"
 
@@ -165,15 +176,13 @@ services:
       start_period: 20s
       retries: 3
 
-    # NOT `network_mode: none`, though it needs no egress. `none` leaves only
-    # loopback INSIDE the container, which would make the published port
-    # unreachable from the host -- the same reason the highlighter cannot use
-    # it. See the note at the bottom of this file.
+    # NOT `network_mode: none`, though it needs no egress: it publishes a port,
+    # so the networking comment on the `highlighter` service applies here too.
     restart: unless-stopped
 
     command: ["node", "tools/server.js"]
 
-  # One-shot: build the Lambda deployment zip into the repo root, then exit.
+  # One-shot: build the Lambda deployment zip into dist/, then exit.
   #
   #   docker compose run --rm --build package
   #
@@ -208,17 +217,17 @@ services:
     # Build output goes to dist/, which .gitignore covers. Docker creates the
     # directory on first run.
     #
-    # Deliberately NOT the repo root. A
-    # one-directory mount means the packaging container can only ever write to
-    # the one place it is supposed to -- the same blast-radius reasoning that
-    # makes .dockerignore an allow-list rather than a deny-list.
+    # Deliberately NOT the repo root. A one-directory mount means the packaging
+    # container can only ever write to the one place it is supposed to -- the
+    # same blast-radius reasoning that makes .dockerignore an allow-list rather
+    # than a deny-list.
     volumes:
       - ./dist:/out
 
     # It reads a bind mount and writes one file. It has no reason to reach
     # anything, and unlike the runtime service, egress here IS expressible --
-    # see the note on the highlighter network below for why that is not true
-    # of a service that must answer HTTP.
+    # the networking comment on the `highlighter` service says why that is not
+    # true of a service that must answer HTTP.
     network_mode: none
 
   # Both test suites, one shot:
@@ -289,15 +298,3 @@ services:
 
     entrypoint: ["node"]
     command: ["test/corpus.test.js", "--update"]
-
-# On the absent `networks:` block, beyond the header's reason for it:
-#
-# DO NOT ADD ONE TO BLOCK OUTBOUND ACCESS FROM `highlighter`. Both ways of doing
-# that were tried here and neither works: `enable_ip_masquerade: "false"` because
-# Docker Desktop NATs again at the macOS VM boundary, and `internal: true`
-# because it kills inbound along with outbound and the service has to answer
-# HTTP. Egress is deliberately not enforced on Lambda either. This comment is
-# the only record of the two failed experiments -- do not re-run them.
-#
-# The one service that genuinely constrains networking is `package`, which sets
-# `network_mode: none` because it truly needs nothing.

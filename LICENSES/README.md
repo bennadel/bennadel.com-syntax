@@ -17,9 +17,9 @@ model this directory imitates at a much smaller scale, and it is already inside
 `ng build` writes a `3rdpartylicenses.txt` into its output, and it has to:
 webpack/esbuild concatenate dependencies into a few files and destroy the
 `node_modules` tree, so every upstream license file is lost unless the bundler
-re-attaches it. We never bundle — decision recorded in the gotchas, for the
-unrelated reason that a bundler mishandles starry-night's `#get-oniguruma`
-imports map — so nothing is ever stripped and there is nothing to reconstruct.
+re-attaches it. We never bundle (README, Security Notes) — for the unrelated
+reason that a bundler mishandles starry-night's `#get-oniguruma` imports map —
+so nothing is ever stripped and there is nothing to reconstruct.
 Copying those licenses to this directory would duplicate what is already in the
 artifact, and the copy would go stale on the next dependency bump.
 

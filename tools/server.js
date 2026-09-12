@@ -103,7 +103,7 @@ var STYLE = ["core", "both"].map((name) => ({
 *
 * Page width is a variable rather than a fixed rule because that is the one
 * thing they genuinely disagree on: the fixture list is a reading column, the
-* comparison is two code panels side by side.
+* archive check is wider.
 */
 var BASE_CSS = `
 	:root { color-scheme: light dark; --page: 62rem;
