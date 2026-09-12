@@ -34,7 +34,7 @@ The boundary that carries weight here is **what ships versus what does not**, an
 |---|---|---|
 | `src/core/` | `highlight.js`, the pure function over code plus a language flag; `resolve.js`, fence tag to grammar scope; `config.js`, every env var parsed and validated once; `api.js`, transport-neutral auth, routing and response serialization | yes |
 | `src/adapters/` | `server.js` for `node:http`, `lambda.js` for a Function URL. Transport only — no logic that both would need | yes |
-| `src/grammars/` | The two cfmleditor CFML grammars, vendored byte-identical; `cfml.js` and `stock.js`, which load them and the stock grammars; and `patches/`, the in-memory grammar patches, one module per language family | yes |
+| `src/grammars/` | The two cfmleditor CFML grammars, vendored byte-identical; `cfml.js`, which reads and patches them; `stock.js`, which swaps patched clones into starry-night's stock list; `scopes.js`, their scope names; and `patches/`, the grammar patches, one module per language family | yes |
 | `test/` | `corpus.test.js` (golden output), `contract.test.js` (adapter parity), `__fixtures__/` | no |
 | `tools/` | Local inspection pages on `:3001` — `/` renders the corpus, `/blog` renders a live post. Never packaged | no |
 | `scripts/` | One `docker compose` wrapper per routine task, plus `check-upstream.sh` | no |
@@ -173,7 +173,7 @@ Every Linguist grammar is registered, plus 2 vendored CFML grammars. Individual 
 
 ## Local Grammar Changes
 
-Where this service renders differently from the published grammars, the difference is a deliberate preference. Each line states what a reader of the rendered page sees. How it is done is in the source (`src/grammars/patches/`, one module per language family, and `src/core/resolve.js` for fence tags); this list stays current with it.
+Where this service renders differently from the published grammars, the difference is a deliberate preference. Each line states what a reader of the rendered page sees. How it is done is in the source (`src/grammars/patches/`, one module per language family; `src/core/resolve.js` for fence tags; `src/core/highlight.js` for grammar registration); this list stays current with it.
 
 **Rendering**
 
@@ -185,13 +185,13 @@ Where this service renders differently from the published grammars, the differen
 - **CFML**: call expressions in function metadata (`cachedWithin = createTimeSpan(...)`) highlight as expressions, not errors.
 - **CFML**: `<`, `<=` and `<>` in cfquery SQL bodies are not flagged as errors.
 - **CFML**: common column names (`name`, `type`, `value`, `status`, `data`) are not colored as SQL keywords inside cfquery bodies.
-- **CFML**: `COLLATE`, `ENGINE`, `DEFAULT` and `CHARSET` color as keywords inside cfquery bodies.
 - **CFML**: a block written with tags highlights as tags even when the fence says script (`cfc`, `cfs`, `cfscript`).
 - **CFML, HTML**: `--` inside an HTML comment (hyphen-divider comments) is not flagged as an error.
 - **CFML, HTML**: the `<!DOCTYPE` keyword is highlighted.
 - **CFML, JavaScript, TypeScript**: every chained method call renders in one color, whether or not the name collides with a DOM or standard-library method.
 - **CFML, JavaScript, TypeScript**: object-literal keys color as constants.
 - **CFML, JavaScript, TypeScript**: `console` colors as a global like `document` and `window`, and `console.log(` colors like any other method call rather than as a built-in.
+- **CFML, SQL**: `COLLATE`, `ENGINE`, `DEFAULT`, `CHARSET` and `CHARACTER SET` color as keywords, in a `sql` fence and inside cfquery bodies.
 - **CSS**: nested rules highlight as rules: the `&` nesting selector colors like an element name, a nested selector colors as a selector, and the declarations inside a nested block, including directly inside a nested `@media` or `@supports`, color as declarations rather than plain text.
 - **CSS**: every feature in an `@media` header colors like a property name and its value like a property value, including features the grammar predates (`prefers-reduced-motion`, `prefers-color-scheme`, `pointer`).
 - **CSS**: an author-defined name in a declaration value (`animation-name: modal-enter`, a grid area, an unlisted font) colors like a keyword value instead of plain text.
@@ -200,7 +200,6 @@ Where this service renders differently from the published grammars, the differen
 - **TypeScript**: template strings in `@Component` metadata parse as HTML.
 - **TypeScript**: a property name renders in one color whether declared, accessed via `this.`, or used as a literal key.
 - **SQL**: `EXPLAIN`, `EXPLAIN ANALYZE`, `WITH` and `WITH RECURSIVE` color as keywords.
-- **SQL**: `COLLATE`, `ENGINE`, `DEFAULT`, `CHARSET` and `CHARACTER SET` color as keywords.
 
 **Fence tags**
 

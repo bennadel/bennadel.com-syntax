@@ -65,7 +65,8 @@
   time, never to the files on disk, from `src/grammars/patches/` - one module
   per language family, each patch a descriptor with a branch per grammar that
   carries the rule. Stock starry-night grammars are patched the same way, on
-  clones. `src/grammars/cfml.js` and `src/grammars/stock.js` only load.
+  clones. `src/grammars/cfml.js` and `src/grammars/stock.js` only hand
+  grammars to `patches/`; no patch lives in either.
   `test/corpus.test.js` hashes both vendored files and fails on any change - a
   single added space is enough. Updating them upstream is a deliberate
   procedure: `LICENSES/README.md`.
