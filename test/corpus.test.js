@@ -27,14 +27,22 @@
 * about highlighting output so that a grammar change cannot fail a transport
 * test.
 *
+* The goldens are not the whole file. After the runner come unit assertions on
+* the pure module (normalize(), longestLine(), loadConfig(), the highlight()
+* guards, escaping), a child process that proves boot() refuses to start
+* without a token, fence-tag resolution, and the grammar assertions: what the
+* cfmleditor grammars fix, one block per patch in src/grammars/patches/, the
+* registry of which patches ran, and the hashes of the vendored files. They
+* share this file because they share one init() and one failure count.
+*
 * WHY THIS LIVES IN test/ RATHER THAN NEXT TO THE CODE. The deployment zip is
 * built by copying src/ wholesale, so anything under src/ ships. Do not move
 * tests or fixtures under src/ and hold them back with exclusion rules in
 * .dockerignore: an exclusion covers only the names it lists, so the next helper
 * module or fixture directory ships silently. Living outside src/ means the
 * allow-list denies this by default rather than by enumeration.
-* docker-compose.yaml bind-mounts test/ into the test services; nothing else
-* mounts it and no image stage copies it.
+* docker-compose.yaml bind-mounts test/ into the services that need it; no
+* image stage copies it.
 */
 
 import {execFile} from "node:child_process";
@@ -360,7 +368,7 @@ if (!UPDATE) {
 	// from the list above because the failure mode differs: these break if the
 	// override is dropped OR if curation stops registering the target grammar,
 	// and either way the symptom is a silent downgrade to plain text rather than
-	// an error. All three are tags found in the archive scan.
+	// an error. All are tags found in the archive scan.
 	var mustResolveViaOverride = [
 		["cf", "embedding.cfml"],
 		["cfs", "embedding.cfml.cfs"],
@@ -390,6 +398,11 @@ if (!UPDATE) {
 	// that is worth knowing rather than absorbing silently.
 	assertEqual("known wart: \"snippet\"", highlight("x", "snippet").scope, "source.yasnippet");
 	assertEqual("known wart: \"tpl\"", highlight("x", "tpl").scope, "source.go-template");
+
+	// Case and whitespace are normalized before lookup, so these are the same
+	// tag. Worth pinning because the archive's fence tags were hand-typed.
+	assertEqual("flags are case-insensitive", highlight("x", "CFML").scope, "embedding.cfml");
+	assertEqual("flags are trimmed", highlight("x", "  js  ").scope, "source.js");
 
 	// -------------------------------------------------------------------------
 	// Grammar registry: dependencies missingScopes() cannot see
@@ -427,10 +440,6 @@ if (!UPDATE) {
 	assertEqual("regex in an HTML script block carries no illegal tokens",
 		scriptBlock.html.includes("pl-ii"), false);
 
-	// Case and whitespace are normalized before lookup, so these are the same
-	// tag. Worth pinning because the archive's fence tags were hand-typed.
-	assertEqual("flags are case-insensitive", highlight("x", "CFML").scope, "embedding.cfml");
-	assertEqual("flags are trimmed", highlight("x", "  js  ").scope, "source.js");
 
 	// -------------------------------------------------------------------------
 	// Content-based scope refinement
@@ -734,9 +743,10 @@ if (!UPDATE) {
 
 	// The SGML rule's doctype sub-rule assigns its scope to capture group 1 of
 	// a begin regex with no capture group, so the keyword rendered plain while
-	// the DTD strings beside it highlighted. The doctype-capture patches (one
-	// per grammar layer) add the parentheses upstream forgot. GitHub ships the
-	// same dead rule, so this diverges from GitHub: correct beats parity.
+	// the DTD strings beside it highlighted. The doctype-capture patch adds the
+	// parentheses upstream forgot in every grammar that carries the rule. GitHub
+	// ships the same dead rule, so this diverges from GitHub: correct beats
+	// parity.
 	var doctypeSource = "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\">\n<html></html>";
 
 	var doctypeInCfm = highlight(doctypeSource, "cfm");
@@ -782,6 +792,27 @@ if (!UPDATE) {
 	var cte = highlight("<cfquery name=\"q\">\n\tWITH t AS ( SELECT 1 )\n\tSELECT 1\n</cfquery>", "cfm");
 	assertEqual("with is a keyword inside a cfquery body",
 		cte.html.includes("<span class=\"pl-k\">WITH</span> t <span class=\"pl-k\">AS</span>"), true);
+
+	// -- column words -----------------------------------------------------------------
+
+	// cfmleditor's inlined mssql keyword list is SSMS's coloring roster, which
+	// carries `name`, `type`, `value`, `status` and `data`, so the most common
+	// column names in a SELECT list rendered in the same pl-k as SELECT. The
+	// column-words patch (src/grammars/patches/sql.js) prunes them from cfquery
+	// bodies and queryExecute strings. `KEY` stays: that same list is what
+	// colors it in `PRIMARY KEY`, so pruning it would leave half the phrase
+	// plain in every CREATE TABLE. `date` is not in the roster because the
+	// data-type rule colors it anyway; asserted so nobody adds it expecting a
+	// change.
+	var columns = highlight("<cfquery name=\"q\">\n\tSELECT id, name, type, value, status, data, date FROM users\n\tCREATE TABLE t ( id INT PRIMARY KEY )\n</cfquery>", "cfm");
+	assertEqual("cfquery column names are not keywords",
+		columns.html.includes("<span class=\"pl-k\">SELECT</span> id, name, type, value, status, data, <span class=\"pl-k\">date</span> <span class=\"pl-k\">FROM</span>"), true);
+	assertEqual("cfquery primary key is still two keywords",
+		columns.html.includes("<span class=\"pl-k\">PRIMARY</span> <span class=\"pl-k\">KEY</span>"), true);
+
+	var columnsInScript = highlight("queryExecute( \"SELECT id, name, status FROM users\" );", "cfs");
+	assertEqual("queryExecute column names are not keywords",
+		columnsInScript.html.includes("<span class=\"pl-k\">SELECT</span> id, name, status <span class=\"pl-k\">FROM</span>"), true);
 
 	// -- ddl keywords -----------------------------------------------------------------
 

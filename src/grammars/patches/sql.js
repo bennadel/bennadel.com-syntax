@@ -157,9 +157,9 @@ function ddlKeywordsInCfml(grammar) {
 * cfmleditor's inlined `source-sql` is Microsoft's vscode-mssql grammar, whose
 * generic keyword rule is one ~830-word alternation copied from SQL Server
 * Management Studio's coloring list. That list was assembled for SSMS parity,
-* not correctness: `name`, `type`, `value`, `status`, `date`, `data` are all
-* in it, none is a reserved word in any SQL dialect, and all six are among the
-* most common column names there are. Upstream has only ever added to the
+* not correctness: `name`, `type`, `value`, `status`, `data` are all in it,
+* none is a reserved word in any SQL dialect, and all five are among the most
+* common column names there are. Upstream has only ever added to the
 * list, and the SSMS behaviour it mirrors is a two-decade-old known quirk, so
 * this is not going to be fixed by an update.
 *
@@ -173,7 +173,9 @@ function ddlKeywordsInCfml(grammar) {
 * Do not add `key` to the roster, column name though it is. This list matches
 * `PRIMARY` before the `primary key` storage-modifier rule further down the
 * entry gets a look, so `KEY` in `PRIMARY KEY` is colored by this list alone
-* and removing it leaves half the phrase plain in every CREATE TABLE.
+* and removing it leaves half the phrase plain in every CREATE TABLE. Do not
+* add `date` either: the data-type rule in the same entry matches it as a
+* type, so pruning it from this list changes nothing a reader can see.
 *
 * Top-level ```sql fences are unaffected: those route to starry-night's stock
 * `source.sql` (the old TextMate bundle), whose keyword list has none of these
@@ -188,7 +190,7 @@ var patchColumnWords = {
 };
 
 function columnWordsInCfml(grammar) {
-	var WORDS = ["name", "type", "value", "status", "date", "data"];
+	var WORDS = ["name", "type", "value", "status", "data"];
 
 	var roster = sqlKeywordRoster(grammar, "columnWordsInCfml");
 

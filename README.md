@@ -184,7 +184,7 @@ Where this service renders differently from the published grammars, the differen
 - **CFML**: digits in custom tag names (`<cf_h1>`, `<html:h1>`) are not flagged as errors.
 - **CFML**: call expressions in function metadata (`cachedWithin = createTimeSpan(...)`) highlight as expressions, not errors.
 - **CFML**: `<`, `<=` and `<>` in cfquery SQL bodies are not flagged as errors.
-- **CFML**: common column names (`name`, `type`, `value`, `status`, `date`, `data`) are not colored as SQL keywords inside cfquery bodies.
+- **CFML**: common column names (`name`, `type`, `value`, `status`, `data`) are not colored as SQL keywords inside cfquery bodies.
 - **CFML**: `COLLATE`, `ENGINE`, `DEFAULT` and `CHARSET` color as keywords inside cfquery bodies.
 - **CFML**: a block written with tags highlights as tags even when the fence says script (`cfc`, `cfs`, `cfscript`).
 - **CFML, HTML**: `--` inside an HTML comment (hyphen-divider comments) is not flagged as an error.
