@@ -14,8 +14,9 @@
 *   comment-hyphens     `--` inside an HTML comment is not an error
 *   doctype-capture     the `<!DOCTYPE` keyword is highlighted
 *
-* The first two edit HTML rules that only the cfmleditor copy carries in a
-* form that misfires; the stock grammar is not a carrier today.
+* bad-ampersand and bad-angle-bracket edit HTML rules that only the
+* cfmleditor copy carries in a form that misfires; the stock grammar is not a
+* carrier today.
 */
 
 import {CFML_TAG, CFML_SCRIPT} from "../scopes.js";
