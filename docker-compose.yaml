@@ -83,7 +83,7 @@ services:
       #
       # A RESTART IS STILL REQUIRED. Node does not reload modules, so the running
       # process keeps the version it imported at startup. Ctrl-C and `up` again,
-      # or `docker compose restart highlighter`.
+      # or `./scripts/restart.sh highlighter`.
       #
       # node_modules deliberately stays baked into the image, so a dependency
       # change (package.json / package-lock.json) still needs --build. So does a

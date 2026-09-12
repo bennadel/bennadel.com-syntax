@@ -50,17 +50,13 @@
 * this port exposes no API surface -- and any bug you see here is unambiguously
 * a highlighting bug rather than a transport one.
 *
-* A RESTART IS REQUIRED AFTER EDITING src/.
+* A RESTART IS REQUIRED AFTER EDITING src/ OR tools/:
 *
-* Node does not reload modules, so the process keeps whatever it imported at
-* startup:
+*   ./scripts/restart.sh tools
 *
-*   docker compose restart tools
-*
-* Fixtures are re-read on every request, so editing a .code or .html file shows
-* up on refresh. Deliberately not using `node --watch`: file-change events do
-* not reliably cross the Docker Desktop VM boundary on macOS, and a watch flag
-* that silently fails to fire is worse than no watch flag at all.
+* scripts/restart.sh explains why, and why it is not `restart`. Fixtures are
+* re-read on every request, so editing a .code or .html file shows up on
+* refresh with no restart.
 */
 
 import {createServer} from "node:http";
@@ -335,7 +331,7 @@ function section(fixture) {
 		${badge("lines", String(lines), "neutral")}
 		${goldenBadge}
 	</p>
-	${drift ? `<p class="drift">Live output differs from <code>${escapeHtml(goldenName)}</code>. Either the golden is stale (run <code>docker compose run --rm test-update</code> and read the diff) or highlighting has regressed. <code>test/corpus.test.js</code> is the authority, not this page.</p>` : ""}
+	${drift ? `<p class="drift">Live output differs from <code>${escapeHtml(goldenName)}</code>. Either the golden is stale (run <code>./scripts/test-update.sh</code> and read the diff it prints) or highlighting has regressed. <code>test/corpus.test.js</code> is the authority, not this page.</p>` : ""}
 	<pre class="render"><code>${result.html}</code></pre>
 	<details>
 		<summary>markup</summary>
