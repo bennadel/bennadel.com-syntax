@@ -247,8 +247,8 @@ if (!UPDATE) {
 
 	// The highlighted path escapes by a different route -- raw nodes plus
 	// allowDangerousHtml -- so it gets its own assertion instead of relying on
-	// the corpus to notice. This is the exact byte sequence the old Gist payload
-	// carried for a cfscript tag.
+	// the corpus to notice. A tag is the right probe: its name gets a span while
+	// the brackets around it are escaped text, so both routes show in one string.
 	var marked = highlight("<cfscript>", "cfml");
 	assertEqual(
 		"highlighted text escapes without damaging markup",

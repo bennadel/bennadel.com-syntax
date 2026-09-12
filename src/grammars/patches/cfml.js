@@ -103,10 +103,6 @@ function bareIncludeInCfml(grammar) {
 * `?.` safe navigation -- CF2018. cfmleditor has no rule for it, so neither
 * character is claimed by anything and the operator renders as plain text.
 *
-* This is the one construct the old 2013 grammar handled BETTER, because we had
-* patched it there. Carried across so the swap is not a regression: it was
-* `pl-k` before and it is `pl-k` after.
-*
 * Scoped as an operator, which puts it alongside `=` and `&&`.
 */
 var patchSafeNavigation = {

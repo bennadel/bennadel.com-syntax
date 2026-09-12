@@ -54,11 +54,12 @@ import {count, find, named} from "./walk.js";
 * `console`'s -- patchConsoleGlobal, for a different reason.
 *
 * In source.js the dot-PROPERTY name lists steal methods too: the DOM
-* property roster includes `text`, `link`, `top`, so jQuery's `.text(` kept
-* rendering as a built-in after the method lists were gone. Those rules stay
-* -- `el.href` as a recognized property is fine -- but they get the
-* not-followed-by-a-paren guard that Microsoft's equivalent rules already
-* carry, so a CALLED name always falls through to method_calls. The
+* property roster includes `text`, `link`, `top`, so with the method lists
+* deleted and nothing else, jQuery's `.text(` still renders as a built-in.
+* Those rules stay -- `el.href` as a recognized property is fine -- but they
+* get the not-followed-by-a-paren guard that Microsoft's equivalent rules
+* already carry, so a CALLED name always falls through to method_calls. Do not
+* drop the guard; it is what the deletion alone does not buy. The
 * Microsoft-lineage grammars (source.ts and the cfmleditor copy) need no
 * property rule touched for that reason.
 */

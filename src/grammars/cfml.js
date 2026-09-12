@@ -44,9 +44,9 @@
 *
 * WHAT WE GAVE UP
 *
-* Exact parity with GitHub for CFML. GitHub renders CFML with the same stale
-* Linguist grammar we just left, so matching it and being correct are now
-* different things, and we chose correct. This is the same trade refineScope()
+* Exact parity with GitHub for CFML. GitHub renders CFML with Linguist's
+* `SublimeText/ColdFusion`, so matching it and being correct are different
+* things, and we chose correct. This is the same trade refineScope()
 * in core/resolve.js already makes for tag-based `.cfc` files, and the reason
 * the project exists: GitHub's CFML is out of reach, self-hosted it is a file.
 *

@@ -38,8 +38,8 @@
 var TOKEN = "contract-test-token";
 var PORT = 3999;
 
-// Must be set BEFORE importing either adapter: both read process.env at module
-// scope, and both now refuse to start without a token.
+// Must be set BEFORE importing either adapter: both call boot() at module
+// scope, and boot() refuses to start without a token.
 process.env.HIGHLIGHT_TOKEN = TOKEN;
 process.env.PORT = String(PORT);
 

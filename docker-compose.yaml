@@ -267,10 +267,8 @@ services:
   # point -- regenerating goldens is a deliberate act, not something a test run
   # can do to itself by accident.
   #
-  # Note that src/ stays :ro even here. Since the goldens moved out of src/, the
-  # one command allowed to write has no reason to reach source at all, so it
-  # cannot. Before the move this service had src/ read-write and that was the
-  # only way to grant it access to src/__fixtures__/.
+  # Note that src/ stays :ro even here. The one command allowed to write has no
+  # reason to reach source at all, so it cannot.
   #
   # ALWAYS read the resulting diff. An unreviewed --update blesses whatever the
   # code currently does, which converts the corpus from a test into a rubber
