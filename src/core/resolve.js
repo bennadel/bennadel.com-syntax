@@ -10,7 +10,6 @@ import {CFML_TAG, CFML_SCRIPT} from "../grammars/scopes.js";
 * module must not import highlight.js back.
 */
 
-
 // Local overrides layered on top of Linguist's alias set. Linguist already
 // resolves the common cases ('js', 'cfm', 'cfml', 'bash'); this is only for
 // conventions of our own, or mappings we disagree with.
@@ -183,4 +182,3 @@ function looksTagBased(source) {
 
 	return /^[ \t]*<cf[a-z]/im.test(withoutIslands);
 }
-

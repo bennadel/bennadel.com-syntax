@@ -35,7 +35,7 @@ import {patchNesting} from "./css-nesting.js";
 * - A generic identifier followed by `:`, `)` or a comparison operator ->
 *   support.type.property-name.media.css, the scope the feature list uses.
 *   Appended LAST so the stock rules keep winning on the names they know
-*   (including the vendored scope), and `(hover)` in boolean context still
+*   (including the vendor-prefixed names), and `(hover)` in boolean context still
 *   reads as a feature. Range syntax `(400px <= width <= 700px)` reaches it
 *   through the comparison-operator lookahead.
 *
@@ -64,7 +64,6 @@ function mediaFeaturesInCss(grammar) {
 	}
 
 	var patterns = parens[0].patterns;
-	var colons = patterns.filter((p) => p.match === ":" && p.name === KEY_VALUE);
 
 	// The value patterns are looked up by identity so the sub-rule reuses the
 	// grammar's own objects. Each must be present exactly once.
@@ -78,9 +77,7 @@ function mediaFeaturesInCss(grammar) {
 		return found[0];
 	}
 
-	if (colons.length !== 1) {
-		throw new Error(`${grammar.scopeName}: media-query's paren rule no longer has exactly one ${KEY_VALUE} match; re-derive mediaFeaturesInCss`);
-	}
+	var colon = one((p) => p.match === ":" && p.name === KEY_VALUE, `${KEY_VALUE} match`);
 
 	// Asserted only: the known-name rule must still be there, ahead of the
 	// generic one appended below.
@@ -100,7 +97,7 @@ function mediaFeaturesInCss(grammar) {
 	// The four reused objects now sit in two places in this grammar. Do not
 	// write a whole-grammar count over source.css that expects to see any of
 	// them once.
-	patterns[patterns.indexOf(colons[0])] = {
+	patterns[patterns.indexOf(colon)] = {
 		begin: ":",
 		beginCaptures: {
 			"0": {name: KEY_VALUE}

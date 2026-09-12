@@ -24,6 +24,7 @@ var PORT = Number(process.env.PORT ?? 3000);
 * highlighted output is what tools/ is for, and asserting it is correct is what
 * test/corpus.test.js is for -- neither job belongs in an adapter.
 */
+
 // Boot before creating the server, mirroring lambda.js, where boot is the
 // first thing the module does. Throws on a missing token or unmet grammar
 // scopes, and the throw is deliberately uncaught: a top-level throw exits
@@ -71,4 +72,3 @@ function readBody(request) {
 		request.on("error", reject);
 	});
 }
-

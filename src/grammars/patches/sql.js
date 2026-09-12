@@ -17,7 +17,7 @@
 */
 
 import {CFML_TAG, CFML_SCRIPT} from "../scopes.js";
-import {count} from "./walk.js";
+import {count, named} from "./walk.js";
 
 /**
 * `EXPLAIN` and `WITH` render as plain text in a `sql` fence.
@@ -71,7 +71,7 @@ function statementKeywordsInSql(grammar) {
 	rules[0].match = `${HEAD}explain(\\s+analyze)?|with(\\s+recursive)?|${rules[0].match.slice(HEAD.length)}`;
 
 	// The top-level rule must be the ONLY carrier of the scope.
-	if (count(grammar, (node) => node.name === SCOPE) !== 1) {
+	if (count(grammar, named(SCOPE)) !== 1) {
 		throw new Error(`${grammar.scopeName}: a ${SCOPE} rule now appears outside the top-level patterns; extend statementKeywordsInSql to cover it`);
 	}
 }

@@ -398,8 +398,10 @@ var patchObjectKeys = {
 	])
 };
 
-// The bare-identifier key rule in a Microsoft-lineage grammar is the one
-// whose ONLY capture assigns the meta key scope to the whole match.
+/**
+* The bare-identifier key rule in a Microsoft-lineage grammar is the one whose
+* ONLY capture assigns the meta key scope to the whole match.
+*/
 function bareKeyCarrier(meta) {
 	return (node) => (
 		node.captures
@@ -409,9 +411,11 @@ function bareKeyCarrier(meta) {
 	);
 }
 
-// Promote the identifier's non-capturing group to group 1 and scope it. The
-// whole-match meta scope stays, mirroring upstream's own numeric-key and
-// function-key siblings.
+/**
+* Promote the identifier's non-capturing group to group 1 and scope it. The
+* whole-match meta scope stays, mirroring upstream's own numeric-key and
+* function-key siblings.
+*/
 function promoteBareKey(rule, scope) {
 	rule.match = `(${rule.match.slice("(?:".length)}`;
 	rule.captures[1] = {name: scope};
