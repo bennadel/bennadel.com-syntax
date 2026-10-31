@@ -1,0 +1,28 @@
+<span class="pl-c"># Error ratio per job, alerting above 5%.</span>
+<span class="pl-k">sum</span> <span class="pl-k">by</span> (<span class="pl-e">job</span>) (<span class="pl-en">rate</span>(http_requests_total{<span class="pl-e">status</span><span class="pl-k">=~</span><span class="pl-s"><span class="pl-pds">"</span>5..<span class="pl-pds">"</span></span>, <span class="pl-e">method</span><span class="pl-k">!=</span><span class="pl-s"><span class="pl-pds">"</span>OPTIONS<span class="pl-pds">"</span></span>}[<span class="pl-c1">5m</span>]))
+  <span class="pl-k">/</span>
+<span class="pl-k">sum</span> <span class="pl-k">by</span> (<span class="pl-e">job</span>) (<span class="pl-en">rate</span>(http_requests_total[<span class="pl-c1">5m</span>])) <span class="pl-k">&gt;</span> <span class="pl-k">bool</span> <span class="pl-c1">0.05</span>
+
+<span class="pl-c"># Aggregation clause after the call, and a recording rule name.</span>
+<span class="pl-k">sum</span>(job:request_latency_seconds:mean5m) <span class="pl-k">without</span> (<span class="pl-e">instance</span>, <span class="pl-e">group</span>)
+
+<span class="pl-en">histogram_quantile</span>(<span class="pl-c1">0.95</span>, <span class="pl-k">sum</span> <span class="pl-k">by</span> (<span class="pl-e">le</span>) (<span class="pl-en">rate</span>(http_request_duration_seconds_bucket{<span class="pl-e">job</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">'</span>api<span class="pl-pds">'</span></span>}[<span class="pl-c1">1h30m</span>])))
+
+<span class="pl-c"># Subquery, offset, and the @ modifier.</span>
+<span class="pl-en">max_over_time</span>(<span class="pl-en">deriv</span>(node_memory_free_bytes[<span class="pl-c1">10m</span>])[<span class="pl-c1">1h</span>:<span class="pl-c1">30s</span>]) <span class="pl-k">offset</span> <span class="pl-c1">1d</span> <span class="pl-k">@</span> <span class="pl-en">end</span>()
+
+<span class="pl-c"># Vector matching.</span>
+node_filesystem_avail_bytes <span class="pl-k">/</span> <span class="pl-k">on</span> (<span class="pl-e">instance</span>, <span class="pl-e">device</span>) <span class="pl-k">group_left</span> (<span class="pl-e">mountpoint</span>) node_filesystem_size_bytes
+
+up <span class="pl-k">==</span> <span class="pl-c1">0</span> <span class="pl-k">and</span> <span class="pl-k">on</span> (<span class="pl-e">job</span>) <span class="pl-k">count</span> <span class="pl-k">by</span> (<span class="pl-e">job</span>) (up) <span class="pl-k">&gt;</span> <span class="pl-c1">1</span> <span class="pl-k">unless</span> <span class="pl-en">absent</span>(up{<span class="pl-e">job</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">`</span>raw\path<span class="pl-pds">`</span></span>})
+
+<span class="pl-k">topk</span>(<span class="pl-c1">3</span>, <span class="pl-k">count_values</span>(<span class="pl-s"><span class="pl-pds">"</span>version<span class="pl-pds">"</span></span>, build_info)) <span class="pl-k">or</span> <span class="pl-en">vector</span>(<span class="pl-k">-</span><span class="pl-c1">Inf</span>)
+
+<span class="pl-c"># Metrics that share a name with an aggregation stay metrics.</span>
+count <span class="pl-k">+</span> group <span class="pl-k">*</span> <span class="pl-c1">1e3</span> <span class="pl-k">-</span> <span class="pl-c1">0x1F</span> <span class="pl-k">%</span> <span class="pl-c1">2</span> <span class="pl-k">^</span> <span class="pl-c1">NaN</span>
+
+<span class="pl-en">increase</span>(bennadel_system_task_all_invocation_total{<span class="pl-e">env</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span>prod<span class="pl-pds">"</span></span>}[<span class="pl-c1">5m</span>])
+
+<span class="pl-c"># An unterminated string stops at the end of its line.</span>
+<span class="pl-k">count_values</span>(<span class="pl-s"><span class="pl-pds">"</span>version, build_info)</span>
+<span class="pl-k">sum</span>(<span class="pl-en">rate</span>(x[<span class="pl-c1">5m</span>])) <span class="pl-k">atan2</span> <span class="pl-c1">1</span>

@@ -1,0 +1,28 @@
+# Error ratio per job, alerting above 5%.
+sum by (job) (rate(http_requests_total{status=~"5..", method!="OPTIONS"}[5m]))
+  /
+sum by (job) (rate(http_requests_total[5m])) > bool 0.05
+
+# Aggregation clause after the call, and a recording rule name.
+sum(job:request_latency_seconds:mean5m) without (instance, group)
+
+histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{job='api'}[1h30m])))
+
+# Subquery, offset, and the @ modifier.
+max_over_time(deriv(node_memory_free_bytes[10m])[1h:30s]) offset 1d @ end()
+
+# Vector matching.
+node_filesystem_avail_bytes / on (instance, device) group_left (mountpoint) node_filesystem_size_bytes
+
+up == 0 and on (job) count by (job) (up) > 1 unless absent(up{job=`raw\path`})
+
+topk(3, count_values("version", build_info)) or vector(-Inf)
+
+# Metrics that share a name with an aggregation stay metrics.
+count + group * 1e3 - 0x1F % 2 ^ NaN
+
+increase(bennadel_system_task_all_invocation_total{env="prod"}[5m])
+
+# An unterminated string stops at the end of its line.
+count_values("version, build_info)
+sum(rate(x[5m])) atan2 1

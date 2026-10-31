@@ -6,6 +6,7 @@ import sourceJsRegexp from "@wooorm/starry-night/source.js.regexp";
 import {toHtml} from "hast-util-to-html";
 
 import {loadCfmlGrammars} from "../grammars/cfml.js";
+import {promql} from "../grammars/promql.js";
 import {patchStockGrammars} from "../grammars/stock.js";
 import {resolveScope} from "./resolve.js";
 
@@ -125,7 +126,10 @@ export async function init(config) {
 	// Its `names` and `extensions` ship empty, so registering it cannot make
 	// any fence tag resolve here -- the same isolation the CFML grammars above
 	// get by having their lists emptied at load.
-	await starryNight.register([...grammars, sourceJsRegexp]);
+	//
+	// PromQL is the opposite case: Linguist has no grammar for it, so it keeps
+	// its own `names` and the `promql` fence tag resolves without an override.
+	await starryNight.register([...grammars, sourceJsRegexp, promql]);
 
 	return starryNight;
 }

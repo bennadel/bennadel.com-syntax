@@ -41,7 +41,7 @@ The boundary that carries weight here is **what ships versus what does not**, an
 |---|---|---|
 | `src/core/` | `highlight.js`, the pure function over code plus a language flag; `resolve.js`, fence tag to grammar scope; `config.js`, every env var parsed and validated once; `api.js`, transport-neutral auth, routing and response serialization | yes |
 | `src/adapters/` | `server.js` for `node:http`, `lambda.js` for a Function URL. Transport only — no logic that both would need | yes |
-| `src/grammars/` | The two cfmleditor CFML grammars, vendored byte-identical; `cfml.js`, which reads and patches them; `stock.js`, which swaps patched clones into starry-night's stock list; `scopes.js`, their scope names; and `patches/`, the grammar patches, one module per language family | yes |
+| `src/grammars/` | The two cfmleditor CFML grammars, vendored byte-identical; `cfml.js`, which reads and patches them; `stock.js`, which swaps patched clones into starry-night's stock list; `scopes.js`, their scope names; `promql.js`, a PromQL grammar written for this repo; and `patches/`, the grammar patches, one module per language family | yes |
 | `test/` | `corpus.test.js` (golden output), `contract.test.js` (adapter parity), `__fixtures__/` | no |
 | `tools/` | Local inspection page on `:3001` — `/` renders the corpus. Never packaged | no |
 | `scripts/` | One `docker compose` wrapper per routine task, plus `check-upstream.sh` | no |
@@ -52,7 +52,7 @@ The boundary that carries weight here is **what ships versus what does not**, an
 
 Dependencies inside `src/` point one way: adapters import core, core imports nothing from adapters. A `../adapters/` import under `core/` means the layering has been broken, and the import line itself says so.
 
-Three directories are the *inputs* (`src/`, `test/`, `tools/`); `dist/` is the only *output*. `src/grammars/` sits outside the core/adapters split because it is not a layer: two vendored grammars (third-party, tracked in [`LICENSES/README.md`](LICENSES/README.md)) and the in-memory patches this repo applies to them and to starry-night's stock grammars. Core imports it; nothing in it imports core.
+Three directories are the *inputs* (`src/`, `test/`, `tools/`); `dist/` is the only *output*. `src/grammars/` sits outside the core/adapters split because it is not a layer: two vendored grammars (third-party, tracked in [`LICENSES/README.md`](LICENSES/README.md)), one grammar of its own, and the in-memory patches this repo applies to them and to starry-night's stock grammars. Core imports it; nothing in it imports core.
 
 ## Running It Locally
 
@@ -176,7 +176,7 @@ docker buildx imagetools inspect node:24-alpine --format '{{println .Manifest.Di
 |---|---|
 | [LICENSES/](LICENSES/) | Third-party notices and provenance for code vendored by hand — currently the two cfmleditor CFML grammars. npm dependencies need nothing here; they carry their own licenses and ship them with `node_modules`. |
 
-Every Linguist grammar is registered, plus 2 vendored CFML grammars. Individual fence tags are corrected by the `flagOverrides` map in `src/core/resolve.js`, which is commented with what each override repairs.
+Every Linguist grammar is registered, plus 2 vendored CFML grammars and a local PromQL grammar. Individual fence tags are corrected by the `flagOverrides` map in `src/core/resolve.js`, which is commented with what each override repairs.
 
 ## Local Grammar Changes
 
@@ -213,6 +213,7 @@ Where this service renders differently from the published grammars, the differen
 - `cf`, `cfm`, `cfml`, `coldfusion` highlight as tag-based CFML; `cfs`, `cfscript`, `cfc`, `coldfusion-cfc` as script-based CFML. All use the cfmleditor grammars, not Linguist's.
 - `dockerignore` highlights as gitignore syntax.
 - `ndjson` highlights as JSON.
+- `promql` highlights as PromQL, which Linguist does not cover.
 - `conf` highlights as nginx config, not INI.
 - `txt` renders as plain text with no highlighting.
 
